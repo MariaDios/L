@@ -227,6 +227,13 @@ button,input,select,textarea{font-family:inherit}
 .gdate:focus{border-color:var(--gd2)}
 .gdate-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--mt);margin-bottom:6px;margin-top:12px}
 
+/* BACKUP + EDIT */
+.backup-row{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--ln);background:var(--bg);flex-shrink:0}
+.backup-btn{flex:1;padding:10px 12px;border-radius:12px;border:1.5px solid var(--ln);background:var(--c2);color:var(--tx2);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.backup-btn:active{transform:scale(.97)}
+.edit-mini{font-size:14px;color:var(--mt);cursor:pointer;padding:0 4px;opacity:.75}
+.edit-mini:hover{color:var(--tx);opacity:1}
+
 /* SHEETS */
 .sh-ov{position:fixed;inset:0;background:rgba(16,12,6,.50);z-index:60;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .28s;backdrop-filter:blur(8px)}
 .sh-ov.O{opacity:1;pointer-events:all}
@@ -372,6 +379,7 @@ button,input,select,textarea{font-family:inherit}
   <div class="V" id="V-sph">
     <div class="spv-hd"><div class="spv-title">Spheres</div><div class="spv-sub">Activities · Goals · Deadlines</div></div>
     <div class="band-tabs" id="band-tabs"></div>
+    <div class="backup-row"><button class="backup-btn" onclick="exportBackup()">Export Backup</button><button class="backup-btn" onclick="document.getElementById('backup-file').click()">Import Backup</button><input id="backup-file" type="file" accept="application/json" style="display:none" onchange="importBackupFile(event)"></div>
     <div class="Vsc" style="padding-bottom:28px" id="sp-cards"></div>
   </div>
 
@@ -393,14 +401,8 @@ button,input,select,textarea{font-family:inherit}
     <div class="sh-alist" id="sh-alist"></div>
     <div class="sh-cust" style="display:none"><span style="color:var(--mt);font-size:14px">◦</span><input id="sh-ci" placeholder="Custom activity..."></div>
     <div class="sh-row">
-      <div><div class="sh-lbl">Start</div><input type="time" class="sh-inp" id="sh-st" value="09:00"></div>
-      <div><div class="sh-lbl">Duration</div>
-        <select class="sh-inp" id="sh-du">
-          <option value="25">25 min</option><option value="30">30 min</option><option value="45">45 min</option>
-          <option value="60" selected>1 hour</option><option value="90">1.5 h</option><option value="120">2 h</option>
-          <option value="150">2.5 h</option><option value="180">3 h</option><option value="240">4 h</option><option value="480">8 h</option>
-        </select>
-      </div>
+      <div><div class="sh-lbl">Start</div><input type="time" class="sh-inp" id="sh-st" value="09:00" onchange="autoEndIfNeeded()"></div>
+      <div><div class="sh-lbl">End</div><input type="time" class="sh-inp" id="sh-end" value="10:00"></div>
     </div>
     <div class="sh-lbl">Selected tasks</div>
     <div class="sh-tasks" id="sh-tasks"></div>
@@ -447,6 +449,8 @@ const p2=n=>String(n).padStart(2,'0');
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const tm=m=>p2(Math.floor(m/60))+':'+p2(m%60);
 const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m;};
+const fromMin=m=>p2(Math.floor(m/60)%24)+':'+p2(m%60);
+function autoEndIfNeeded(){const st=document.getElementById('sh-st'),en=document.getElementById('sh-end');if(st&&en){const sm=toMin(st.value||'09:00'),em=toMin(en.value||'00:00');if(!en.value||em<=sm)en.value=fromMin(sm+60);}}
 const dkey=d=>p2(d.getFullYear())+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
 const selDk=()=>p2(S.sy)+'-'+p2(S.sm+1)+'-'+p2(S.sd);
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
@@ -655,6 +659,7 @@ let aSp=null,aAc=null,aTk=[];
 function openAdd(t){
   aSp=null;aAc=null;aTk=[];aSel=null;aOpenAct=null;aChecked={};
   if(t)document.getElementById('sh-st').value=t;
+  autoEndIfNeeded();
   document.getElementById('sh-ci').value='';
   document.getElementById('sh-spg').innerHTML='';
   renderActivityPicker();
@@ -715,9 +720,11 @@ function bShTk(){renderSelectedTasks();}
 function confirmAdd(){
   if(!aSel){toast('Choose an activity');return;}
   const sMin=toMin(document.getElementById('sh-st').value||'09:00');
-  const dur=parseInt(document.getElementById('sh-du').value)||60;
+  const eMin=toMin(document.getElementById('sh-end').value||'10:00');
+  if(eMin<=sMin){toast('End time must be after start time');return;}
+  const dur=eMin-sMin;
   const dk=selDk();
-  const tasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]).map(t=>({id:uid(),text:t.text,done:false}));
+  const tasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]).map(t=>({id:uid(),sourceTaskId:t.id,text:t.text,done:false}));
   const blockTitle = tasks.length===1 ? tasks[0].text : (tasks.length>1 ? tasks[0].text+' + '+(tasks.length-1)+' more' : aSel.activity.title);
   getDay(dk).push({id:uid(),title:blockTitle,activityTitle:aSel.activity.title,sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,band:aSel.sphere.band,startMin:sMin,dur,tasks,done:false});
   save();csh(null,'sh-add');renderCal();toast('Block added');
@@ -732,7 +739,7 @@ let oSph={};
 function renderSph(){
   normData();
   document.getElementById('band-tabs').innerHTML=['work','life','sleep'].map(b=>{const m=BAND[b],sphs=S.spheres.filter(s=>s.band===b);return`<div class="btab" style="border-color:${m.color}28"><div class="btab-n" style="color:${m.color}">${m.label}</div><div class="btab-c">${sphs.map(s=>s.name).join(' · ')}</div></div>`;}).join('');
-  document.getElementById('sp-cards').innerHTML=S.spheres.map(s=>{const o=oSph[s.id],bm=BAND[s.band];return`<div class="spcard" style="border-color:${s.color}22"><div class="sph-h" onclick="toSph('${s.id}')"><div class="sph-strip" style="background:${s.color}"></div><div class="sph-name">${s.name}</div><div class="sph-btag" style="color:${bm.color};border-color:${bm.color}28;background:${bm.color}0C">${bm.label}</div><div class="sph-chev${o?' o':''}">›</div></div>${o?`<div class="spbody"><div class="sp-lbl">Goals</div>${(s.goals||[]).map((g,gi)=>{const gok=!!g._open;return`<div class="goal-card"><div class="goal-head" onclick="toggleGoal('${s.id}','${g.id}')"><div class="gdot" style="background:${s.color}"></div><div style="flex:1"><div class="goal-title">${esc(g.text)}</div>${g.term?`<div class="goal-meta">by ${g.term}</div>`:''}</div><div class="goal-chevron${gok?' o':''}">›</div><div class="grm" onclick="rmGoal('${s.id}',${gi});event.stopPropagation()">×</div></div>${gok?`<div class="goal-body"><div class="sp-lbl">Activities</div>${(g.activities||[]).map((a,ai)=>{const aok=!!a._open;return`<div class="act-card"><div class="act-head" onclick="toggleActivity('${s.id}','${g.id}','${a.id}')"><div class="task-dot" style="background:${s.color}"></div><div class="act-title">${esc(a.title)}</div><div class="act-chevron${aok?' o':''}">›</div><div class="grm" onclick="rmActivity('${s.id}','${g.id}',${ai});event.stopPropagation()">×</div></div>${aok?`<div class="act-body"><div class="sp-lbl">Tasks</div>${(a.tasks||[]).map((t,ti)=>`<div class="task-row-mini"><div class="task-dot" style="background:${s.color}"></div><div style="flex:1">${esc(t.text)}</div><div class="grm" onclick="rmTask('${s.id}','${g.id}','${a.id}',${ti})">×</div></div>`).join('')||`<div class="s80-s">No tasks yet</div>`}<div class="mini-add-row"><input class="mini-inp" id="task-${safeId(a.id)}" placeholder="Add task..." onkeydown="if(event.key==='Enter')addTask('${s.id}','${g.id}','${a.id}')"><button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addTask('${s.id}','${g.id}','${a.id}')">Add</button></div></div>`:''}</div>`;}).join('')||`<div class="s80-s">No activities yet</div>`}<div class="mini-add-row"><input class="mini-inp" id="act-${safeId(g.id)}" placeholder="Add activity..." onkeydown="if(event.key==='Enter')addActivity('${s.id}','${g.id}')"><button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addActivity('${s.id}','${g.id}')">Add</button></div></div>`:''}</div>`;}).join('')||`<div class="s80-s">No goals yet</div>`}<div class="gdate-lbl">Goal · target month</div><div class="g-add-row"><input class="ainp" id="gi-${s.id}" placeholder="Write a goal..." onkeydown="if(event.key==='Enter')addGoal('${s.id}')"><input type="month" class="gdate" id="gm-${s.id}" title="Target"></div><button class="abtn" style="color:${s.color};border-color:${s.color}30;width:100%;margin-top:10px" onclick="addGoal('${s.id}')">Add goal</button></div>`:''}</div>`;}).join('');
+  document.getElementById('sp-cards').innerHTML=S.spheres.map(s=>{const o=oSph[s.id],bm=BAND[s.band];return`<div class="spcard" style="border-color:${s.color}22"><div class="sph-h" onclick="toSph('${s.id}')"><div class="sph-strip" style="background:${s.color}"></div><div class="sph-name">${s.name}</div><div class="sph-btag" style="color:${bm.color};border-color:${bm.color}28;background:${bm.color}0C">${bm.label}</div><div class="sph-chev${o?' o':''}">›</div></div>${o?`<div class="spbody"><div class="sp-lbl">Goals</div>${(s.goals||[]).map((g,gi)=>{const gok=!!g._open;return`<div class="goal-card"><div class="goal-head" onclick="toggleGoal('${s.id}','${g.id}')"><div class="gdot" style="background:${s.color}"></div><div style="flex:1"><div class="goal-title">${esc(g.text)}</div>${g.term?`<div class="goal-meta">by ${g.term}</div>`:''}</div><div class="goal-chevron${gok?' o':''}">›</div><div class="edit-mini" onclick="editGoal('${s.id}','${g.id}');event.stopPropagation()">✎</div><div class="grm" onclick="rmGoal('${s.id}',${gi});event.stopPropagation()">×</div></div>${gok?`<div class="goal-body"><div class="sp-lbl">Activities</div>${(g.activities||[]).map((a,ai)=>{const aok=!!a._open;return`<div class="act-card"><div class="act-head" onclick="toggleActivity('${s.id}','${g.id}','${a.id}')"><div class="task-dot" style="background:${s.color}"></div><div class="act-title">${esc(a.title)}</div><div class="act-chevron${aok?' o':''}">›</div><div class="edit-mini" onclick="editActivity('${s.id}','${g.id}','${a.id}');event.stopPropagation()">✎</div><div class="grm" onclick="rmActivity('${s.id}','${g.id}',${ai});event.stopPropagation()">×</div></div>${aok?`<div class="act-body"><div class="sp-lbl">Tasks</div>${(a.tasks||[]).map((t,ti)=>`<div class="task-row-mini"><div class="task-dot" style="background:${s.color}"></div><div style="flex:1">${esc(t.text)}</div><div class="edit-mini" onclick="editTask('${s.id}','${g.id}','${a.id}','${t.id}')">✎</div><div class="grm" onclick="rmTask('${s.id}','${g.id}','${a.id}',${ti})">×</div></div>`).join('')||`<div class="s80-s">No tasks yet</div>`}<div class="mini-add-row"><input class="mini-inp" id="task-${safeId(a.id)}" placeholder="Add task..." onkeydown="if(event.key==='Enter')addTask('${s.id}','${g.id}','${a.id}')"><button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addTask('${s.id}','${g.id}','${a.id}')">Add</button></div></div>`:''}</div>`;}).join('')||`<div class="s80-s">No activities yet</div>`}<div class="mini-add-row"><input class="mini-inp" id="act-${safeId(g.id)}" placeholder="Add activity..." onkeydown="if(event.key==='Enter')addActivity('${s.id}','${g.id}')"><button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addActivity('${s.id}','${g.id}')">Add</button></div></div>`:''}</div>`;}).join('')||`<div class="s80-s">No goals yet</div>`}<div class="gdate-lbl">Goal · target month</div><div class="g-add-row"><input class="ainp" id="gi-${s.id}" placeholder="Write a goal..." onkeydown="if(event.key==='Enter')addGoal('${s.id}')"><input type="month" class="gdate" id="gm-${s.id}" title="Target"></div><button class="abtn" style="color:${s.color};border-color:${s.color}30;width:100%;margin-top:10px" onclick="addGoal('${s.id}')">Add goal</button></div>`:''}</div>`;}).join('');
 }
 function toSph(id){oSph[id]=!oSph[id];renderSph();}
 function toggleGoal(sid,gid){const g=gsp(sid).goals.find(x=>x.id===gid);if(g){g._open=!g._open;renderSph();}}
@@ -741,12 +748,30 @@ function addActivity(sid,gid){const el=document.getElementById('act-'+safeId(gid
 function rmActivity(sid,gid,i){const g=gsp(sid).goals.find(x=>x.id===gid);if(g){g.activities.splice(i,1);save();renderSph();}}
 function addTask(sid,gid,aid){const el=document.getElementById('task-'+safeId(aid));const v=el&&el.value.trim();if(!v)return;const g=gsp(sid).goals.find(x=>x.id===gid);const a=g&&g.activities.find(x=>x.id===aid);if(a){if(!a.tasks)a.tasks=[];a.tasks.push({id:uid(),text:v,done:false});a._open=true;save();renderSph();}}
 function rmTask(sid,gid,aid,i){const g=gsp(sid).goals.find(x=>x.id===gid);const a=g&&g.activities.find(x=>x.id===aid);if(a){a.tasks.splice(i,1);save();renderSph();}}
+function editGoal(sid,gid){const s=gsp(sid),g=s&&s.goals.find(x=>x.id===gid);if(!g)return;const v=prompt('Edit goal',g.text||'');if(v===null)return;g.text=v.trim()||g.text;save();renderSph();renderCal();}
+function editActivity(sid,gid,aid){const s=gsp(sid),g=s&&s.goals.find(x=>x.id===gid),a=g&&g.activities.find(x=>x.id===aid);if(!a)return;const old=a.title;const v=prompt('Edit activity',a.title||'');if(v===null)return;const nv=v.trim();if(!nv)return;a.title=nv;Object.values(S.cal||{}).forEach(day=>(day||[]).forEach(ev=>{if(ev.activityId===aid){ev.activityTitle=nv;if(ev.title===old)ev.title=nv;}}));save();renderSph();renderCal();}
+function editTask(sid,gid,aid,tid){const s=gsp(sid),g=s&&s.goals.find(x=>x.id===gid),a=g&&g.activities.find(x=>x.id===aid),t=a&&a.tasks.find(x=>x.id===tid);if(!t)return;const old=t.text;const v=prompt('Edit task',t.text||'');if(v===null)return;const nv=v.trim();if(!nv)return;t.text=nv;Object.values(S.cal||{}).forEach(day=>(day||[]).forEach(ev=>{(ev.tasks||[]).forEach(ct=>{if(ct.sourceTaskId===tid)ct.text=nv;}); if(ev.title===old)ev.title=nv;}));save();renderSph();renderCal();}
 function addGoal(id){const ti=document.getElementById('gi-'+id),tm2=document.getElementById('gm-'+id),t=ti.value.trim();if(!t)return;const s=gsp(id);if(!s.goals)s.goals=[];s.goals.push({id:uid(),text:t,term:tm2.value||'',activities:[],_open:true});ti.value='';save();renderSph();}
 function rmGoal(id,i){gsp(id).goals.splice(i,1);save();renderSph();}
 function set80(id,v){}
 function addAct(id){}
 function rmAct(id,i){}
 function csh(e,id){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.remove('O');}
+
+
+function exportBackup(){
+  const data={schemaVersion:2,exportedAt:new Date().toISOString(),app:'Life Balance OS',state:S};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='life-balance-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);toast('Backup exported');
+}
+function importBackupFile(e){
+  const file=e.target.files&&e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(){try{const data=JSON.parse(reader.result);const st=data.state||data;if(!st.spheres&&!st.cal)throw new Error('Invalid backup');S={...S,...st};normData();save();renderCal();renderSph();toast('Backup imported');}catch(err){toast('Import failed');} e.target.value='';};
+  reader.readAsText(file);
+}
 
 load();normData();renderCal();
 setTimeout(()=>{const o=document.getElementById('tg-outer');if(o)o.scrollTop=(7-CAL_S)*HR_H-20;},200);
