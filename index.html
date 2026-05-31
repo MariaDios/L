@@ -4,12 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Life Balance OS</title>
+<!-- version: final-force-colors-v3 -->
 <meta name="theme-color" content="#F5EFE4">
 <meta name="description" content="Your personal life operating system. 8·8·8 balance, spheres, goals, calendar.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Life Balance">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20180%20180%27%3E%0A%3Cdefs%3E%3Cfilter%20id%3D%27s%27%20x%3D%27-20%25%27%20y%3D%27-20%25%27%20width%3D%27140%25%27%20height%3D%27140%25%27%3E%3CfeDropShadow%20dx%3D%270%27%20dy%3D%274%27%20stdDeviation%3D%276%27%20flood-color%3D%27%23000000%27%20flood-opacity%3D%27.10%27%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%0A%3Crect%20width%3D%27180%27%20height%3D%27180%27%20rx%3D%2742%27%20fill%3D%27%23F7F1E7%27%2F%3E%0A%3Cg%20filter%3D%27url%28%23s%29%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%3E%0A%3Ccircle%20cx%3D%2790%27%20cy%3D%2773%27%20r%3D%2734%27%20stroke%3D%27%237FA7C7%27%20stroke-width%3D%2710%27%20opacity%3D%27.95%27%2F%3E%0A%3Ccircle%20cx%3D%2765%27%20cy%3D%27112%27%20r%3D%2734%27%20stroke%3D%27%238DBF93%27%20stroke-width%3D%2710%27%20opacity%3D%27.95%27%2F%3E%0A%3Ccircle%20cx%3D%27115%27%20cy%3D%27112%27%20r%3D%2734%27%20stroke%3D%27%23D9A441%27%20stroke-width%3D%2710%27%20opacity%3D%27.95%27%2F%3E%0A%3C%2Fg%3E%0A%3Ccircle%20cx%3D%2790%27%20cy%3D%2799%27%20r%3D%278%27%20fill%3D%27%232F2A22%27%20opacity%3D%27.72%27%2F%3E%0A%3C%2Fsvg%3E">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="manifest" id="pwa-manifest">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -18,7 +21,7 @@
   --ln:#DDD4BC;--ln2:#C8BB9E;
   --tx:#1A160E;--tx2:#3A2E18;--mt:#8A7860;--mt2:#BBAA90;
   --gd:#A87828;--gd2:#C89840;--gdf:rgba(168,120,40,.10);--gdl:rgba(168,120,40,.22);
-  --work:#3838B0;--life:#1A7840;--slp:#1858A0;
+  --work:#B88A2E;--life:#4CAF50;--slp:#3B82F6;
   --nh:68px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -154,15 +157,15 @@ button,input,select,textarea{font-family:inherit}
 
 .hr{display:flex;align-items:flex-start;position:relative;min-height:70px}
 .hr.zsl{
-  background:rgba(167,180,196,.12);
+  background:#EEF4FF !important;
 }
 
 .hr.zwk{
-  background:rgba(127,138,120,.08);
+  background:#F8F1DE !important;
 }
 
 .hr.zlf{
-  background:rgba(184,149,122,.08);
+  background:#EEF8EF !important;
 }
 .hband{width:3px;align-self:stretch;border-radius:2px;flex-shrink:0;margin-right:8px;opacity:.65}
 .hband.sl{background:var(--slp)}
@@ -534,9 +537,9 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 
 /* === Requested: proper Work/Life/Sleep colors + compact priorities === */
 :root{
-  --work:#7F8A78;
-  --life:#B8957A;
-  --slp:#A7B4C4;
+  --work:#B88A2E;
+  --life:#4CAF50;
+  --slp:#3B82F6;
 }
 
 /* 8-8-8 balance colors stay visible even with brown typography */
@@ -550,15 +553,15 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 #bal-bar .bb:nth-of-type(2) .bb-fil{ background:var(--life) !important; }
 #bal-bar .bb:nth-of-type(3) .bb-fil{ background:var(--slp) !important; }
 .hband.wk{
-  background:#7F8A78 !important;
+  background:#B88A2E !important;
 }
 
 .hband.lf{
-  background:#B8957A !important;
+  background:#4CAF50 !important;
 }
 
 .hband.sl{
-  background:#A7B4C4 !important;
+  background:#3B82F6 !important;
 }
 
 /* Today's Priorities: smaller, one elegant line */
@@ -593,6 +596,48 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 /* keep inputs inside priorities readable but calm */
 .b3i{ font-size:17px !important; font-weight:400 !important; }
 .b3n{ font-size:15px !important; font-weight:400 !important; }
+
+
+
+/* FINAL FORCE CATEGORY COLORS - visible override */
+:root{
+  --work:#B88A2E !important;
+  --life:#4CAF50 !important;
+  --slp:#3B82F6 !important;
+}
+
+/* calendar hour backgrounds */
+.hr.zwk{ background:#F8F1DE !important; }
+.hr.zlf{ background:#EEF8EF !important; }
+.hr.zsl{ background:#EEF4FF !important; }
+
+/* vertical hour color strips */
+.hband.wk{ background:#B88A2E !important; }
+.hband.lf{ background:#4CAF50 !important; }
+.hband.sl{ background:#3B82F6 !important; }
+
+/* 8-8-8 balance: exact positions are bb + separators */
+#bal-bar .bb:nth-child(1) .bb-nm,
+#bal-bar .bb:nth-child(1) .bb-vl{ color:#B88A2E !important; }
+#bal-bar .bb:nth-child(1) .bb-fil{ background:#B88A2E !important; }
+
+#bal-bar .bb:nth-child(3) .bb-nm,
+#bal-bar .bb:nth-child(3) .bb-vl{ color:#4CAF50 !important; }
+#bal-bar .bb:nth-child(3) .bb-fil{ background:#4CAF50 !important; }
+
+#bal-bar .bb:nth-child(5) .bb-nm,
+#bal-bar .bb:nth-child(5) .bb-vl{ color:#3B82F6 !important; }
+#bal-bar .bb:nth-child(5) .bb-fil{ background:#3B82F6 !important; }
+
+/* event cards: make category color visible even with dark-brown typography */
+.ev[style*="#B88A2E"]{ background:#F8F1DE !important; border-left-color:#B88A2E !important; }
+.ev[style*="#4CAF50"]{ background:#EEF8EF !important; border-left-color:#4CAF50 !important; }
+.ev[style*="#3B82F6"]{ background:#EEF4FF !important; border-left-color:#3B82F6 !important; }
+
+/* priorities done colors */
+.b3n.done[style*="var(--work)"]{ background:#B88A2E !important; border-color:#B88A2E !important; }
+.b3n.done[style*="var(--life)"]{ background:#4CAF50 !important; border-color:#4CAF50 !important; }
+.b3n.done[style*="var(--slp)"]{ background:#3B82F6 !important; border-color:#3B82F6 !important; }
 
 </style>
 </head>
@@ -697,17 +742,17 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 
 <script>
 const SPHERES=[
-  {id:'sleep',    name:'Sleep',    band:'sleep', color:'#1858A0'},
-  {id:'health',   name:'Health',   band:'life', color:'#1A7A44'},
-  {id:'family',   name:'Family',   band:'life', color:'#B83858'},
-  {id:'career',   name:'Career',   band:'work', color:'#4040B8'},
+  {id:'sleep',      name:'Sleep',   band:'sleep', color:'#3B82F6'},
+  {id:'health',     name:'Health',   band:'life', color:'#4CAF50'},
+  {id:'family',     name:'Family',   band:'life', color:'#4CAF50'},
+  {id:'career',     name:'Career',   band:'work', color:'#B88A2E'},
   {id:'spiritual',name:'Spiritual',band:'life', color:'#7830A8'},
-  {id:'joy',      name:'Joy',      band:'life', color:'#C06018'},
-  {id:'growth',   name:'Growth',   band:'life', color:'#107878'},
-  {id:'sport',    name:'Sport',    band:'life', color:'#0870A8'},
-  {id:'finance',  name:'Finance',  band:'work', color:'#906010'},
+  {id:'joy',        name:'Joy',   band:'life', color:'#4CAF50'},
+  {id:'growth',     name:'Growth',   band:'life', color:'#4CAF50'},
+  {id:'sport',      name:'Sport',   band:'life', color:'#4CAF50'},
+  {id:'finance',    name:'Finance',   band:'work', color:'#B88A2E'},
 ];
-const BAND={work:{label:'Work',color:'#3838B0'},life:{label:'Life',color:'#1A7840'},sleep:{label:'Sleep',color:'#1858A0'}};
+const BAND={work:{label:'Work',color:'#B88A2E'},life:{label:'Life',color:'#4CAF50'},sleep:{label:'Sleep',color:'#3B82F6'}};
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DOW_L=['M','T','W','T','F','S','S'];
 const DOW_FULL=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
