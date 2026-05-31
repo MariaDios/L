@@ -611,18 +611,6 @@ setTimeout(()=>{const o=document.getElementById('tg-outer');if(o)o.scrollTop=(7-
      PWA — Manifest + Service Worker
 ══════════════════════════════════ -->
 
-<!-- Install banner (shown on first visit) -->
-<div id="install-banner" style="
-  display:none;position:fixed;bottom:calc(68px + 14px);left:12px;right:12px;
-  background:#fff;border:1px solid #DDD4BC;border-radius:18px;
-  padding:14px 16px;z-index:200;
-  box-shadow:0 8px 32px rgba(26,22,14,.14);
-  display:flex;align-items:center;gap:12px;
-  animation:slideUp .4s cubic-bezier(.4,0,.2,1);
-" id="install-banner">
-<div style="width:42px;height:42px;border-radius:12px;background:#F5EFE4;border:1px solid #DDD4BC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-  <svg viewBox="0 0 42 42" width="42" height="42"><circle cx="21" cy="21" r="17" fill="none" stroke="#A87828" stroke-width="2"/><text x="21" y="28" font-family="Georgia,serif" font-size="20" font-style="italic" fill="#A87828" text-anchor="middle">L</text></svg>
-</div>
 <div style="flex:1">
   <div style="font-size:14px;font-weight:700;color:#1A160E;margin-bottom:2px">Install Life Balance OS</div>
   <div style="font-size:12px;color:#8A7860">Works offline · Lives on your home screen</div>
@@ -631,10 +619,6 @@ setTimeout(()=>{const o=document.getElementById('tg-outer');if(o)o.scrollTop=(7-
 <button onclick="dismissBanner()" style="padding:8px;background:none;border:none;font-size:18px;color:#BBAA90;cursor:pointer;line-height:1;flex-shrink:0">×</button>
 </div>
 
-<!-- iOS "Add to Home Screen" hint (Safari only) -->
-<div id="ios-hint" style="display:none;position:fixed;bottom:calc(68px + 14px);left:12px;right:12px;background:#fff;border:1px solid #DDD4BC;border-radius:18px;padding:16px;z-index:200;box-shadow:0 8px 32px rgba(26,22,14,.14)">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-    <div style="font-size:14px;font-weight:700;color:#1A160E">Install on your iPhone</div>
     <button onclick="document.getElementById('ios-hint').style.display='none'" style="background:none;border:none;font-size:18px;color:#BBAA90;cursor:pointer;line-height:1">×</button>
   </div>
   <div style="font-size:13px;color:#3A2E18;line-height:1.7">
@@ -713,47 +697,19 @@ try {
   }
 } catch(e) {}
 
-// ══ INSTALL PROMPT ══
-let deferredPrompt = null;
-const banner = document.getElementById('install-banner');
-const iosHint = document.getElementById('ios-hint');
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-const dismissed = localStorage.getItem('lbos-install-dismissed');
 
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if(!isStandalone && !dismissed) {
-    setTimeout(()=>{ banner.style.display='flex'; }, 2000);
-  }
-});
 
 // iOS hint
 if(isIOS && !isStandalone && !dismissed) {
   setTimeout(()=>{ iosHint.style.display='block'; }, 2500);
 }
 
-function installApp() {
-  banner.style.display='none';
-  if(deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(r => {
-      if(r.outcome==='accepted') localStorage.setItem('lbos-install-dismissed','1');
-      deferredPrompt=null;
-    });
+);
   }
 }
-function dismissBanner() {
-  banner.style.display='none';
-  iosHint.style.display='none';
-  localStorage.setItem('lbos-install-dismissed','1');
-}
 
-window.addEventListener('appinstalled', ()=>{
-  banner.style.display='none';
-  localStorage.setItem('lbos-install-dismissed','1');
-});
+
+
 
 // ══ OFFLINE INDICATOR ══
 function updateOnline(){
