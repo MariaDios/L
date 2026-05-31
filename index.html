@@ -821,7 +821,7 @@ const SPHERES=[
   {id:'health',     name:'Health',   band:'life', color:'#4CAF50'},
   {id:'family',     name:'Family',   band:'life', color:'#4CAF50'},
   {id:'career',     name:'Career',   band:'work', color:'#B88A2E'},
-  {id:'spiritual',name:'Spiritual',band:'life', color:'#7830A8'},
+  {id:'spiritual',name:'Spiritual',band:'life', color:'#B8A6D9'},
   {id:'joy',        name:'Joy',   band:'life', color:'#4CAF50'},
   {id:'growth',     name:'Growth',   band:'life', color:'#4CAF50'},
   {id:'sport',      name:'Sport',   band:'life', color:'#4CAF50'},
@@ -1300,6 +1300,626 @@ setTimeout(()=>{const o=document.getElementById('tg-outer');if(o)o.scrollTop=0;}
 <script>
 try{if(!localStorage.getItem('lbosInstallDismissed'))setTimeout(()=>{const n=document.getElementById('install-note');if(n)n.style.display='flex'},1600)}catch(e){}
 </script>
+
+
+<!-- FINAL UX PATCH START -->
+<style>
+.nav{height:82px!important;padding-top:8px!important;background:rgba(245,239,228,.98)!important}.nb{gap:5px!important;padding:6px 4px 10px!important}.nb-ic{width:44px!important;height:44px!important;font-size:28px!important;color:#2A1C12!important}.nb-lb{display:block!important;font-size:17px!important;line-height:1!important;color:#2A1C12!important;opacity:.95!important}.nb.on .nb-ic{background:#EFE6D3!important;color:#2A1C12!important}.nb.on .nb-lb{color:#2A1C12!important}
+.hr.zsl,.hr.zwk,.hr.zlf{background:transparent!important}.hlbl{width:58px!important;padding-right:16px!important;position:relative!important;z-index:6!important}.hlbl-n{font-size:22px!important;color:#8D7C68!important}.ev{left:94px!important;right:12px!important;padding:10px 42px 10px 54px!important;min-height:50px!important;display:block!important}.ev-check{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:1.8px solid currentColor;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-size:17px;line-height:1;background:rgba(255,255,255,.55);color:inherit}.ev.done{opacity:.64}.ev.done .ev-n,.ev.done .ev-s{text-decoration:line-through}.ev-t{display:block!important;position:absolute!important;right:38px!important;top:50%!important;transform:translateY(-50%)!important;font-size:16px!important;line-height:1!important;opacity:.88!important;color:#2A1C12!important;white-space:nowrap!important}.ev-n,.ev-s,.ev-tk{max-width:50%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.ev-x{display:none!important}
+.quick-add-box{margin:8px 0 12px!important;padding:0!important;border:none!important;background:transparent!important}.quick-add-head{display:flex;align-items:center;justify-content:space-between;border:1.5px dashed var(--ln2);border-radius:16px;background:#fffaf2;padding:12px 14px;cursor:pointer}.quick-add-head .sh-lbl{margin:0!important}.quick-add-body{display:none;border:1.5px dashed var(--ln2);border-top:none;border-radius:0 0 16px 16px;padding:12px;background:#fffaf2}.quick-add-box.open .quick-add-head{border-radius:16px 16px 0 0}.quick-add-box.open .quick-add-body{display:block}#sh-alist{max-height:42vh!important;overflow-y:auto!important;padding-right:2px!important}.backup-row{padding:6px 18px 8px!important;justify-content:flex-end!important;gap:12px!important;border-bottom:1px solid rgba(221,212,188,.65)!important}.backup-btn{flex:0 0 auto!important;padding:4px 0!important;border:none!important;background:transparent!important;box-shadow:none!important;font-size:15px!important;color:#8A7860!important}.band-tabs .btab{cursor:pointer!important}.band-tabs .btab.active{box-shadow:0 0 0 2px currentColor,0 2px 10px rgba(0,0,0,.06)!important;background:#fffaf4!important}.sphere-tools{display:flex;gap:8px;padding:10px 16px 0}.sphere-tools button{flex:1;border:1px solid var(--ln);background:var(--c2);border-radius:14px;padding:10px;font-size:18px;cursor:pointer}.sphere-page-head{padding:44px 22px 14px;border-bottom:1px solid var(--ln)}.sphere-back{border:none;background:transparent;color:#8A7860;font-size:18px;margin-bottom:12px;cursor:pointer}.delete-sphere-small{border:1px solid var(--ln);background:var(--c2);color:#8A7860;border-radius:999px;padding:7px 12px;font-size:15px;margin-top:10px;cursor:pointer}
+</style>
+<script>
+let activeBandFilter='all';let activeSpherePage=null;
+function ensureCustomSafe(){if(!Array.isArray(S.spheres))S.spheres=[];S.spheres.forEach(s=>{if(!s.id)s.id=uid();if(!s.name)s.name='New Sphere';if(!s.band)s.band='life';if(!s.color)s.color=s.band==='work'?'#B88A2E':s.band==='sleep'?'#3B82F6':'#4CAF50';if(!Array.isArray(s.goals))s.goals=[];if(!Array.isArray(s.activities))s.activities=[];});}
+function toggleEventDone(dk,id,event){if(event){event.stopPropagation();event.preventDefault();}const ev=getDay(dk).find(e=>e.id===id);if(ev){ev.done=!ev.done;save();renderCal();}}
+renderGrid=function(dk){const tg=document.getElementById('tg');const evts=getDay(dk);const now=new Date();const nMin=now.getHours()*60+now.getMinutes();const selDate=new Date(S.sy,S.sm,S.sd);const isToday=selDate.toDateString()===now.toDateString();let html='';for(let h=CAL_S;h<CAL_E;h++){let z,b;if(h<8||h>=22){z='sl';b='sl';}else if(h>=9&&h<18){z='wk';b='wk';}else{z='lf';b='lf';}const lbl=p2(h);html+=`<div class="hr z${z}"><div class="hband ${b}"></div><div class="hlbl"><div class="hlbl-n">${lbl}</div></div><div class="hcol" style="min-height:${HR_H}px"><div class="hhalf"></div></div></div>`;}tg.innerHTML=html;if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){const nl=document.createElement('div');nl.className='nowl';nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);}evts.forEach(ev=>{const sph=gsp(ev.sphId),c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';const top=(ev.startMin-CAL_S*60)/60*HR_H;const ht=Math.max(Math.min(ev.dur,(CAL_E*60)-ev.startMin)/60*HR_H-3,42);const el=document.createElement('div');el.className='ev'+(ev.done?' done':'');el.style.cssText=`top:${top}px;height:${ht}px;left:94px;right:12px;background:color-mix(in srgb, ${c} 14%, #F9F4EA);border-left-color:${c};color:${c}`;const tc=ev.tasks?.filter(t=>t.done).length||0,ta=ev.tasks?.length||0;el.innerHTML=`<div class="ev-check" onclick="toggleEventDone('${dk}','${ev.id}',event)">${ev.done?'✓':''}</div><div class="ev-n">${esc(ev.title)}</div><div class="ev-t">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)}</div>${sph?`<div class="ev-s">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''}</div>`:''}${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}`;el.onclick=e=>{if(!e.target.classList.contains('ev-check'))openDet(ev,dk);};tg.appendChild(el);});tg.querySelectorAll('.hcol').forEach((col,i)=>{col.onclick=()=>{const t=p2(CAL_S+i)+':00';document.getElementById('sh-st').value=t;openAdd(t);};});};
+openDet=function(ev,dk){dDk=dk;dId=ev.id;const sph=gsp(ev.sphId),c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';document.getElementById('det-in').innerHTML=`<div style="margin-bottom:20px"><div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:#2A1C12;margin-bottom:8px">${esc(ev.title)}</div><div style="font-family:'Cormorant Garamond',serif;font-size:21px;color:var(--mt)">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)} · ${Math.round(ev.dur/60*10)/10}h</div>${sph?`<div style="font-size:18px;margin-top:6px;color:${c};font-weight:400">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''} · ${BAND[sph.band]?.label}</div>`:''}${ev.activityTitle?`<div style="font-size:17px;margin-top:4px;color:var(--mt)">Activity: ${esc(ev.activityTitle)}</div>`:''}</div>${ev.tasks?.length?`<div style="font-size:15px;font-weight:400;text-transform:uppercase;letter-spacing:.12em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">${ev.tasks.map((t,i)=>`<div class="dtask-row" onclick="togDT(${i})"><div class="dtask-chk${t.done?' done':''}" style="border-color:${c}${t.done?';background:'+c:''};color:${t.done?'#fff':'transparent'}">${t.done?'✓':''}</div><div style="flex:1;font-size:20px;font-weight:400;color:#2A1C12${t.done?';text-decoration:line-through;opacity:.45':''}">${esc(t.text)}</div></div>`).join('')}</div>`:''}<div class="d-act"><button class="d-btn d-ok" style="background:${c}" onclick="openEditDet()">Edit</button></div>`;document.getElementById('sh-det').classList.add('O');};
+function setupQuickAddCollapsed(){const box=document.querySelector('#sh-add .quick-add-box');if(!box||box.dataset.ready==='1')return;box.dataset.ready='1';const old=box.innerHTML;box.innerHTML=`<div class="quick-add-head" onclick="toggleQuickAdd(event)"><div class="sh-lbl">Add new activity</div><div style="font-size:20px;color:var(--mt)">▾</div></div><div class="quick-add-body">${old}</div>`;}function toggleQuickAdd(event){event.stopPropagation();const box=document.querySelector('#sh-add .quick-add-box');if(box)box.classList.toggle('open');}
+const oldOpenAdd=openAdd;openAdd=function(t){oldOpenAdd(t);setupQuickAddCollapsed();const box=document.querySelector('#sh-add .quick-add-box');if(box)box.classList.remove('open');};
+function setupSwipeClose(){document.querySelectorAll('.sh-ov').forEach(ov=>{if(ov.dataset.swipeReady==='1')return;ov.dataset.swipeReady='1';let sx=0,sy=0;ov.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});ov.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;const dy=e.changedTouches[0].clientY-sy;if(dy>70||dx<-80)ov.classList.remove('O');},{passive:true});});}
+function setBandFilter(b){activeBandFilter=b;activeSpherePage=null;renderSph();}function openSpherePage(id){activeSpherePage=id;renderSph();}function closeSpherePage(){activeSpherePage=null;renderSph();}
+function addCustomSphere(){const name=prompt('New sphere name');if(!name||!name.trim())return;let band=prompt('Category: work, life, or sleep','life');band=(band||'life').toLowerCase().trim();if(!['work','life','sleep'].includes(band))band='life';const color=band==='work'?'#B88A2E':band==='sleep'?'#3B82F6':'#4CAF50';S.spheres.push({id:'custom_'+uid(),name:name.trim(),band,color,activities:[],goals:[],key20:''});save();renderSph();}
+function deleteSphere(id){const s=gsp(id);if(!s)return;if(!confirm('Delete sphere "'+s.name+'"? Calendar blocks will stay but this sphere will disappear.'))return;S.spheres=S.spheres.filter(x=>x.id!==id);save();activeSpherePage=null;renderSph();renderCal();}
+function renderBandTabs(){return ['all','work','life','sleep'].map(b=>{if(b==='all')return `<div class="btab ${activeBandFilter==='all'?'active':''}" onclick="setBandFilter('all')" style="color:#8A7860;border-color:#DDD4BC"><div class="btab-n">ALL</div><div class="btab-c">All spheres</div></div>`;const m=BAND[b],sphs=S.spheres.filter(s=>s.band===b);return `<div class="btab ${activeBandFilter===b?'active':''}" onclick="setBandFilter('${b}')" style="color:${m.color};border-color:${m.color}28"><div class="btab-n">${m.label}</div><div class="btab-c">${sphs.map(s=>s.name).join(' · ')}</div></div>`;}).join('');}
+function renderSphereCard(s){const bm=BAND[s.band];return `<div class="spcard" style="border-color:${s.color}22" onclick="openSpherePage('${s.id}')"><div class="sph-h"><div class="sph-strip" style="background:${s.color}"></div><div class="sph-name">${esc(s.name)}</div><div class="sph-btag" style="color:${bm.color};border-color:${bm.color}28;background:${bm.color}0C">${bm.label}</div><div class="sph-chev">›</div></div></div>`;}
+function renderSphereDetail(s){const bm=BAND[s.band];return `<div class="sphere-page-head"><button class="sphere-back" onclick="closeSpherePage()">‹ Spheres</button><div class="spv-title">${esc(s.name)}</div><div class="spv-sub">${bm.label} · Goals · Activities · Tasks</div><button class="delete-sphere-small" onclick="deleteSphere('${s.id}')">Delete sphere</button></div><div class="Vsc" style="padding-bottom:28px"><div class="spbody" style="background:transparent"><div class="sp-lbl">Goals</div>${(s.goals||[]).map((g,gi)=>{const gok=!!g._open;return `<div class="goal-card"><div class="goal-head" onclick="toggleGoal('${s.id}','${g.id}')"><div class="gdot" style="background:${s.color}"></div><div style="flex:1"><div class="goal-title">${esc(g.text)}</div>${g.term?`<div class="goal-meta">by ${g.term}</div>`:''}</div><div class="goal-chevron${gok?' o':''}">›</div><div class="edit-mini" onclick="editGoal('${s.id}','${g.id}');event.stopPropagation()">✎</div><div class="grm" onclick="rmGoal('${s.id}',${gi});event.stopPropagation()">×</div></div>${gok?`<div class="goal-body"><div class="sp-lbl">Activities</div>${(g.activities||[]).map((a,ai)=>{const aok=!!a._open;return `<div class="act-card"><div class="act-head" onclick="toggleActivity('${s.id}','${g.id}','${a.id}')"><div class="task-dot" style="background:${s.color}"></div><div class="act-title">${esc(a.title)}</div><div class="act-chevron${aok?' o':''}">›</div><div class="edit-mini" onclick="editActivity('${s.id}','${g.id}','${a.id}');event.stopPropagation()">✎</div><div class="grm" onclick="rmActivity('${s.id}','${g.id}',${ai});event.stopPropagation()">×</div></div>${aok?`<div class="act-body"><div class="sp-lbl">Tasks</div>${(a.tasks||[]).map((t,ti)=>`<div class="task-row-mini"><div class="task-dot" style="background:${s.color}"></div><div style="flex:1">${esc(t.text)}</div><div class="edit-mini" onclick="editTask('${s.id}','${g.id}','${a.id}','${t.id}')">✎</div><div class="grm" onclick="rmTask('${s.id}','${g.id}','${a.id}',${ti})">×</div></div>`).join('')||`<div class="s80-s">No tasks yet</div>`}<div class="mini-add-row"><input class="mini-inp" id="task-${safeId(a.id)}" placeholder="Add task..." onkeydown="if(event.key==='Enter')addTask('${s.id}','${g.id}','${a.id}')"><button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addTask('${s.id}','${g.id}','${a.id}')">Add</button></div></div>`:''}</div>`;}).join('')||`<div class="s80-s">No activities yet</div>`}<div class="mini-add-row"><input class="mini-inp" id="act-${safeId(g.id)}" placeholder="Add activity..." onkeydown="if(event.key==='Enter')addActivity('${s.id}','${g.id}')"><button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addActivity('${s.id}','${g.id}')">Add</button></div></div>`:''}</div>`;}).join('')||`<div class="s80-s">No goals yet</div>`}<div class="gdate-lbl">Goal · target month</div><div class="g-add-row"><input class="ainp" id="gi-${s.id}" placeholder="Write a goal..." onkeydown="if(event.key==='Enter')addGoal('${s.id}')"><input type="month" class="gdate" id="gm-${s.id}" title="Target"></div><button class="abtn" style="color:${s.color};border-color:${s.color}30;width:100%;margin-top:10px" onclick="addGoal('${s.id}')">Add goal</button></div></div>`;}
+renderSph=function(){ensureCustomSafe();normData();if(activeSpherePage){const s=gsp(activeSpherePage);if(s){document.getElementById('V-sph').innerHTML=renderSphereDetail(s)+`<div class="nav"><div class="nb" data-v="cal" onclick="goV('cal')"><div class="nb-ic">◈</div><div class="nb-lb">Calendar</div></div><div class="nb on" data-v="sph" onclick="goV('sph')"><div class="nb-ic">◎</div><div class="nb-lb">Spheres</div></div></div>`;return;}}const filtered=activeBandFilter==='all'?S.spheres:S.spheres.filter(s=>s.band===activeBandFilter);document.getElementById('V-sph').innerHTML=`<div class="spv-hd"><div class="spv-title">Spheres</div><div class="spv-sub">Activities · Goals · Deadlines</div></div><div class="band-tabs" id="band-tabs">${renderBandTabs()}</div><div class="backup-row"><button class="backup-btn" onclick="exportBackup()">Export</button><button class="backup-btn" onclick="document.getElementById('backup-file').click()">Import</button><input id="backup-file" type="file" accept="application/json" style="display:none" onchange="importBackupFile(event)"></div><div class="sphere-tools"><button onclick="addCustomSphere()">+ Add sphere</button></div><div class="Vsc" style="padding-bottom:28px" id="sp-cards">${filtered.map(renderSphereCard).join('')}</div><div class="nav"><div class="nb" data-v="cal" onclick="goV('cal')"><div class="nb-ic">◈</div><div class="nb-lb">Calendar</div></div><div class="nb on" data-v="sph" onclick="goV('sph')"><div class="nb-ic">◎</div><div class="nb-lb">Spheres</div></div></div>`;};
+setTimeout(()=>{try{renderCal();if(document.getElementById('V-sph').classList.contains('on'))renderSph();setupSwipeClose();}catch(e){}},700);
+</script>
+<!-- FINAL UX PATCH END -->
+
+
+<!-- FINAL SMALL FIXES START -->
+<style>
+/* one bottom nav only, clearly visible */
+#V-sph > .nav{
+  display:none !important;
+}
+#app > .nav{
+  display:flex !important;
+}
+
+/* task checkbox circle on the RIGHT side of calendar cards */
+.ev{
+  padding:10px 58px 10px 16px !important;
+}
+.ev-check{
+  left:auto !important;
+  right:14px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  width:28px !important;
+  height:28px !important;
+  border-radius:50% !important;
+  border:1.8px solid currentColor !important;
+  background:rgba(255,255,255,.55) !important;
+}
+.ev-t{
+  right:58px !important;
+}
+.ev-x{
+  display:none !important;
+}
+
+/* remove selected tasks section visually to give more room */
+#sh-add .sh-lbl:nth-of-type(4),
+#sh-tasks,
+#sh-preview{
+  display:none !important;
+}
+
+/* My activities gets more room */
+#sh-alist{
+  max-height:55vh !important;
+  min-height:220px !important;
+}
+
+/* Add new activity stays collapsed and compact */
+.quick-add-box{
+  margin-bottom:12px !important;
+}
+
+/* Spheres: remove "All spheres" text and all tab */
+.band-tabs .btab:first-child{
+  display:none !important;
+}
+.btab-c{
+  display:none !important;
+}
+.band-tabs{
+  grid-template-columns:repeat(3,1fr) !important;
+}
+
+/* Add sphere and Export/Import at the end, secondary */
+.sphere-tools.bottom-tools{
+  padding:18px 16px 28px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:10px !important;
+}
+.sphere-tools.bottom-tools button{
+  font-size:19px !important;
+  padding:13px !important;
+}
+.backup-row.bottom-backup{
+  border-top:1px solid var(--ln) !important;
+  border-bottom:none !important;
+  justify-content:center !important;
+  padding:0 16px 26px !important;
+}
+.backup-row.bottom-backup .backup-btn{
+  font-size:16px !important;
+  padding:6px 12px !important;
+}
+
+/* hide old top backups/tools if they still exist */
+#V-sph > .backup-row:not(.bottom-backup),
+#V-sph > .sphere-tools:not(.bottom-tools){
+  display:none !important;
+}
+</style>
+
+<script>
+/* FINAL SMALL FIXES LOGIC */
+
+/* Override renderGrid: right-side checkbox, no delete icon */
+renderGrid = function(dk){
+  const tg=document.getElementById('tg');
+  const evts=getDay(dk);
+  const now=new Date();
+  const nMin=now.getHours()*60+now.getMinutes();
+  const selDate=new Date(S.sy,S.sm,S.sd);
+  const isToday=selDate.toDateString()===now.toDateString();
+  let html='';
+  for(let h=CAL_S;h<CAL_E;h++){
+    let z,b;
+    if(h<8||h>=22){z='sl';b='sl';}
+    else if(h>=9&&h<18){z='wk';b='wk';}
+    else{z='lf';b='lf';}
+    const lbl=p2(h);
+    html+=`<div class="hr z${z}"><div class="hband ${b}"></div><div class="hlbl"><div class="hlbl-n">${lbl}</div></div><div class="hcol" style="min-height:${HR_H}px"><div class="hhalf"></div></div></div>`;
+  }
+  tg.innerHTML=html;
+  if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+    const nl=document.createElement('div');
+    nl.className='nowl';
+    nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';
+    nl.innerHTML='<div class="nowd"></div>';
+    tg.appendChild(nl);
+  }
+  evts.forEach(ev=>{
+    const sph=gsp(ev.sphId), c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';
+    const top=(ev.startMin-CAL_S*60)/60*HR_H;
+    const ht=Math.max(Math.min(ev.dur,(CAL_E*60)-ev.startMin)/60*HR_H-3,42);
+    const el=document.createElement('div');
+    el.className='ev'+(ev.done?' done':'');
+    el.style.cssText=`top:${top}px;height:${ht}px;left:94px;right:12px;background:color-mix(in srgb, ${c} 14%, #F9F4EA);border-left-color:${c};color:${c}`;
+    const tc=ev.tasks?.filter(t=>t.done).length||0, ta=ev.tasks?.length||0;
+    el.innerHTML=`<div class="ev-n">${esc(ev.title)}</div>
+      <div class="ev-t">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)}</div>
+      ${sph?`<div class="ev-s">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''}</div>`:''}
+      ${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}
+      <div class="ev-check" onclick="toggleEventDone('${dk}','${ev.id}',event)">${ev.done?'✓':''}</div>`;
+    el.onclick=e=>{ if(!e.target.classList.contains('ev-check')) openDet(ev,dk); };
+    tg.appendChild(el);
+  });
+  tg.querySelectorAll('.hcol').forEach((col,i)=>{
+    col.onclick=()=>{
+      const t=p2(CAL_S+i)+':00';
+      document.getElementById('sh-st').value=t;
+      openAdd(t);
+    };
+  });
+};
+
+/* Override renderBandTabs: only Work/Life/Sleep, no All, no descriptions */
+function renderBandTabs(){
+  if(!activeBandFilter || activeBandFilter==='all') activeBandFilter='work';
+  return ['work','life','sleep'].map(b=>{
+    const m=BAND[b];
+    return `<div class="btab ${activeBandFilter===b?'active':''}" onclick="setBandFilter('${b}')" style="color:${m.color};border-color:${m.color}28"><div class="btab-n">${m.label}</div></div>`;
+  }).join('');
+}
+
+/* Override Spheres render so Add sphere + Export/Import are at the END only */
+renderSph = function(){
+  ensureCustomSafe();
+  normData();
+  if(!activeBandFilter || activeBandFilter==='all') activeBandFilter='work';
+
+  if(activeSpherePage){
+    const s=gsp(activeSpherePage);
+    if(s){
+      document.getElementById('V-sph').innerHTML=renderSphereDetail(s);
+      return;
+    }
+  }
+
+  const filtered=S.spheres.filter(s=>s.band===activeBandFilter);
+  document.getElementById('V-sph').innerHTML=`<div class="spv-hd">
+    <div class="spv-title">Spheres</div>
+    <div class="spv-sub">Activities · Goals · Deadlines</div>
+  </div>
+  <div class="band-tabs" id="band-tabs">${renderBandTabs()}</div>
+  <div class="Vsc" style="padding-bottom:120px" id="sp-cards">
+    ${filtered.map(renderSphereCard).join('')}
+    <div class="sphere-tools bottom-tools"><button onclick="addCustomSphere()">+ Add sphere</button></div>
+    <div class="backup-row bottom-backup"><button class="backup-btn" onclick="exportBackup()">Export</button><button class="backup-btn" onclick="document.getElementById('backup-file').click()">Import</button><input id="backup-file" type="file" accept="application/json" style="display:none" onchange="importBackupFile(event)"></div>
+  </div>`;
+};
+
+/* Override selected tasks render: keep logic, hide visible list/preview */
+const oldRenderSelectedTasksFinal = renderSelectedTasks;
+renderSelectedTasks = function(){
+  oldRenderSelectedTasksFinal();
+  const el=document.getElementById('sh-tasks');
+  const prev=document.getElementById('sh-preview');
+  if(el) el.style.display='none';
+  if(prev) prev.style.display='none';
+};
+
+/* rerender current screen */
+setTimeout(()=>{
+  try{
+    renderCal();
+    if(document.getElementById('V-sph')?.classList.contains('on')) renderSph();
+  }catch(e){}
+},300);
+</script>
+<!-- FINAL SMALL FIXES END -->
+
+
+<!-- FINAL ALL TAB FIX START -->
+<style>
+/* Keep ALL tab, but remove only the "All spheres" subtitle */
+.band-tabs .btab:first-child{
+  display:block !important;
+}
+.band-tabs .btab:first-child .btab-c{
+  display:none !important;
+}
+
+/* Keep category subtitles for Work/Life/Sleep if present */
+.band-tabs .btab:not(:first-child) .btab-c{
+  display:block !important;
+}
+
+/* Bottom nav only once */
+#V-sph > .nav{
+  display:none !important;
+}
+#app > .nav{
+  display:flex !important;
+}
+
+/* Tick circle on the right side of calendar events */
+.ev{
+  padding:10px 58px 10px 16px !important;
+}
+.ev-check{
+  left:auto !important;
+  right:14px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  width:28px !important;
+  height:28px !important;
+  border-radius:50% !important;
+  border:1.8px solid currentColor !important;
+  background:rgba(255,255,255,.55) !important;
+}
+.ev-t{
+  right:58px !important;
+}
+.ev-x{
+  display:none !important;
+}
+
+/* Hide selected tasks section for more My Activities space */
+#sh-add .sh-lbl:nth-of-type(4),
+#sh-tasks,
+#sh-preview{
+  display:none !important;
+}
+#sh-alist{
+  max-height:55vh !important;
+  min-height:220px !important;
+}
+
+/* Export/import and Add sphere stay secondary at the bottom */
+.backup-row.bottom-backup{
+  border-top:1px solid var(--ln) !important;
+  border-bottom:none !important;
+  justify-content:center !important;
+  padding:0 16px 26px !important;
+}
+.backup-row.bottom-backup .backup-btn{
+  font-size:16px !important;
+  padding:6px 12px !important;
+}
+.sphere-tools.bottom-tools{
+  padding:18px 16px 28px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:10px !important;
+}
+</style>
+
+<script>
+/* Restore ALL tab logic, remove only "All spheres" text */
+function renderBandTabs(){
+  return ['all','work','life','sleep'].map(b=>{
+    if(b==='all'){
+      return `<div class="btab ${activeBandFilter==='all'?'active':''}" onclick="setBandFilter('all')" style="color:#8A7860;border-color:#DDD4BC"><div class="btab-n">ALL</div><div class="btab-c" style="display:none">All spheres</div></div>`;
+    }
+    const m=BAND[b], sphs=S.spheres.filter(s=>s.band===b);
+    return `<div class="btab ${activeBandFilter===b?'active':''}" onclick="setBandFilter('${b}')" style="color:${m.color};border-color:${m.color}28"><div class="btab-n">${m.label}</div><div class="btab-c">${sphs.map(s=>s.name).join(' · ')}</div></div>`;
+  }).join('');
+}
+
+/* Spheres page: keep ALL, Work, Life, Sleep. Only move Add sphere and Export/Import to bottom. */
+renderSph = function(){
+  ensureCustomSafe();
+  normData();
+
+  if(activeSpherePage){
+    const s=gsp(activeSpherePage);
+    if(s){
+      document.getElementById('V-sph').innerHTML=renderSphereDetail(s);
+      return;
+    }
+  }
+
+  const filtered = activeBandFilter==='all' ? S.spheres : S.spheres.filter(s=>s.band===activeBandFilter);
+
+  document.getElementById('V-sph').innerHTML=`<div class="spv-hd">
+    <div class="spv-title">Spheres</div>
+    <div class="spv-sub">Activities · Goals · Deadlines</div>
+  </div>
+  <div class="band-tabs" id="band-tabs">${renderBandTabs()}</div>
+  <div class="Vsc" style="padding-bottom:120px" id="sp-cards">
+    ${filtered.map(renderSphereCard).join('')}
+    <div class="sphere-tools bottom-tools"><button onclick="addCustomSphere()">+ Add sphere</button></div>
+    <div class="backup-row bottom-backup"><button class="backup-btn" onclick="exportBackup()">Export</button><button class="backup-btn" onclick="document.getElementById('backup-file').click()">Import</button><input id="backup-file" type="file" accept="application/json" style="display:none" onchange="importBackupFile(event)"></div>
+  </div>`;
+};
+
+/* Ensure ALL is the default tab again */
+if(!activeBandFilter) activeBandFilter='all';
+setTimeout(()=>{
+  try{
+    if(document.getElementById('V-sph')?.classList.contains('on')) renderSph();
+    renderCal();
+  }catch(e){}
+},300);
+</script>
+<!-- FINAL ALL TAB FIX END -->
+
+
+<!-- FINAL USER REQUEST PATCH START -->
+<style>
+/* Remove first ALL tab completely */
+.band-tabs .btab:first-child{display:none !important;}
+.band-tabs{display:flex !important;gap:8px !important;}
+.band-tabs .btab{flex:1 !important;}
+
+/* Spiritual color */
+.spcard[data-sphere-id="spiritual"] .sph-strip,
+.spcard.spiritual .sph-strip{background:#B8A6D9 !important;}
+
+/* Bottom nav only once */
+#V-sph > .nav{display:none !important;}
+#app > .nav{display:flex !important;}
+
+/* Tick circle on right side */
+.ev{padding:10px 58px 10px 16px !important;}
+.ev-check{
+  left:auto !important;
+  right:14px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  width:28px !important;
+  height:28px !important;
+  border-radius:50% !important;
+  border:1.8px solid currentColor !important;
+  background:rgba(255,255,255,.55) !important;
+}
+.ev-t{right:58px !important;}
+.ev-x{display:none !important;}
+
+/* Hide selected tasks and preview */
+#sh-add .sh-lbl:nth-of-type(4),
+#sh-tasks,
+#sh-preview{display:none !important;}
+#sh-alist{max-height:55vh !important;min-height:220px !important;}
+
+/* Bottom secondary actions */
+.sphere-tools.bottom-tools{
+  padding:18px 16px 28px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:10px !important;
+}
+.sphere-tools.bottom-tools button{font-size:19px !important;padding:13px !important;}
+.backup-row.bottom-backup{
+  border-top:1px solid var(--ln) !important;
+  border-bottom:none !important;
+  justify-content:center !important;
+  padding:0 16px 26px !important;
+}
+.backup-row.bottom-backup .backup-btn{font-size:16px !important;padding:6px 12px !important;}
+</style>
+
+<script>
+function fixSpiritualColorFinal(){
+  try{
+    if(Array.isArray(S.spheres)){
+      S.spheres.forEach(s=>{
+        if(s.id==='spiritual' || s.name==='Spiritual') s.color='#B8A6D9';
+      });
+      save();
+    }
+  }catch(e){}
+}
+
+function renderBandTabs(){
+  if(!activeBandFilter || activeBandFilter==='all') activeBandFilter='work';
+  return ['work','life','sleep'].map(b=>{
+    const m=BAND[b], sphs=S.spheres.filter(s=>s.band===b);
+    return `<div class="btab ${activeBandFilter===b?'active':''}" onclick="setBandFilter('${b}')" style="color:${m.color};border-color:${m.color}28"><div class="btab-n">${m.label}</div><div class="btab-c">${sphs.map(s=>s.name).join(' · ')}</div></div>`;
+  }).join('');
+}
+
+renderSph = function(){
+  ensureCustomSafe();
+  fixSpiritualColorFinal();
+  normData();
+  if(!activeBandFilter || activeBandFilter==='all') activeBandFilter='work';
+
+  if(activeSpherePage){
+    const s=gsp(activeSpherePage);
+    if(s){
+      document.getElementById('V-sph').innerHTML=renderSphereDetail(s);
+      return;
+    }
+  }
+
+  const filtered = S.spheres.filter(s=>s.band===activeBandFilter);
+  document.getElementById('V-sph').innerHTML=`<div class="spv-hd">
+    <div class="spv-title">Spheres</div>
+    <div class="spv-sub">Activities · Goals · Deadlines</div>
+  </div>
+  <div class="band-tabs" id="band-tabs">${renderBandTabs()}</div>
+  <div class="Vsc" style="padding-bottom:120px" id="sp-cards">
+    ${filtered.map(renderSphereCard).join('')}
+    <div class="sphere-tools bottom-tools"><button onclick="addCustomSphere()">+ Add sphere</button></div>
+    <div class="backup-row bottom-backup"><button class="backup-btn" onclick="exportBackup()">Export</button><button class="backup-btn" onclick="document.getElementById('backup-file').click()">Import</button><input id="backup-file" type="file" accept="application/json" style="display:none" onchange="importBackupFile(event)"></div>
+  </div>`;
+};
+
+if(typeof renderSelectedTasks === 'function'){
+  const baseRenderSelectedTasks = renderSelectedTasks;
+  renderSelectedTasks = function(){
+    baseRenderSelectedTasks();
+    const el=document.getElementById('sh-tasks');
+    const prev=document.getElementById('sh-preview');
+    if(el) el.style.display='none';
+    if(prev) prev.style.display='none';
+  };
+}
+
+setTimeout(()=>{
+  try{
+    fixSpiritualColorFinal();
+    renderCal();
+    if(document.getElementById('V-sph')?.classList.contains('on')) renderSph();
+  }catch(e){}
+},300);
+</script>
+<!-- FINAL USER REQUEST PATCH END -->
+
+
+<!-- FINAL ORDER PATCH START -->
+<script>
+/* Final order: LIFE / WORK / SLEEP */
+function renderBandTabs(){
+  if(!activeBandFilter || activeBandFilter==='all') activeBandFilter='life';
+  return ['life','work','sleep'].map(b=>{
+    const m=BAND[b], sphs=S.spheres.filter(s=>s.band===b);
+    return `<div class="btab ${activeBandFilter===b?'active':''}" onclick="setBandFilter('${b}')" style="color:${m.color};border-color:${m.color}28"><div class="btab-n">${m.label}</div><div class="btab-c">${sphs.map(s=>s.name).join(' · ')}</div></div>`;
+  }).join('');
+}
+
+const prevRenderSphOrder = renderSph;
+renderSph = function(){
+  if(!activeBandFilter || activeBandFilter==='all') activeBandFilter='life';
+  prevRenderSphOrder();
+};
+
+setTimeout(()=>{
+  try{
+    activeBandFilter='life';
+    if(document.getElementById('V-sph')?.classList.contains('on')) renderSph();
+  }catch(e){}
+},300);
+</script>
+<!-- FINAL ORDER PATCH END -->
+
+
+<!-- FINAL LIFE WORK SLEEP + DONE STYLE PATCH START -->
+<style>
+/* Show all three tabs: LIFE / WORK / SLEEP */
+.band-tabs .btab:first-child{
+  display:block !important;
+}
+.band-tabs{
+  display:flex !important;
+  gap:8px !important;
+}
+.band-tabs .btab{
+  flex:1 !important;
+}
+
+/* Completed calendar cards: duller, no strike-through */
+.ev.done{
+  opacity:.55 !important;
+  filter:saturate(.55) !important;
+}
+
+.ev.done .ev-n,
+.ev.done .ev-s,
+.ev.done .ev-t,
+.ev.done .ev-tk{
+  text-decoration:none !important;
+}
+
+/* Also remove strike-through in details/tasks if checked */
+.dtask-row div{
+  text-decoration:none !important;
+}
+</style>
+
+<script>
+/* Final tabs order: LIFE / WORK / SLEEP */
+function renderBandTabs(){
+  if(!activeBandFilter || activeBandFilter==='all') activeBandFilter='life';
+  return ['life','work','sleep'].map(b=>{
+    const m=BAND[b], sphs=S.spheres.filter(s=>s.band===b);
+    return `<div class="btab ${activeBandFilter===b?'active':''}" onclick="setBandFilter('${b}')" style="color:${m.color};border-color:${m.color}28"><div class="btab-n">${m.label}</div><div class="btab-c">${sphs.map(s=>s.name).join(' · ')}</div></div>`;
+  }).join('');
+}
+
+/* Final Spheres render, with LIFE as default and no ALL tab */
+renderSph = function(){
+  ensureCustomSafe();
+  if(typeof fixSpiritualColorFinal === 'function') fixSpiritualColorFinal();
+  normData();
+
+  if(!activeBandFilter || activeBandFilter==='all') activeBandFilter='life';
+
+  if(activeSpherePage){
+    const s=gsp(activeSpherePage);
+    if(s){
+      document.getElementById('V-sph').innerHTML=renderSphereDetail(s);
+      return;
+    }
+  }
+
+  const filtered = S.spheres.filter(s=>s.band===activeBandFilter);
+
+  document.getElementById('V-sph').innerHTML=`<div class="spv-hd">
+    <div class="spv-title">Spheres</div>
+    <div class="spv-sub">Activities · Goals · Deadlines</div>
+  </div>
+  <div class="band-tabs" id="band-tabs">${renderBandTabs()}</div>
+  <div class="Vsc" style="padding-bottom:120px" id="sp-cards">
+    ${filtered.map(renderSphereCard).join('')}
+    <div class="sphere-tools bottom-tools"><button onclick="addCustomSphere()">+ Add sphere</button></div>
+    <div class="backup-row bottom-backup"><button class="backup-btn" onclick="exportBackup()">Export</button><button class="backup-btn" onclick="document.getElementById('backup-file').click()">Import</button><input id="backup-file" type="file" accept="application/json" style="display:none" onchange="importBackupFile(event)"></div>
+  </div>`;
+};
+
+/* Final event rendering: keep right checkbox and no cross-out */
+const finalRenderGridClean = renderGrid;
+renderGrid = function(dk){
+  finalRenderGridClean(dk);
+  document.querySelectorAll('.ev.done .ev-n, .ev.done .ev-s, .ev.done .ev-t, .ev.done .ev-tk').forEach(el=>{
+    el.style.textDecoration='none';
+  });
+};
+
+setTimeout(()=>{
+  try{
+    activeBandFilter='life';
+    renderCal();
+    if(document.getElementById('V-sph')?.classList.contains('on')) renderSph();
+  }catch(e){}
+},300);
+</script>
+<!-- FINAL LIFE WORK SLEEP + DONE STYLE PATCH END -->
+
+
+<style>
+.spv-sub,
+.btab-c,
+.sph-sub,
+.card-sub,
+.subtitle{
+    display:none !important;
+}
+</style>
+
+
+<style id="force-hide-tab-subtitles">
+.band-tabs .btab-c,
+.btab .btab-c{
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    overflow:hidden !important;
+    font-size:0 !important;
+    line-height:0 !important;
+}
+</style>
 
 </body>
 </html>
