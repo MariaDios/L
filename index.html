@@ -730,7 +730,43 @@ function confirmAdd(){
   save();csh(null,'sh-add');renderCal();toast('Block added');
 }
 let dDk='',dId='';
-function openDet(ev,dk){dDk=dk;dId=ev.id;const sph=gsp(ev.sphId),c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';document.getElementById('det-in').innerHTML=`<div style="margin-bottom:20px"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:${c};margin-bottom:6px">${esc(ev.title)}</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--mt)">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)} · ${Math.round(ev.dur/60*10)/10}h</div>${sph?`<div style="font-size:13px;margin-top:5px;color:${c};font-weight:700">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''} · ${BAND[sph.band]?.label}</div>`:''}${ev.activityTitle?`<div style="font-size:12px;margin-top:3px;color:var(--mt)">Activity: ${esc(ev.activityTitle)}</div>`:''}</div>${ev.tasks?.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">${ev.tasks.map((t,i)=>`<div class="dtask-row" onclick="togDT(${i})"><div class="dtask-chk${t.done?' done':''}" style="border-color:${c}${t.done?';background:'+c:''};color:${t.done?'#fff':'transparent'}">${t.done?'✓':''}</div><div style="flex:1;font-size:15px;font-weight:500;color:var(--tx2)${t.done?';text-decoration:line-through;opacity:.45':''}">${esc(t.text)}</div></div>`).join('')}</div>`:''}<div class="d-act"><button class="d-btn d-ok" style="background:${c}" onclick="togDD()">${ev.done?'Mark undone':'Mark done'}</button><button class="d-btn d-rm" onclick="detRm()">Remove</button></div>`;document.getElementById('sh-det').classList.add('O');}
+function openDet(ev,dk){
+  dDk=dk;dId=ev.id;
+  const sph=gsp(ev.sphId),c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';
+  document.getElementById('det-in').innerHTML=`<div style="margin-bottom:20px"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:${c};margin-bottom:6px">${esc(ev.title)}</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--mt)">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)} · ${Math.round(ev.dur/60*10)/10}h</div>${sph?`<div style="font-size:13px;margin-top:5px;color:${c};font-weight:700">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''} · ${BAND[sph.band]?.label}</div>`:''}${ev.activityTitle?`<div style="font-size:12px;margin-top:3px;color:var(--mt)">Activity: ${esc(ev.activityTitle)}</div>`:''}</div>${ev.tasks?.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">${ev.tasks.map((t,i)=>`<div class="dtask-row" onclick="togDT(${i})"><div class="dtask-chk${t.done?' done':''}" style="border-color:${c}${t.done?';background:'+c:''};color:${t.done?'#fff':'transparent'}">${t.done?'✓':''}</div><div style="flex:1;font-size:15px;font-weight:500;color:var(--tx2)${t.done?';text-decoration:line-through;opacity:.45':''}">${esc(t.text)}</div></div>`).join('')}</div>`:''}<div class="d-act"><button class="d-btn d-ok" style="background:${c}" onclick="togDD()">${ev.done?'Mark undone':'Mark done'}</button><button class="d-btn d-rm" onclick="openEditDet()">Edit</button><button class="d-btn d-rm" onclick="detRm()">Remove</button></div>`;
+  document.getElementById('sh-det').classList.add('O');
+}
+function openEditDet(){
+  const ev=getDay(dDk).find(e=>e.id===dId);if(!ev)return;
+  const sph=gsp(ev.sphId),c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';
+  const start=tm(ev.startMin),end=tm(ev.startMin+ev.dur);
+  document.getElementById('det-in').innerHTML=`<div class="sh-title" style="color:${c}">Edit calendar block</div><div class="sh-sub">Change the task/activity name and exact time.</div><div class="sh-lbl">Title shown in calendar</div><input class="sh-inp" id="det-title" value="${esc(ev.title)}" style="margin-bottom:14px"><div class="sh-lbl">Activity</div><input class="sh-inp" id="det-activity" value="${esc(ev.activityTitle||'')}" placeholder="Activity name" style="margin-bottom:14px"><div class="sh-row"><div><div class="sh-lbl">Start</div><input type="time" class="sh-inp" id="det-start" value="${start}"></div><div><div class="sh-lbl">End</div><input type="time" class="sh-inp" id="det-end" value="${end}"></div></div>${ev.tasks?.length?`<div class="sh-lbl">Tasks in this block</div><div class="sh-tasks">${ev.tasks.map((t,i)=>`<div class="sh-tr"><input class="sh-ti" id="det-task-${i}" value="${esc(t.text)}"><div class="sh-tx" onclick="removeDetTask(${i})">×</div></div>`).join('')}</div>`:''}<div class="d-act"><button class="d-btn d-ok" style="background:${c}" onclick="saveEditDet()">Save</button><button class="d-btn d-rm" onclick="openDet(getDay(dDk).find(e=>e.id===dId),dDk)">Cancel</button></div>`;
+}
+function removeDetTask(i){
+  const ev=getDay(dDk).find(e=>e.id===dId);if(!ev||!ev.tasks)return;
+  ev.tasks.splice(i,1);
+  if(ev.tasks.length===1)ev.title=ev.tasks[0].text;
+  else if(!ev.tasks.length)ev.title=ev.activityTitle||ev.title;
+  save();openEditDet();renderCal();
+}
+function saveEditDet(){
+  const ev=getDay(dDk).find(e=>e.id===dId);if(!ev)return;
+  const title=(document.getElementById('det-title')?.value||'').trim();
+  const activity=(document.getElementById('det-activity')?.value||'').trim();
+  const st=document.getElementById('det-start')?.value||'09:00';
+  const en=document.getElementById('det-end')?.value||'10:00';
+  const sMin=toMin(st),eMin=toMin(en);
+  if(!title){toast('Title is required');return;}
+  if(eMin<=sMin){toast('End time must be after start time');return;}
+  ev.title=title;
+  ev.activityTitle=activity;
+  ev.startMin=sMin;
+  ev.dur=eMin-sMin;
+  if(ev.tasks&&ev.tasks.length){
+    ev.tasks=ev.tasks.map((t,i)=>({...t,text:(document.getElementById('det-task-'+i)?.value||t.text).trim()||t.text}));
+  }
+  save();openDet(ev,dDk);renderCal();toast('Block updated');
+}
 function togDT(i){const ev=getDay(dDk).find(e=>e.id===dId);if(ev?.tasks[i]){ev.tasks[i].done=!ev.tasks[i].done;save();openDet(ev,dDk);}}
 function togDD(){const ev=getDay(dDk).find(e=>e.id===dId);if(ev){ev.done=!ev.done;save();csh(null,'sh-det');renderCal();}}
 function detRm(){S.cal[dDk]=(S.cal[dDk]||[]).filter(e=>e.id!==dId);save();csh(null,'sh-det');renderCal();}
