@@ -308,7 +308,8 @@ button,input,select,textarea{font-family:inherit}
 .mini-btn{padding:9px 12px;border-radius:10px;border:1.5px solid var(--ln);background:var(--c2);font-size:13px;font-weight:700;cursor:pointer}
 .sh-group{margin-bottom:12px}
 .sh-group-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;margin:8px 0 7px}
-.sh-act{background:var(--c2);border:1.5px solid var(--ln);border-radius:13px;margin-bottom:7px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.sh-act{background:var(--c2);border:1.5px solid var(--ln);border-radius:13px;margin-bottom:7px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:all .16s}
+.sh-act.selected{box-shadow:0 0 0 2px currentColor,0 4px 14px rgba(0,0,0,.08);background:#fff}
 .sh-act-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer}
 .sh-act-name{flex:1;font-size:14px;font-weight:700;color:var(--tx2);line-height:1.3}
 .sh-act-goal{font-size:11px;color:var(--mt);margin-top:2px}
@@ -318,6 +319,10 @@ button,input,select,textarea{font-family:inherit}
 .sh-check-box{width:19px;height:19px;border-radius:50%;border:2px solid var(--ln2);display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0}
 .sh-check.on .sh-check-box{color:#fff}
 .sh-selected-note{font-size:12px;color:var(--mt);line-height:1.4;margin-top:8px}
+.quick-add-box{border:1.5px dashed var(--ln2);border-radius:14px;background:#fffaf2;padding:11px 12px;margin:10px 0 15px}
+.quick-add-row{display:flex;gap:7px;margin-top:8px}
+.quick-add-row .sh-inp,.quick-add-row .ainp{box-shadow:none}
+.quick-add-btn{padding:10px 13px;border-radius:12px;border:none;background:var(--gd);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
 .b3hd{cursor:pointer}
 .b3w.collapsed .b3s{display:none}
 .b3arrow{color:var(--mt);font-size:13px;margin-left:6px;transition:transform .2s}
@@ -399,6 +404,15 @@ button,input,select,textarea{font-family:inherit}
     <div class="sh-spg" id="sh-spg" style="display:none"></div>
     <div class="sh-lbl">Activity → Tasks</div>
     <div class="sh-alist" id="sh-alist"></div>
+    <div class="quick-add-box">
+      <div class="sh-lbl" style="margin-bottom:7px">Add new activity here</div>
+      <select class="sh-inp" id="new-act-sphere" onchange="renderNewActivityGoalOptions()"></select>
+      <select class="sh-inp" id="new-act-goal" style="margin-top:8px"></select>
+      <div class="quick-add-row">
+        <input class="ainp" id="new-act-title" placeholder="New activity name..." onkeydown="if(event.key==='Enter')addNewActivityFromAddSheet()">
+        <button class="quick-add-btn" onclick="addNewActivityFromAddSheet()">Add</button>
+      </div>
+    </div>
     <div class="sh-cust" style="display:none"><span style="color:var(--mt);font-size:14px">◦</span><input id="sh-ci" placeholder="Custom activity..."></div>
     <div class="sh-row">
       <div><div class="sh-lbl">Start</div><input type="time" class="sh-inp" id="sh-st" value="09:00" onchange="autoEndIfNeeded()"></div>
@@ -662,6 +676,7 @@ function openAdd(t){
   autoEndIfNeeded();
   document.getElementById('sh-ci').value='';
   document.getElementById('sh-spg').innerHTML='';
+  renderNewActivityOptions();
   renderActivityPicker();
   renderSelectedTasks();
   document.getElementById('sh-add').classList.add('O');
@@ -681,7 +696,7 @@ function renderActivityPicker(){
       items.map(x=>{
         const aid=x.activity.id, open=aOpenAct===aid, selected=aSel&&aSel.activity.id===aid;
         const tasks=x.activity.tasks||[];
-        return `<div class="sh-act" style="border-color:${s.color}30">
+        return `<div class="sh-act${selected?' selected':''}" style="border-color:${selected?s.color:s.color+'30'};color:${s.color}">
           <div class="sh-act-head" onclick="pickActivity('${s.id}','${x.goal.id}','${aid}')">
             <div class="sh-ai-d" style="background:${s.color}"></div>
             <div style="flex:1"><div class="sh-act-name">${esc(x.activity.title)}</div><div class="sh-act-goal">${esc(s.name)} · ${esc(x.goal.text)}</div></div>
@@ -695,6 +710,51 @@ function renderActivityPicker(){
       }).join('')+`</div>`;
   }).join('');
 }
+
+function renderNewActivityOptions(){
+  const sel=document.getElementById('new-act-sphere');
+  if(!sel)return;
+  normData();
+  sel.innerHTML=S.spheres.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  if(aSel&&aSel.sphere) sel.value=aSel.sphere.id;
+  renderNewActivityGoalOptions();
+}
+function renderNewActivityGoalOptions(){
+  const ss=document.getElementById('new-act-sphere'), gs=document.getElementById('new-act-goal');
+  if(!ss||!gs)return;
+  const s=gsp(ss.value); if(!s)return;
+  if(!Array.isArray(s.goals))s.goals=[];
+  gs.innerHTML=(s.goals||[]).map(g=>`<option value="${g.id}">${esc(g.text||'General')}</option>`).join('')+`<option value="__new_general__">+ General</option>`;
+}
+function addNewActivityFromAddSheet(){
+  const ss=document.getElementById('new-act-sphere'), gs=document.getElementById('new-act-goal'), inp=document.getElementById('new-act-title');
+  if(!ss||!gs||!inp)return;
+  const title=(inp.value||'').trim();
+  if(!title){toast('Write activity name');return;}
+  const s=gsp(ss.value); if(!s)return;
+  if(!Array.isArray(s.goals))s.goals=[];
+  let g=null;
+  if(gs.value==='__new_general__' || !s.goals.length){
+    g={id:uid(),text:'General',term:'',activities:[],_open:true};
+    s.goals.push(g);
+  } else {
+    g=s.goals.find(x=>x.id===gs.value) || s.goals[0];
+  }
+  if(!Array.isArray(g.activities))g.activities=[];
+  const a={id:uid(),title,tasks:[],_open:true};
+  g.activities.push(a);
+  g._open=true;
+  inp.value='';
+  aSel={sphere:s,goal:g,activity:a};
+  aOpenAct=a.id;
+  aChecked={};
+  save();
+  renderNewActivityOptions();
+  renderActivityPicker();
+  renderSelectedTasks();
+  toast('Activity added');
+}
+
 function pickActivity(sid,gid,aid){
   const s=gsp(sid),g=s.goals.find(x=>x.id===gid),a=g.activities.find(x=>x.id===aid);
   aSel={sphere:s,goal:g,activity:a};
