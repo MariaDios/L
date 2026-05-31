@@ -309,7 +309,8 @@ button,input,select,textarea{font-family:inherit}
 .sh-group{margin-bottom:12px}
 .sh-group-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;margin:8px 0 7px}
 .sh-act{background:var(--c2);border:1.5px solid var(--ln);border-radius:13px;margin-bottom:7px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:all .16s}
-.sh-act.selected{box-shadow:0 0 0 2px currentColor,0 4px 14px rgba(0,0,0,.08);background:#fff}
+.sh-act.selected{box-shadow:0 0 0 2px currentColor,0 6px 18px rgba(0,0,0,.10);background:#fff;transform:scale(.995)}
+.sh-act.selected .sh-act-name::after{content:'  ✓';font-weight:800}
 .sh-act-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer}
 .sh-act-name{flex:1;font-size:14px;font-weight:700;color:var(--tx2);line-height:1.3}
 .sh-act-goal{font-size:11px;color:var(--mt);margin-top:2px}
@@ -400,19 +401,18 @@ button,input,select,textarea{font-family:inherit}
     <div class="sh-h"></div>
     <div class="sh-title">Add to calendar</div>
     <div class="sh-sub">Choose an activity and select tasks for this calendar block</div>
-    <div class="sh-lbl">Activities grouped by sphere</div>
-    <div class="sh-spg" id="sh-spg" style="display:none"></div>
-    <div class="sh-lbl">Activity → Tasks</div>
-    <div class="sh-alist" id="sh-alist"></div>
     <div class="quick-add-box">
-      <div class="sh-lbl" style="margin-bottom:7px">Add new activity here</div>
-      <select class="sh-inp" id="new-act-sphere" onchange="renderNewActivityGoalOptions()"></select>
-      <select class="sh-inp" id="new-act-goal" style="margin-top:8px"></select>
-      <div class="quick-add-row">
+      <div class="sh-lbl" style="margin-bottom:7px">Add new activity</div>
+      <div class="quick-add-row" style="margin-top:0">
         <input class="ainp" id="new-act-title" placeholder="New activity name..." onkeydown="if(event.key==='Enter')addNewActivityFromAddSheet()">
         <button class="quick-add-btn" onclick="addNewActivityFromAddSheet()">Add</button>
       </div>
+      <select class="sh-inp" id="new-act-sphere" style="margin-top:8px" onchange="renderNewActivityGoalOptions()"></select>
+      <select class="sh-inp" id="new-act-goal" style="display:none"></select>
     </div>
+    <div class="sh-spg" id="sh-spg" style="display:none"></div>
+    <div class="sh-lbl">My activities</div>
+    <div class="sh-alist" id="sh-alist"></div>
     <div class="sh-cust" style="display:none"><span style="color:var(--mt);font-size:14px">◦</span><input id="sh-ci" placeholder="Custom activity..."></div>
     <div class="sh-row">
       <div><div class="sh-lbl">Start</div><input type="time" class="sh-inp" id="sh-st" value="09:00" onchange="autoEndIfNeeded()"></div>
@@ -724,7 +724,10 @@ function renderNewActivityGoalOptions(){
   if(!ss||!gs)return;
   const s=gsp(ss.value); if(!s)return;
   if(!Array.isArray(s.goals))s.goals=[];
-  gs.innerHTML=(s.goals||[]).map(g=>`<option value="${g.id}">${esc(g.text||'General')}</option>`).join('')+`<option value="__new_general__">+ General</option>`;
+  // Hidden helper only: new quick activities go to the first goal in that sphere,
+  // or to an internal General goal if the sphere has no goals yet.
+  gs.innerHTML=(s.goals||[]).map(g=>`<option value="${g.id}">${esc(g.text||'General')}</option>`).join('')+`<option value="__new_general__">General</option>`;
+  gs.value=s.goals[0]?.id || '__new_general__';
 }
 function addNewActivityFromAddSheet(){
   const ss=document.getElementById('new-act-sphere'), gs=document.getElementById('new-act-goal'), inp=document.getElementById('new-act-title');
