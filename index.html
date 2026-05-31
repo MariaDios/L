@@ -280,6 +280,42 @@ button,input,select,textarea{font-family:inherit}
 .dtask-chk.done{color:#fff;border-color:transparent}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--tx);color:var(--bg);padding:12px 22px;border-radius:100px;font-size:14px;font-weight:600;opacity:0;transition:all .26s;z-index:100;white-space:nowrap;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.22)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Minimal structure update: Goal → Activity → Tasks */
+.goal-card{background:var(--c2);border:1px solid var(--ln);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.04)}
+.goal-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.goal-title{flex:1;font-size:15px;font-weight:700;color:var(--tx2);line-height:1.35}
+.goal-meta{font-size:11px;color:var(--mt);font-family:'DM Mono',monospace;margin-top:3px}
+.goal-chevron,.act-chevron{color:var(--mt);font-size:15px;transition:transform .2s}
+.goal-chevron.o,.act-chevron.o{transform:rotate(90deg)}
+.goal-body{padding:0 14px 14px;border-top:1px solid var(--ln);background:var(--bg)}
+.act-card{background:var(--c2);border:1px solid var(--ln);border-radius:12px;margin-top:10px;overflow:hidden}
+.act-head{display:flex;align-items:center;gap:9px;padding:10px 12px;cursor:pointer}
+.act-title{flex:1;font-size:14px;font-weight:700;color:var(--tx2)}
+.act-body{padding:0 12px 12px;border-top:1px solid var(--ln);background:#fffaf2}
+.task-row-mini{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:13px;color:var(--tx2)}
+.task-row-mini:last-child{border-bottom:none}
+.task-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.mini-add-row{display:flex;gap:7px;margin-top:10px}
+.mini-inp{flex:1;padding:9px 11px;background:var(--c2);border:1.5px solid var(--ln);border-radius:10px;font-size:13px;color:var(--tx);outline:none}
+.mini-btn{padding:9px 12px;border-radius:10px;border:1.5px solid var(--ln);background:var(--c2);font-size:13px;font-weight:700;cursor:pointer}
+.sh-group{margin-bottom:12px}
+.sh-group-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;margin:8px 0 7px}
+.sh-act{background:var(--c2);border:1.5px solid var(--ln);border-radius:13px;margin-bottom:7px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.sh-act-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer}
+.sh-act-name{flex:1;font-size:14px;font-weight:700;color:var(--tx2);line-height:1.3}
+.sh-act-goal{font-size:11px;color:var(--mt);margin-top:2px}
+.sh-act-body{padding:0 13px 11px;border-top:1px solid var(--ln);background:#fffaf2}
+.sh-check{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:13px;color:var(--tx2);cursor:pointer}
+.sh-check:last-child{border-bottom:none}
+.sh-check-box{width:19px;height:19px;border-radius:50%;border:2px solid var(--ln2);display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0}
+.sh-check.on .sh-check-box{color:#fff}
+.sh-selected-note{font-size:12px;color:var(--mt);line-height:1.4;margin-top:8px}
+.b3hd{cursor:pointer}
+.b3w.collapsed .b3s{display:none}
+.b3arrow{color:var(--mt);font-size:13px;margin-left:6px;transition:transform .2s}
+.b3w.collapsed .b3arrow{transform:rotate(-90deg)}
+
 </style>
 </head>
 <body>
@@ -318,8 +354,8 @@ button,input,select,textarea{font-family:inherit}
       <div class="cal-div"></div>
 
       <div class="bal-bar" id="bal-bar" style="margin-top:8px"></div>
-      <div class="b3w">
-        <div class="b3hd"><div class="b3ht">The Big Three</div><div class="b3hs">Most important tasks today</div></div>
+      <div class="b3w" id="b3w">
+        <div class="b3hd" onclick="togglePriorities()"><div class="b3ht">Today’s Priorities <span class="b3arrow">▾</span></div><div class="b3hs">3 things that matter today</div></div>
         <div class="b3s" id="b3s"></div>
       </div>
     </div>
@@ -334,7 +370,7 @@ button,input,select,textarea{font-family:inherit}
 
   <!-- ████ SPHERES ████ -->
   <div class="V" id="V-sph">
-    <div class="spv-hd"><div class="spv-title">Spheres</div><div class="spv-sub">Activities · 80/20 · Goals · Deadlines</div></div>
+    <div class="spv-hd"><div class="spv-title">Spheres</div><div class="spv-sub">Activities · Goals · Deadlines</div></div>
     <div class="band-tabs" id="band-tabs"></div>
     <div class="Vsc" style="padding-bottom:28px" id="sp-cards"></div>
   </div>
@@ -350,12 +386,12 @@ button,input,select,textarea{font-family:inherit}
   <div class="sh">
     <div class="sh-h"></div>
     <div class="sh-title">Add to calendar</div>
-    <div class="sh-sub">Select a sphere, pick or write an activity</div>
-    <div class="sh-lbl">Sphere</div>
-    <div class="sh-spg" id="sh-spg"></div>
-    <div class="sh-lbl">Activity <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:12px;color:var(--mt)">— from your list, or type below</span></div>
+    <div class="sh-sub">Choose an activity and select tasks for this calendar block</div>
+    <div class="sh-lbl">Activities grouped by sphere</div>
+    <div class="sh-spg" id="sh-spg" style="display:none"></div>
+    <div class="sh-lbl">Activity → Tasks</div>
     <div class="sh-alist" id="sh-alist"></div>
-    <div class="sh-cust"><span style="color:var(--mt);font-size:14px">◦</span><input id="sh-ci" placeholder="Custom activity..."></div>
+    <div class="sh-cust" style="display:none"><span style="color:var(--mt);font-size:14px">◦</span><input id="sh-ci" placeholder="Custom activity..."></div>
     <div class="sh-row">
       <div><div class="sh-lbl">Start</div><input type="time" class="sh-inp" id="sh-st" value="09:00"></div>
       <div><div class="sh-lbl">Duration</div>
@@ -366,9 +402,9 @@ button,input,select,textarea{font-family:inherit}
         </select>
       </div>
     </div>
-    <div class="sh-lbl">Tasks <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:12px;color:var(--mt)">— optional checklist</span></div>
+    <div class="sh-lbl">Selected tasks</div>
     <div class="sh-tasks" id="sh-tasks"></div>
-    <button class="sh-atb" onclick="addShTask()">◦ &nbsp;Add a task</button>
+    <button class="sh-atb" style="display:none" onclick="addShTask()">◦ &nbsp;Add a task</button>
     <button class="sh-ok" onclick="confirmAdd()">Add to calendar</button>
   </div>
 </div>
@@ -381,6 +417,7 @@ button,input,select,textarea{font-family:inherit}
 
 <script>
 const SPHERES=[
+  {id:'sleep',    name:'Sleep',    band:'sleep', color:'#1858A0'},
   {id:'health',   name:'Health',   band:'life', color:'#1A7A44'},
   {id:'family',   name:'Family',   band:'life', color:'#B83858'},
   {id:'career',   name:'Career',   band:'work', color:'#4040B8'},
@@ -402,7 +439,7 @@ let S={
   cal:{},big3:{},
   vy:new Date().getFullYear(),vm:new Date().getMonth(),
   sy:new Date().getFullYear(),sm:new Date().getMonth(),sd:new Date().getDate(),
-  folded:true,
+  folded:true, prioritiesOpen:false,
 };
 const gsp=id=>S.spheres.find(s=>s.id===id)||SPHERES.find(s=>s.id===id);
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -414,14 +451,11 @@ const dkey=d=>p2(d.getFullYear())+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
 const selDk=()=>p2(S.sy)+'-'+p2(S.sm+1)+'-'+p2(S.sd);
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 function save(){try{localStorage.setItem('lbosL',JSON.stringify({...S}));}catch(e){}}
-function load(){try{const r=localStorage.getItem('lbosL');if(r){const p=JSON.parse(r);S.cal=p.cal||{};S.big3=p.big3||{};S.vy=p.vy||new Date().getFullYear();S.vm=p.vm||new Date().getMonth();S.sy=p.sy||new Date().getFullYear();S.sm=p.sm||new Date().getMonth();S.sd=p.sd||new Date().getDate();S.folded=p.folded!==undefined?p.folded:true;if(p.spheres)S.spheres=SPHERES.map((d,i)=>({...d,...(p.spheres[i]||{}),id:d.id,name:d.name,band:d.band,color:d.color}));
-      // migrate activities from string[] to object[]
-      S.spheres.forEach(s=>{
-        if(!s.activities)s.activities=[];
-        s.activities=s.activities.map(a=>typeof a==='string'?{id:uid(),name:a,tasks:[]}:a);
-      });}}catch(e){}}
+function load(){try{const r=localStorage.getItem('lbosL');if(r){const p=JSON.parse(r);S.cal=p.cal||{};S.big3=p.big3||{};S.vy=p.vy||new Date().getFullYear();S.vm=p.vm||new Date().getMonth();S.sy=p.sy||new Date().getFullYear();S.sm=p.sm||new Date().getMonth();S.sd=p.sd||new Date().getDate();S.folded=p.folded!==undefined?p.folded:true;S.prioritiesOpen=p.prioritiesOpen!==undefined?p.prioritiesOpen:false;if(p.spheres)S.spheres=SPHERES.map((d,i)=>({...d,...(p.spheres[i]||{}),id:d.id,name:d.name,band:d.band,color:d.color}));}}catch(e){}}
 function getDay(k){if(!S.cal[k])S.cal[k]=[];return S.cal[k];}
 function getBig3(k){if(!S.big3[k])S.big3[k]=[{id:uid(),text:'',done:false},{id:uid(),text:'',done:false},{id:uid(),text:'',done:false}];return S.big3[k];}
+function togglePriorities(){S.prioritiesOpen=!S.prioritiesOpen;save();renderDayDetail();}
+function getGoalText(ev){const s=gsp(ev.sphId);const g=s&&s.goals&&s.goals.find(x=>x.id===ev.goalId);return g?g.text:'';}
 
 function goV(v){document.querySelectorAll('.V').forEach(e=>e.classList.remove('on'));document.getElementById('V-'+v).classList.add('on');document.querySelectorAll('.nb').forEach(e=>e.classList.toggle('on',e.dataset.v===v));if(v==='cal')renderCal();if(v==='sph')renderSph();}
 
@@ -526,6 +560,7 @@ function renderDayDetail(){
 
   // Big 3
   const b3=getBig3(dk);
+  const b3box=document.getElementById('b3w');if(b3box)b3box.classList.toggle('collapsed',!S.prioritiesOpen);
   const bc=['var(--life)','var(--work)','var(--slp)'];
   document.getElementById('b3s').innerHTML=b3.map((t,i)=>
     `<div class="b3r">
@@ -568,7 +603,7 @@ function renderGrid(dk){
     const el=document.createElement('div');el.className='ev';
     el.style.cssText=`top:${top}px;height:${ht}px;left:66px;right:4px;background:${c}18;border-left-color:${c}`;
     const tc=ev.tasks?.filter(t=>t.done).length||0,ta=ev.tasks?.length||0;
-    el.innerHTML=`<div class="ev-n" style="color:${c}">${esc(ev.title)}</div><div class="ev-t" style="color:${c}">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)}</div>${sph?`<div class="ev-s" style="color:${c}">${sph.name}</div>`:''}${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}<div class="ev-x" onclick="rmEv('${dk}','${ev.id}',event)">×</div>`;
+    el.innerHTML=`<div class="ev-n" style="color:${c}">${esc(ev.title)}</div><div class="ev-t" style="color:${c}">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)}</div>${sph?`<div class="ev-s" style="color:${c}">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''}</div>`:''}${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}<div class="ev-x" onclick="rmEv('${dk}','${ev.id}',event)">×</div>`;
     el.onclick=e=>{if(!e.target.classList.contains('ev-x'))openDet(ev,dk);};
     tg.appendChild(el);
   });
@@ -578,273 +613,152 @@ function renderGrid(dk){
 function togB3(dk,i){const t=getBig3(dk)[i];if(t){t.done=!t.done;save();renderCal();}}
 function rmEv(dk,id,e){e.stopPropagation();S.cal[dk]=(S.cal[dk]||[]).filter(ev=>ev.id!==id);save();renderCal();}
 
-let aSp=null,aAc=null,aTk=[];
-function openAdd(t){aSp=S.spheres[0].id;aAc=null;aTk=[];if(t)document.getElementById('sh-st').value=t;bShSp();bShAc();document.getElementById('sh-tasks').innerHTML='';document.getElementById('sh-ci').value='';document.getElementById('sh-add').classList.add('O');}
-function bShSp(){document.getElementById('sh-spg').innerHTML=S.spheres.map(s=>`<div class="sh-sp${aSp===s.id?' on':''}" style="${aSp===s.id?'background:'+s.color+';border-color:'+s.color:''}" onclick="shSp('${s.id}')"><div class="sh-sp-dot" style="background:${s.color}"></div><div class="sh-sp-n" style="${aSp===s.id?'color:#fff':''}">${s.name}</div></div>`).join('');}
-function shSp(id){aSp=id;aAc=null;bShSp();bShAc();}
-function bShAc(){
-  let html='';let hasAny=false;
+
+function normData(){
   S.spheres.forEach(s=>{
-    const acts=s.activities||[];
-    if(!acts.length)return;
-    hasAny=true;
-    html+=`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${s.color};padding:10px 2px 6px;display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:${s.color}"></div>${s.name}</div>`;
-    acts.forEach(a=>{
-      const on=aAc===a.id&&aSp===s.id;
-      const expanded=on;
-      html+=`<div class="sh-ai${on?' on':''}" style="${on?'background:'+s.color+';border-color:'+s.color:''}border-radius:12px;flex-direction:column;align-items:flex-start;padding:10px 13px;gap:6px" onclick="shAcSph('${a.id}','${s.id}')">
-        <div style="display:flex;align-items:center;gap:10px;width:100%">
-          <div class="sh-ai-d" style="background:${s.color}"></div>
-          <div class="sh-ai-n" style="${on?'color:#fff':''};font-size:14px;font-weight:600">${esc(a.name)}</div>
-          <div style="margin-left:auto;font-size:12px;opacity:.6;color:${on?'#fff':'var(--mt)'}">${a.tasks&&a.tasks.length?a.tasks.length+' tasks':'+ tasks'}</div>
-        </div>
-        ${on&&a.tasks&&a.tasks.length?`<div style="width:100%;padding-left:18px;display:flex;flex-direction:column;gap:5px">
-          ${a.tasks.map((t,ti)=>`<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleShTask('${s.id}','${a.id}',${ti},event)">
-            <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:9px;color:${shSelTasks['${s.id}_${a.id}_'+${ti}]?'inherit':'transparent'};background:${shSelTasks['${s.id}_${a.id}_'+${ti}]?'rgba(255,255,255,.3)':'transparent'};flex-shrink:0">${shSelTasks['${s.id}_${a.id}_'+${ti}]?'✓':''}</div>
-            <div style="font-size:13px;color:rgba(255,255,255,.85)">${esc(t.text||t)}</div>
-          </div>`).join('')}
-        </div>`:''}
-      </div>`;
-    });
-  });
-  if(!hasAny)html=`<div style="font-size:14px;color:var(--mt);padding:12px 4px;text-align:center;font-style:italic">Go to Spheres → add activities first</div>`;
-  document.getElementById('sh-alist').innerHTML=html;
-}
-function shAc(a){aAc=a;document.getElementById('sh-ci').value='';bShAc();}
-let shSelTasks={};
-function shAcSph(actId,sphId){
-  if(aAc===actId&&aSp===sphId){aAc=null;aSp=S.spheres[0].id;}
-  else{aAc=actId;aSp=sphId;shSelTasks={};}
-  document.getElementById('sh-ci').value='';
-  bShAc();
-}
-function toggleShTask(sphId,actId,ti,e){
-  e.stopPropagation();
-  const key=sphId+'_'+actId+'_'+ti;
-  shSelTasks[key]=!shSelTasks[key];
-  bShAc();
-}
-function addShTask(){aTk.push({id:uid(),text:'',done:false});bShTk();setTimeout(()=>{const x=document.querySelectorAll('.sh-ti');if(x.length)x[x.length-1].focus();},30);}
-function rmShTask(i){aTk.splice(i,1);bShTk();}
-function bShTk(){document.getElementById('sh-tasks').innerHTML=aTk.map((t,i)=>`<div class="sh-tr"><input class="sh-ti" placeholder="Task..." value="${esc(t.text)}" oninput="aTk[${i}].text=this.value"><div class="sh-tx" onclick="rmShTask(${i})">×</div></div>`).join('');}
-function confirmAdd(){
-  const ci=document.getElementById('sh-ci').value.trim();
-  // resolve activity name from id
-  let title=ci;
-  let resolvedTasks=[...aTk.filter(t=>t.text.trim())];
-  if(!ci&&aAc){
-    const sph=gsp(aSp);
-    const act=(sph?.activities||[]).find(a=>a.id===aAc);
-    if(act){
-      title=act.name;
-      // add selected tasks from activity
-      (act.tasks||[]).forEach((t,ti)=>{
-        if(shSelTasks[aSp+'_'+aAc+'_'+ti]) resolvedTasks.push({id:uid(),text:t.text||t,done:false});
+    if(!Array.isArray(s.goals)) s.goals=[];
+    const legacyActs=Array.isArray(s.activities)?s.activities.slice():[];
+    s.goals=s.goals.map((g,gi)=>{
+      if(typeof g==='string') g={id:uid(),text:g,term:'',activities:[]};
+      if(!g.id) g.id=uid();
+      if(!g.text && g.title) g.text=g.title;
+      if(!Array.isArray(g.activities)) g.activities=[];
+      g.activities=g.activities.map(a=>{
+        if(typeof a==='string') a={id:uid(),title:a,tasks:[]};
+        if(!a.id) a.id=uid();
+        if(!a.title && a.text) a.title=a.text;
+        if(!Array.isArray(a.tasks)) a.tasks=[];
+        a.tasks=a.tasks.map(t=> typeof t==='string'?{id:uid(),text:t,done:false}:({...t,id:t.id||uid(),text:t.text||t.title||''}));
+        return a;
       });
-    } else title=aAc; // fallback
+      return g;
+    });
+    if(legacyActs.length){
+      if(!s.goals.length) s.goals.push({id:uid(),text:'General',term:'',activities:[]});
+      const existing=new Set(s.goals.flatMap(g=>g.activities.map(a=>a.title)));
+      legacyActs.forEach(a=>{ if(!existing.has(a)) s.goals[0].activities.push({id:uid(),title:a,tasks:[]}); });
+    }
+    s.activities=[];
+  });
+}
+function allActivities(){
+  normData();
+  const out=[];
+  S.spheres.forEach(s=>s.goals.forEach(g=>g.activities.forEach(a=>out.push({sphere:s,goal:g,activity:a}))));
+  return out;
+}
+function togglePrio(){S.prioritiesOpen=!S.prioritiesOpen;save();renderCal();}
+let aSel=null,aOpenAct=null,aChecked={};
+function safeId(x){return String(x||'').replace(/[^a-zA-Z0-9_-]/g,'_');}
+
+let aSp=null,aAc=null,aTk=[];
+function openAdd(t){
+  aSp=null;aAc=null;aTk=[];aSel=null;aOpenAct=null;aChecked={};
+  if(t)document.getElementById('sh-st').value=t;
+  document.getElementById('sh-ci').value='';
+  document.getElementById('sh-spg').innerHTML='';
+  renderActivityPicker();
+  renderSelectedTasks();
+  document.getElementById('sh-add').classList.add('O');
+}
+function renderActivityPicker(){
+  const list=allActivities();
+  const wrap=document.getElementById('sh-alist');
+  if(!list.length){
+    wrap.innerHTML=`<div style="font-size:14px;color:var(--mt);padding:14px 4px;text-align:center;font-style:italic">Add goals and activities in Spheres first</div>`;
+    return;
   }
-  if(!title){toast('Choose or write an activity');return;}
-  const sph=gsp(aSp),band=sph?.band||'life';
+  const bySphere={};
+  list.forEach(x=>{if(!bySphere[x.sphere.id])bySphere[x.sphere.id]=[];bySphere[x.sphere.id].push(x);});
+  wrap.innerHTML=Object.keys(bySphere).map(sid=>{
+    const items=bySphere[sid],s=items[0].sphere;
+    return `<div class="sh-group"><div class="sh-group-title" style="color:${s.color}">${s.name}</div>`+
+      items.map(x=>{
+        const aid=x.activity.id, open=aOpenAct===aid, selected=aSel&&aSel.activity.id===aid;
+        const tasks=x.activity.tasks||[];
+        return `<div class="sh-act" style="border-color:${s.color}30">
+          <div class="sh-act-head" onclick="pickActivity('${s.id}','${x.goal.id}','${aid}')">
+            <div class="sh-ai-d" style="background:${s.color}"></div>
+            <div style="flex:1"><div class="sh-act-name">${esc(x.activity.title)}</div><div class="sh-act-goal">${esc(s.name)} · ${esc(x.goal.text)}</div></div>
+            <div class="act-chevron${open?' o':''}" style="color:${s.color}">›</div>
+          </div>
+          ${open?`<div class="sh-act-body">${tasks.length?tasks.map(t=>{
+            const on=!!aChecked[t.id];
+            return `<div class="sh-check${on?' on':''}" onclick="togglePickTask('${t.id}')"><div class="sh-check-box" style="${on?'background:'+s.color+';border-color:'+s.color:''}">${on?'✓':''}</div><div>${esc(t.text)}</div></div>`;
+          }).join(''):`<div class="sh-selected-note">No tasks yet. Add tasks inside this activity in Spheres.</div>`}</div>`:''}
+        </div>`;
+      }).join('')+`</div>`;
+  }).join('');
+}
+function pickActivity(sid,gid,aid){
+  const s=gsp(sid),g=s.goals.find(x=>x.id===gid),a=g.activities.find(x=>x.id===aid);
+  aSel={sphere:s,goal:g,activity:a};
+  aOpenAct=aOpenAct===aid?null:aid;
+  aChecked={};
+  (a.tasks||[]).forEach(t=>aChecked[t.id]=true);
+  renderActivityPicker();renderSelectedTasks();
+}
+function togglePickTask(tid){aChecked[tid]=!aChecked[tid];renderActivityPicker();renderSelectedTasks();}
+function renderSelectedTasks(){
+  const el=document.getElementById('sh-tasks');
+  if(!aSel){el.innerHTML='<div class="sh-selected-note">Choose an activity above.</div>';return;}
+  const tasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]);
+  el.innerHTML=tasks.length?tasks.map(t=>`<div class="sh-tr"><input class="sh-ti" value="${esc(t.text)}" readonly><div class="sh-tx" onclick="togglePickTask('${t.id}')">×</div></div>`).join(''):'<div class="sh-selected-note">No tasks selected. You can still add the activity block.</div>';
+}
+function bShSp(){}
+function shSp(id){}
+function bShAc(){renderActivityPicker();}
+function shAc(a){}
+function addShTask(){}
+function rmShTask(i){}
+function bShTk(){renderSelectedTasks();}
+function confirmAdd(){
+  if(!aSel){toast('Choose an activity');return;}
   const sMin=toMin(document.getElementById('sh-st').value||'09:00');
   const dur=parseInt(document.getElementById('sh-du').value)||60;
   const dk=selDk();
-  getDay(dk).push({id:uid(),title,sphId:aSp,band,startMin:sMin,dur,tasks:resolvedTasks,done:false});
+  const tasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]).map(t=>({id:uid(),text:t.text,done:false}));
+  const blockTitle = tasks.length===1 ? tasks[0].text : (tasks.length>1 ? tasks[0].text+' + '+(tasks.length-1)+' more' : aSel.activity.title);
+  getDay(dk).push({id:uid(),title:blockTitle,activityTitle:aSel.activity.title,sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,band:aSel.sphere.band,startMin:sMin,dur,tasks,done:false});
   save();csh(null,'sh-add');renderCal();toast('Block added');
 }
-
 let dDk='',dId='';
-function openDet(ev,dk){dDk=dk;dId=ev.id;const sph=gsp(ev.sphId),c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';document.getElementById('det-in').innerHTML=`<div style="margin-bottom:20px"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:${c};margin-bottom:6px">${esc(ev.title)}</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--mt)">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)} · ${Math.round(ev.dur/60*10)/10}h</div>${sph?`<div style="font-size:13px;margin-top:5px;color:${c};font-weight:700">${sph.name} · ${BAND[sph.band]?.label}</div>`:''}</div>${ev.tasks?.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">${ev.tasks.map((t,i)=>`<div class="dtask-row" onclick="togDT(${i})"><div class="dtask-chk${t.done?' done':''}" style="border-color:${c}${t.done?';background:'+c:''};color:${t.done?'#fff':'transparent'}">${t.done?'✓':''}</div><div style="flex:1;font-size:15px;font-weight:500;color:var(--tx2)${t.done?';text-decoration:line-through;opacity:.45':''}">${esc(t.text)}</div></div>`).join('')}</div>`:''}<div class="d-act"><button class="d-btn d-ok" style="background:${c}" onclick="togDD()">${ev.done?'Mark undone':'Mark done'}</button><button class="d-btn d-rm" onclick="detRm()">Remove</button></div>`;document.getElementById('sh-det').classList.add('O');}
+function openDet(ev,dk){dDk=dk;dId=ev.id;const sph=gsp(ev.sphId),c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';document.getElementById('det-in').innerHTML=`<div style="margin-bottom:20px"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:${c};margin-bottom:6px">${esc(ev.title)}</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--mt)">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)} · ${Math.round(ev.dur/60*10)/10}h</div>${sph?`<div style="font-size:13px;margin-top:5px;color:${c};font-weight:700">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''} · ${BAND[sph.band]?.label}</div>`:''}${ev.activityTitle?`<div style="font-size:12px;margin-top:3px;color:var(--mt)">Activity: ${esc(ev.activityTitle)}</div>`:''}</div>${ev.tasks?.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">${ev.tasks.map((t,i)=>`<div class="dtask-row" onclick="togDT(${i})"><div class="dtask-chk${t.done?' done':''}" style="border-color:${c}${t.done?';background:'+c:''};color:${t.done?'#fff':'transparent'}">${t.done?'✓':''}</div><div style="flex:1;font-size:15px;font-weight:500;color:var(--tx2)${t.done?';text-decoration:line-through;opacity:.45':''}">${esc(t.text)}</div></div>`).join('')}</div>`:''}<div class="d-act"><button class="d-btn d-ok" style="background:${c}" onclick="togDD()">${ev.done?'Mark undone':'Mark done'}</button><button class="d-btn d-rm" onclick="detRm()">Remove</button></div>`;document.getElementById('sh-det').classList.add('O');}
 function togDT(i){const ev=getDay(dDk).find(e=>e.id===dId);if(ev?.tasks[i]){ev.tasks[i].done=!ev.tasks[i].done;save();openDet(ev,dDk);}}
 function togDD(){const ev=getDay(dDk).find(e=>e.id===dId);if(ev){ev.done=!ev.done;save();csh(null,'sh-det');renderCal();}}
 function detRm(){S.cal[dDk]=(S.cal[dDk]||[]).filter(e=>e.id!==dId);save();csh(null,'sh-det');renderCal();}
 
 let oSph={};
-let oGoals={};
-let oActs={};
-function togGoalOpen(sphId,gi){const k=sphId+'_'+gi;oGoals[k]=!oGoals[k];renderSph();}
-function togActOpen(sphId,ai){const k=sphId+'_'+ai;oActs[k]=!oActs[k];renderSph();}
-function addActTask(sphId,ai){
-  const el=document.getElementById('at-'+sphId+'-'+ai);
-  if(!el)return;const v=el.value.trim();if(!v)return;
-  const s=gsp(sphId);if(!s.activities[ai])return;
-  if(!s.activities[ai].tasks)s.activities[ai].tasks=[];
-  s.activities[ai].tasks.push({id:uid(),text:v});
-  el.value='';save();renderSph();
-}
-function rmActTask(sphId,ai,ti){
-  const s=gsp(sphId);
-  if(s.activities[ai]&&s.activities[ai].tasks)s.activities[ai].tasks.splice(ti,1);
-  save();renderSph();
-}
 function renderSph(){
+  normData();
   document.getElementById('band-tabs').innerHTML=['work','life','sleep'].map(b=>{const m=BAND[b],sphs=S.spheres.filter(s=>s.band===b);return`<div class="btab" style="border-color:${m.color}28"><div class="btab-n" style="color:${m.color}">${m.label}</div><div class="btab-c">${sphs.map(s=>s.name).join(' · ')}</div></div>`;}).join('');
-  document.getElementById('sp-cards').innerHTML=S.spheres.map(s=>{const o=oSph[s.id],bm=BAND[s.band];return`<div class="spcard" style="border-color:${s.color}22"><div class="sph-h" onclick="toSph('${s.id}')"><div class="sph-strip" style="background:${s.color}"></div><div class="sph-name">${s.name}</div><div class="sph-btag" style="color:${bm.color};border-color:${bm.color}28;background:${bm.color}0C">${bm.label}</div><div class="sph-chev${o?' o':''}">›</div></div>${o?`<div class="spbody">
-
-        <!-- GOALS unfoldable -->
-        <div class="sp-lbl">Goals</div>
-        ${(s.goals||[]).map((g,gi)=>`
-          <div class="grow" onclick="togGoalOpen('${s.id}',${gi})" style="cursor:pointer">
-            <div class="gdot" style="background:${s.color}"></div>
-            <div class="gbod">
-              <div class="gtxt">${esc(g.text)}</div>
-              ${g.term?`<div class="gterm">by ${g.term}</div>`:''}
-            </div>
-            <div style="font-size:13px;color:var(--mt);margin-right:6px">${oGoals[s.id+'_'+gi]?'▾':'›'}</div>
-            <div class="grm" onclick="rmGoal('${s.id}',${gi});event.stopPropagation()">×</div>
-          </div>
-          ${oGoals[s.id+'_'+gi]?`<div style="padding:8px 14px 10px;background:${s.color}06;border-radius:10px;margin-bottom:6px">
-            <div style="font-size:12px;color:var(--mt);margin-bottom:6px;font-style:italic">Activities for this goal</div>
-            ${(s.activities||[]).filter(a=>a.goalId===gi+'').map(a=>`<div style="font-size:13px;color:${s.color};font-weight:600;padding:3px 0">◦ ${esc(a.name)}</div>`).join('')||'<div style="font-size:12px;color:var(--mt2)">No activities linked yet</div>'}
-          </div>`:''}
-        `).join('')}
-        <div class="g-add-row" style="margin-top:8px">
-          <input class="ainp" id="gi-${s.id}" placeholder="Add a goal...">
-          <input type="month" class="gdate" id="gm-${s.id}" title="Target">
-        </div>
-        <button class="abtn" style="color:${s.color};border-color:${s.color}30;width:100%;margin-top:8px" onclick="addGoal('${s.id}')">Add goal</button>
-
-        <!-- ACTIVITIES unfoldable -->
-        <div class="sp-lbl" style="margin-top:14px">Activities</div>
-        ${(s.activities||[]).map((a,ai)=>`
-          <div style="background:var(--c2);border-radius:12px;border:1px solid ${s.color}20;margin-bottom:7px;overflow:hidden">
-            <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer" onclick="togActOpen('${s.id}',${ai})">
-              <div style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0"></div>
-              <div style="flex:1;font-size:14px;font-weight:600;color:var(--tx)">${esc(a.name)}</div>
-              <div style="font-size:11px;color:var(--mt)">${(a.tasks||[]).length} tasks</div>
-              <div style="font-size:13px;color:var(--mt)">${oActs[s.id+'_'+ai]?'▾':'›'}</div>
-              <div style="font-size:16px;color:var(--mt2);cursor:pointer;padding:0 2px" onclick="rmAct('${s.id}',${ai});event.stopPropagation()">×</div>
-            </div>
-            ${oActs[s.id+'_'+ai]?`<div style="padding:0 13px 12px;border-top:1px solid ${s.color}15">
-              ${(a.tasks||[]).map((t,ti)=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--ln)">
-                <div style="width:6px;height:6px;border-radius:50%;background:${s.color};flex-shrink:0"></div>
-                <div style="flex:1;font-size:13px;color:var(--tx2)">${esc(t.text||t)}</div>
-                <div style="font-size:15px;color:var(--mt2);cursor:pointer" onclick="rmActTask('${s.id}',${ai},${ti})">×</div>
-              </div>`).join('')}
-              <div style="display:flex;gap:7px;margin-top:8px">
-                <input class="ainp" id="at-${s.id}-${ai}" placeholder="Add a task..." style="font-size:13px;padding:8px 11px" onkeydown="if(event.key==='Enter')addActTask('${s.id}',${ai})">
-                <button class="abtn" style="color:${s.color};border-color:${s.color}30;padding:8px 12px;font-size:13px" onclick="addActTask('${s.id}',${ai})">Add</button>
-              </div>
-            </div>`:''}
-          </div>
-        `).join('')}
-        <div class="ainrow" style="margin-top:4px">
-          <input class="ainp" id="ai-${s.id}" placeholder="Add activity..." onkeydown="if(event.key==='Enter')addAct('${s.id}')">
-          <button class="abtn" style="color:${s.color};border-color:${s.color}30" onclick="addAct('${s.id}')">Add</button>
-        </div>
-
-        <!-- 80/20 -->
-        <div class="sp-lbl" style="margin-top:14px">80 · 20</div>
-        <div class="s80" style="border-left-color:${s.color}">
-          <div class="s80-t" style="color:${s.color}">High-Leverage Activity</div>
-          <div class="s80-v">${s.key20||'Not set yet'}</div>
-          <div class="s80-s">The one activity that drives 80% of results in ${s.name}</div>
-          <select class="s80-sel" style="color:${s.color}" onchange="set80('${s.id}',this.value)">
-            <option value="">Select...</option>
-            ${(s.activities||[]).map(a=>`<option value="${esc(a.name)}"${s.key20===a.name?' selected':''}>${esc(a.name)}</option>`).join('')}
-          </select>
-        </div>
-
-      </div>`:''}</div>`;}).join('');
+  document.getElementById('sp-cards').innerHTML=S.spheres.map(s=>{const o=oSph[s.id],bm=BAND[s.band];return`<div class="spcard" style="border-color:${s.color}22"><div class="sph-h" onclick="toSph('${s.id}')"><div class="sph-strip" style="background:${s.color}"></div><div class="sph-name">${s.name}</div><div class="sph-btag" style="color:${bm.color};border-color:${bm.color}28;background:${bm.color}0C">${bm.label}</div><div class="sph-chev${o?' o':''}">›</div></div>${o?`<div class="spbody"><div class="sp-lbl">Goals</div>${(s.goals||[]).map((g,gi)=>{const gok=!!g._open;return`<div class="goal-card"><div class="goal-head" onclick="toggleGoal('${s.id}','${g.id}')"><div class="gdot" style="background:${s.color}"></div><div style="flex:1"><div class="goal-title">${esc(g.text)}</div>${g.term?`<div class="goal-meta">by ${g.term}</div>`:''}</div><div class="goal-chevron${gok?' o':''}">›</div><div class="grm" onclick="rmGoal('${s.id}',${gi});event.stopPropagation()">×</div></div>${gok?`<div class="goal-body"><div class="sp-lbl">Activities</div>${(g.activities||[]).map((a,ai)=>{const aok=!!a._open;return`<div class="act-card"><div class="act-head" onclick="toggleActivity('${s.id}','${g.id}','${a.id}')"><div class="task-dot" style="background:${s.color}"></div><div class="act-title">${esc(a.title)}</div><div class="act-chevron${aok?' o':''}">›</div><div class="grm" onclick="rmActivity('${s.id}','${g.id}',${ai});event.stopPropagation()">×</div></div>${aok?`<div class="act-body"><div class="sp-lbl">Tasks</div>${(a.tasks||[]).map((t,ti)=>`<div class="task-row-mini"><div class="task-dot" style="background:${s.color}"></div><div style="flex:1">${esc(t.text)}</div><div class="grm" onclick="rmTask('${s.id}','${g.id}','${a.id}',${ti})">×</div></div>`).join('')||`<div class="s80-s">No tasks yet</div>`}<div class="mini-add-row"><input class="mini-inp" id="task-${safeId(a.id)}" placeholder="Add task..." onkeydown="if(event.key==='Enter')addTask('${s.id}','${g.id}','${a.id}')"><button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addTask('${s.id}','${g.id}','${a.id}')">Add</button></div></div>`:''}</div>`;}).join('')||`<div class="s80-s">No activities yet</div>`}<div class="mini-add-row"><input class="mini-inp" id="act-${safeId(g.id)}" placeholder="Add activity..." onkeydown="if(event.key==='Enter')addActivity('${s.id}','${g.id}')"><button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addActivity('${s.id}','${g.id}')">Add</button></div></div>`:''}</div>`;}).join('')||`<div class="s80-s">No goals yet</div>`}<div class="gdate-lbl">Goal · target month</div><div class="g-add-row"><input class="ainp" id="gi-${s.id}" placeholder="Write a goal..." onkeydown="if(event.key==='Enter')addGoal('${s.id}')"><input type="month" class="gdate" id="gm-${s.id}" title="Target"></div><button class="abtn" style="color:${s.color};border-color:${s.color}30;width:100%;margin-top:10px" onclick="addGoal('${s.id}')">Add goal</button></div>`:''}</div>`;}).join('');
 }
 function toSph(id){oSph[id]=!oSph[id];renderSph();}
-function set80(id,v){gsp(id).key20=v;save();renderSph();}
-function addAct(id){const el=document.getElementById('ai-'+id),v=el.value.trim();if(!v)return;const s=gsp(id);if(!s.activities)s.activities=[];s.activities.push({id:uid(),name:v,tasks:[]});el.value='';save();renderSph();}
-function rmAct(id,i){gsp(id).activities.splice(i,1);save();renderSph();}
-function addGoal(id){const ti=document.getElementById('gi-'+id),tm2=document.getElementById('gm-'+id),t=ti.value.trim();if(!t)return;const s=gsp(id);if(!s.goals)s.goals=[];s.goals.push({text:t,term:tm2.value||''});ti.value='';save();renderSph();}
+function toggleGoal(sid,gid){const g=gsp(sid).goals.find(x=>x.id===gid);if(g){g._open=!g._open;renderSph();}}
+function toggleActivity(sid,gid,aid){const g=gsp(sid).goals.find(x=>x.id===gid);const a=g&&g.activities.find(x=>x.id===aid);if(a){a._open=!a._open;renderSph();}}
+function addActivity(sid,gid){const el=document.getElementById('act-'+safeId(gid));const v=el&&el.value.trim();if(!v)return;const g=gsp(sid).goals.find(x=>x.id===gid);if(!g.activities)g.activities=[];g.activities.push({id:uid(),title:v,tasks:[],_open:true});g._open=true;save();renderSph();}
+function rmActivity(sid,gid,i){const g=gsp(sid).goals.find(x=>x.id===gid);if(g){g.activities.splice(i,1);save();renderSph();}}
+function addTask(sid,gid,aid){const el=document.getElementById('task-'+safeId(aid));const v=el&&el.value.trim();if(!v)return;const g=gsp(sid).goals.find(x=>x.id===gid);const a=g&&g.activities.find(x=>x.id===aid);if(a){if(!a.tasks)a.tasks=[];a.tasks.push({id:uid(),text:v,done:false});a._open=true;save();renderSph();}}
+function rmTask(sid,gid,aid,i){const g=gsp(sid).goals.find(x=>x.id===gid);const a=g&&g.activities.find(x=>x.id===aid);if(a){a.tasks.splice(i,1);save();renderSph();}}
+function addGoal(id){const ti=document.getElementById('gi-'+id),tm2=document.getElementById('gm-'+id),t=ti.value.trim();if(!t)return;const s=gsp(id);if(!s.goals)s.goals=[];s.goals.push({id:uid(),text:t,term:tm2.value||'',activities:[],_open:true});ti.value='';save();renderSph();}
 function rmGoal(id,i){gsp(id).goals.splice(i,1);save();renderSph();}
+function set80(id,v){}
+function addAct(id){}
+function rmAct(id,i){}
 function csh(e,id){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.remove('O');}
 
-load();renderCal();
+load();normData();renderCal();
 setTimeout(()=>{const o=document.getElementById('tg-outer');if(o)o.scrollTop=(7-CAL_S)*HR_H-20;},200);
 </script>
-
-  <div style="font-size:12px;color:#8A7860">Works offline · Lives on your home screen</div>
+<!-- PWA install note (single-file safe) -->
+<div id="install-note" style="position:fixed;left:14px;right:14px;bottom:calc(var(--nh) + 82px);max-width:402px;margin:0 auto;background:#fff;border:1px solid var(--ln);border-radius:18px;padding:12px 14px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:none;z-index:80;align-items:center;gap:10px;justify-content:space-between">
+  <div style="font-size:12px;color:#8A7860;line-height:1.4"><strong style="color:#1A160E">Install as app</strong><br>Open in Safari/Chrome → Share/Menu → Add to Home Screen.</div>
+  <button onclick="document.getElementById('install-note').style.display='none';localStorage.setItem('lbosInstallDismissed','1')" style="border:none;background:#F5EFE4;border-radius:999px;padding:7px 10px;color:#8A7860;font-weight:700">×</button>
 </div>
-<button onclick="installApp()" style="padding:8px 14px;background:#A87828;color:#fff;border:none;border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">Install</button>
-<button onclick="dismissBanner()" style="padding:8px;background:none;border:none;font-size:18px;color:#BBAA90;cursor:pointer;line-height:1;flex-shrink:0">×</button>
-</div>
-
-    <button onclick="document.getElementById('ios-hint').style.display='none'" style="background:none;border:none;font-size:18px;color:#BBAA90;cursor:pointer;line-height:1">×</button>
-  </div>
-  <div style="font-size:13px;color:#3A2E18;line-height:1.7">
-    1. Tap the <strong>Share</strong> button <span style="font-size:16px">⎙</span> at the bottom of Safari<br>
-    2. Scroll down and tap <strong>"Add to Home Screen"</strong><br>
-    3. Tap <strong>Add</strong> — done! ✦
-  </div>
-</div>
-
 <script>
-// ══ MANIFEST (injected as blob so single-file works) ══
-const manifest = {
-  name: "Life Balance OS",
-  short_name: "Life Balance",
-  description: "Your personal life operating system. 8·8·8 balance, spheres, goals, calendar.",
-  start_url: "./",
-  display: "standalone",
-  orientation: "portrait",
-  background_color: "#F5EFE4",
-  theme_color: "#F5EFE4",
-  icons: [
-    {
-      src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%23F5EFE4'/%3E%3Ccircle cx='256' cy='256' r='200' fill='none' stroke='%23A87828' stroke-width='18'/%3E%3Ctext x='256' y='330' font-family='Georgia,serif' font-size='220' font-style='italic' fill='%23A87828' text-anchor='middle'%3EL%3C/text%3E%3C/svg%3E",
-      sizes: "512x512",
-      type: "image/svg+xml",
-      purpose: "any maskable"
-    }
-  ]
-};
-try {
-  const mBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-  const mURL = URL.createObjectURL(mBlob);
-  document.getElementById('pwa-manifest').href = mURL;
-} catch(e) {}
+try{if(!localStorage.getItem('lbosInstallDismissed'))setTimeout(()=>{const n=document.getElementById('install-note');if(n)n.style.display='flex'},1600)}catch(e){}
+</script>
 
-// ══ SERVICE WORKER (inline blob) ══
-const SW_CACHE = 'lbos-cache-v1';
-const swCode = `
-const CACHE = '${SW_CACHE}';
-self.addEventListener('install', e => {
-  self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll([self.registration.scope]))
-  );
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
-  ));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      const network = fetch(e.request).then(res => {
-        if(res && res.status === 200) {
-          const c = res.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, c));
-        }
-        return res;
-      }).catch(()=>cached);
-      return cached || network;
-    })
-  );
-});
-`;
-try {
-  if('serviceWorker' in navigator) {
-    const swBlob = new Blob([swCode], {type:'application/javascript'});
-    const swURL = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swURL, {scope: './'}).catch(()=>{});
-  }
-} catch(e) {}
-
-
-
-// iOS hint
-if(isIOS && !isStandalone && !dismissed) {
-  setTimeout(()=>{ iosHint.style.display='block'; }, 2500);
-}
-
-);
-  }
-}
+</body>
+</html>
