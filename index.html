@@ -402,7 +402,7 @@ let S={
   cal:{},big3:{},
   vy:new Date().getFullYear(),vm:new Date().getMonth(),
   sy:new Date().getFullYear(),sm:new Date().getMonth(),sd:new Date().getDate(),
-  folded:false,
+  folded:true,
 };
 const gsp=id=>S.spheres.find(s=>s.id===id)||SPHERES.find(s=>s.id===id);
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -414,7 +414,7 @@ const dkey=d=>p2(d.getFullYear())+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
 const selDk=()=>p2(S.sy)+'-'+p2(S.sm+1)+'-'+p2(S.sd);
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 function save(){try{localStorage.setItem('lbosL',JSON.stringify({...S}));}catch(e){}}
-function load(){try{const r=localStorage.getItem('lbosL');if(r){const p=JSON.parse(r);S.cal=p.cal||{};S.big3=p.big3||{};S.vy=p.vy||new Date().getFullYear();S.vm=p.vm||new Date().getMonth();S.sy=p.sy||new Date().getFullYear();S.sm=p.sm||new Date().getMonth();S.sd=p.sd||new Date().getDate();S.folded=p.folded||false;if(p.spheres)S.spheres=SPHERES.map((d,i)=>({...d,...(p.spheres[i]||{}),id:d.id,name:d.name,band:d.band,color:d.color}));}}catch(e){}}
+function load(){try{const r=localStorage.getItem('lbosL');if(r){const p=JSON.parse(r);S.cal=p.cal||{};S.big3=p.big3||{};S.vy=p.vy||new Date().getFullYear();S.vm=p.vm||new Date().getMonth();S.sy=p.sy||new Date().getFullYear();S.sm=p.sm||new Date().getMonth();S.sd=p.sd||new Date().getDate();S.folded=p.folded!==undefined?p.folded:true;if(p.spheres)S.spheres=SPHERES.map((d,i)=>({...d,...(p.spheres[i]||{}),id:d.id,name:d.name,band:d.band,color:d.color}));}}catch(e){}}
 function getDay(k){if(!S.cal[k])S.cal[k]=[];return S.cal[k];}
 function getBig3(k){if(!S.big3[k])S.big3[k]=[{id:uid(),text:'',done:false},{id:uid(),text:'',done:false},{id:uid(),text:'',done:false}];return S.big3[k];}
 
@@ -607,12 +607,6 @@ load();renderCal();
 setTimeout(()=>{const o=document.getElementById('tg-outer');if(o)o.scrollTop=(7-CAL_S)*HR_H-20;},200);
 </script>
 
-<!-- ══════════════════════════════════
-     PWA — Manifest + Service Worker
-══════════════════════════════════ -->
-
-<div style="flex:1">
-  <div style="font-size:14px;font-weight:700;color:#1A160E;margin-bottom:2px">Install Life Balance OS</div>
   <div style="font-size:12px;color:#8A7860">Works offline · Lives on your home screen</div>
 </div>
 <button onclick="installApp()" style="padding:8px 14px;background:#A87828;color:#fff;border:none;border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">Install</button>
@@ -627,10 +621,6 @@ setTimeout(()=>{const o=document.getElementById('tg-outer');if(o)o.scrollTop=(7-
     3. Tap <strong>Add</strong> — done! ✦
   </div>
 </div>
-
-<style>
-@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-</style>
 
 <script>
 // ══ MANIFEST (injected as blob so single-file works) ══
@@ -707,28 +697,3 @@ if(isIOS && !isStandalone && !dismissed) {
 );
   }
 }
-
-
-
-
-// ══ OFFLINE INDICATOR ══
-function updateOnline(){
-  const existing = document.getElementById('offline-chip');
-  if(!navigator.onLine) {
-    if(!existing) {
-      const chip = document.createElement('div');
-      chip.id = 'offline-chip';
-      chip.textContent = '◦ offline mode';
-      chip.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);background:#1A160E;color:#C8BB9E;font-size:11px;font-weight:600;letter-spacing:.08em;padding:5px 14px;border-radius:100px;z-index:300;pointer-events:none';
-      document.body.appendChild(chip);
-    }
-  } else {
-    if(existing) existing.remove();
-  }
-}
-window.addEventListener('online', updateOnline);
-window.addEventListener('offline', updateOnline);
-updateOnline();
-</script>
-</body>
-</html>
