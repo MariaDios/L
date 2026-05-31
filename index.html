@@ -639,6 +639,81 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .b3n.done[style*="var(--life)"]{ background:#4CAF50 !important; border-color:#4CAF50 !important; }
 .b3n.done[style*="var(--slp)"]{ background:#3B82F6 !important; border-color:#3B82F6 !important; }
 
+
+/* FINAL CALENDAR READABILITY FIX */
+
+/* hour rows should stay plain, not colored */
+.hr.zsl,
+.hr.zwk,
+.hr.zlf{
+  background:transparent !important;
+}
+
+/* hour labels must stay visible */
+.hlbl{
+  width:58px !important;
+  padding-right:16px !important;
+  position:relative !important;
+  z-index:5 !important;
+}
+
+.hlbl-n{
+  font-size:22px !important;
+  color:#8D7C68 !important;
+}
+
+/* calendar blocks start after the hour column */
+.ev{
+  left:92px !important;
+  right:12px !important;
+  min-height:46px !important;
+  padding:10px 42px 10px 16px !important;
+  display:block !important;
+}
+
+/* make time visible inside every event card */
+.ev-t{
+  display:block !important;
+  position:absolute !important;
+  right:38px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  font-size:16px !important;
+  line-height:1 !important;
+  opacity:.88 !important;
+  color:#2A1C12 !important;
+  white-space:nowrap !important;
+}
+
+/* title and sphere stay on the left */
+.ev-n{
+  max-width:55% !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.ev-s{
+  max-width:55% !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+/* task count smaller, not covering time */
+.ev-tk{
+  display:block !important;
+  max-width:55% !important;
+  opacity:.55 !important;
+}
+
+/* delete x stays far right */
+.ev-x{
+  right:12px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+}
+
 </style>
 </head>
 <body>
@@ -928,7 +1003,7 @@ function renderGrid(dk){
     const sph=gsp(ev.sphId),c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';
     const top=(ev.startMin-CAL_S*60)/60*HR_H,ht=Math.max(Math.min(ev.dur,(CAL_E*60)-ev.startMin)/60*HR_H-3,30);
     const el=document.createElement('div');el.className='ev';
-    el.style.cssText=`top:${top}px;height:${ht}px;left:66px;right:8px;background:color-mix(in srgb, ${c} 14%, #F9F4EA);border-left-color:${c}`;
+    el.style.cssText=`top:${top}px;height:${ht}px;left:92px;right:12px;background:color-mix(in srgb, ${c} 14%, #F9F4EA);border-left-color:${c}`;
     const tc=ev.tasks?.filter(t=>t.done).length||0,ta=ev.tasks?.length||0;
     el.innerHTML=`<div class="ev-n" style="color:${c}">${esc(ev.title)}</div><div class="ev-t" style="color:${c}">${tm(ev.startMin)} – ${tm(ev.startMin+ev.dur)}</div>${sph?`<div class="ev-s" style="color:${c}">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''}</div>`:''}${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}<div class="ev-x" onclick="rmEv('${dk}','${ev.id}',event)">×</div>`;
     el.onclick=e=>{if(!e.target.classList.contains('ev-x'))openDet(ev,dk);};
