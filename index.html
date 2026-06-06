@@ -3278,6 +3278,151 @@ setTimeout(()=>{
 </script>
 <!-- FINAL REAL DELETE FIX END -->
 
+
+
+<!-- FINAL ONLY FIX: REMOVE SELECTED TASKS WORDS + BIGGER ACTIVITY SCROLL START -->
+<style>
+/* Only Add Activity sheet: remove the "Selected tasks" label/area and give activities more scroll room */
+#sh-add .sh{
+  height:88vh !important;
+  max-height:88vh !important;
+  overflow:hidden !important;
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+#sh-add .quick-add-box,
+#sh-add .sh-spg,
+#sh-add .sh-cust,
+#sh-add .sh-row,
+#lb-file-wrap,
+#sh-add-btn{
+  flex-shrink:0 !important;
+}
+
+/* bigger scroll area for My activities */
+#sh-alist{
+  flex:1 1 auto !important;
+  min-height:300px !important;
+  max-height:none !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
+  margin-bottom:10px !important;
+}
+
+/* remove selected tasks area completely */
+#sh-tasks,
+#sh-preview,
+#sh-add .sh-atb{
+  display:none !important;
+  height:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+}
+
+/* keep Start / End visible and compact */
+#sh-add .sh-row{
+  display:grid !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  margin-top:4px !important;
+  margin-bottom:10px !important;
+}
+#sh-st,
+#sh-end{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+</style>
+
+<script>
+(function(){
+  function removeSelectedTasksLabelAndExpand(){
+    try{
+      var sheet=document.getElementById('sh-add');
+      if(!sheet) return;
+
+      sheet.querySelectorAll('.sh-lbl').forEach(function(label){
+        var txt=(label.textContent||'').trim().toLowerCase();
+        if(txt==='selected tasks'){
+          label.style.display='none';
+          label.style.height='0';
+          label.style.minHeight='0';
+          label.style.margin='0';
+          label.style.padding='0';
+          label.style.overflow='hidden';
+          label.setAttribute('aria-hidden','true');
+        }
+      });
+
+      var tasks=document.getElementById('sh-tasks');
+      if(tasks){
+        tasks.style.display='none';
+        tasks.style.height='0';
+        tasks.style.margin='0';
+        tasks.style.padding='0';
+      }
+
+      var preview=document.getElementById('sh-preview');
+      if(preview){
+        preview.style.display='none';
+        preview.style.height='0';
+        preview.style.margin='0';
+        preview.style.padding='0';
+      }
+
+      var list=document.getElementById('sh-alist');
+      if(list){
+        list.style.flex='1 1 auto';
+        list.style.minHeight='300px';
+        list.style.maxHeight='none';
+        list.style.overflowY='auto';
+        list.style.webkitOverflowScrolling='touch';
+      }
+
+      var row=sheet.querySelector('.sh-row');
+      if(row){
+        row.style.display='grid';
+        row.style.visibility='visible';
+        row.style.opacity='1';
+      }
+    }catch(e){}
+  }
+
+  if(typeof openAdd==='function'){
+    var oldOpenAddSelectedTasksFix=openAdd;
+    openAdd=function(t){
+      oldOpenAddSelectedTasksFix(t);
+      setTimeout(removeSelectedTasksLabelAndExpand,0);
+      setTimeout(removeSelectedTasksLabelAndExpand,80);
+      setTimeout(removeSelectedTasksLabelAndExpand,250);
+    };
+  }
+
+  if(typeof renderSelectedTasks==='function'){
+    var oldRenderSelectedTasksLabelFix=renderSelectedTasks;
+    renderSelectedTasks=function(){
+      oldRenderSelectedTasksLabelFix();
+      removeSelectedTasksLabelAndExpand();
+    };
+  }
+
+  if(typeof renderActivityPicker==='function'){
+    var oldRenderActivityPickerLabelFix=renderActivityPicker;
+    renderActivityPicker=function(){
+      oldRenderActivityPickerLabelFix();
+      removeSelectedTasksLabelAndExpand();
+    };
+  }
+
+  setTimeout(removeSelectedTasksLabelAndExpand,100);
+})();
+</script>
+<!-- FINAL ONLY FIX: REMOVE SELECTED TASKS WORDS + BIGGER ACTIVITY SCROLL END -->
+
 </body>
 </html>
 <!-- FINAL SLEEP REALLY WORKING PATCH START -->
@@ -4511,3 +4656,280 @@ body:has(#sh-det.O) .fab{
 })();
 </script>
 <!-- FINAL ONLY REQUESTED FIXES: ADD BUTTON + ACTIVITY SCROLL END -->
+
+
+<!-- FINAL FIX: BOTTOM ADD BUTTON + TIME VISIBLE START -->
+<style>
+/* Put Add activity between Calendar and Spheres at the bottom. Hide the old floating button. */
+.fab,
+#lb-plus-add{
+  display:none !important;
+}
+#app > .nav{
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:space-between !important;
+  height:82px !important;
+  padding-top:8px !important;
+  padding-bottom:env(safe-area-inset-bottom, 0px) !important;
+  z-index:80 !important;
+}
+#app > .nav .nb{
+  flex:1 1 0 !important;
+}
+.nav-add-center{
+  flex:1 1 0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:5px !important;
+  padding:6px 4px 10px !important;
+  cursor:pointer !important;
+}
+.nav-add-center .nb-ic{
+  width:44px !important;
+  height:44px !important;
+  border-radius:50% !important;
+  background:var(--gd) !important;
+  color:#fff !important;
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-size:30px !important;
+  line-height:1 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-shadow:0 4px 16px rgba(168,120,40,.32) !important;
+}
+.nav-add-center .nb-lb{
+  display:block !important;
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-size:14px !important;
+  line-height:1 !important;
+  color:#2A1C12 !important;
+  text-transform:none !important;
+  letter-spacing:.02em !important;
+}
+
+/* Add sheet: activity list is bigger, but the Start/End time row stays visible. */
+#sh-add .sh{
+  height:91vh !important;
+  max-height:91vh !important;
+  overflow:hidden !important;
+  display:flex !important;
+  flex-direction:column !important;
+  padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+}
+#sh-add .sh-h,
+#sh-add .quick-add-box,
+#sh-add .sh-lbl,
+#sh-add .sh-row,
+#sh-add #lb-file-wrap,
+#sh-add #sh-add-btn{
+  flex:0 0 auto !important;
+}
+#sh-add #sh-alist{
+  flex:1 1 auto !important;
+  min-height:240px !important;
+  max-height:42vh !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
+  overscroll-behavior:contain !important;
+  padding-right:4px !important;
+  margin-bottom:10px !important;
+}
+#sh-add .sh-row{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  margin-top:4px !important;
+  margin-bottom:12px !important;
+  background:var(--bg) !important;
+  z-index:5 !important;
+}
+@media (max-height:740px){
+  #sh-add .sh{height:94vh !important;max-height:94vh !important;}
+  #sh-add #sh-alist{min-height:180px !important;max-height:34vh !important;}
+  #sh-add .quick-add-box{margin-bottom:8px !important;}
+}
+</style>
+<script>
+(function(){
+  function currentHourText(){
+    try{return p2(new Date().getHours())+':00';}catch(e){return '09:00';}
+  }
+  function insertBottomAddButton(){
+    try{
+      var nav=document.querySelector('#app > .nav');
+      if(!nav) return;
+      nav.querySelectorAll('.nav-add-center').forEach(function(x){x.remove();});
+      var cal=nav.querySelector('.nb[data-v="cal"]');
+      var sph=nav.querySelector('.nb[data-v="sph"]');
+      var add=document.createElement('div');
+      add.className='nav-add-center';
+      add.setAttribute('role','button');
+      add.setAttribute('aria-label','Add activity');
+      add.innerHTML='<div class="nb-ic">+</div><div class="nb-lb">Add</div>';
+      add.onclick=function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var t=currentHourText();
+        var st=document.getElementById('sh-st');
+        if(st) st.value=t;
+        openAdd(t);
+        return false;
+      };
+      if(cal && sph) nav.insertBefore(add,sph);
+      else nav.appendChild(add);
+      document.querySelectorAll('.fab,#lb-plus-add').forEach(function(b){b.style.display='none';});
+    }catch(e){}
+  }
+
+  function keepTimeVisibleInAddSheet(){
+    try{
+      var list=document.getElementById('sh-alist');
+      var row=document.querySelector('#sh-add .sh-row');
+      if(!list || !row) return;
+      row.style.display='grid';
+      row.style.visibility='visible';
+      row.style.opacity='1';
+      list.style.overflowY='auto';
+    }catch(e){}
+  }
+
+  if(typeof goV==='function'){
+    var oldGoVBottomAdd=goV;
+    goV=function(v){
+      oldGoVBottomAdd(v);
+      setTimeout(insertBottomAddButton,0);
+    };
+  }
+  if(typeof renderCal==='function'){
+    var oldRenderCalBottomAdd=renderCal;
+    renderCal=function(){
+      oldRenderCalBottomAdd();
+      setTimeout(insertBottomAddButton,0);
+    };
+  }
+  if(typeof renderSph==='function'){
+    var oldRenderSphBottomAdd=renderSph;
+    renderSph=function(){
+      oldRenderSphBottomAdd();
+      setTimeout(insertBottomAddButton,0);
+    };
+  }
+  if(typeof openAdd==='function'){
+    var oldOpenAddBottomAdd=openAdd;
+    openAdd=function(t){
+      oldOpenAddBottomAdd(t);
+      keepTimeVisibleInAddSheet();
+      setTimeout(keepTimeVisibleInAddSheet,0);
+    };
+  }
+  if(typeof renderActivityPicker==='function'){
+    var oldRenderActivityPickerBottomAdd=renderActivityPicker;
+    renderActivityPicker=function(){
+      oldRenderActivityPickerBottomAdd();
+      keepTimeVisibleInAddSheet();
+    };
+  }
+
+  setTimeout(function(){insertBottomAddButton();keepTimeVisibleInAddSheet();},50);
+  setTimeout(function(){insertBottomAddButton();keepTimeVisibleInAddSheet();},300);
+})();
+</script>
+<!-- FINAL FIX: BOTTOM ADD BUTTON + TIME VISIBLE END -->
+
+<!-- FINAL FIX: START END VISIBLE IN ADD ACTIVITY WINDOW START -->
+<style>
+/* Keep Start / End visible in the Add Activity sheet. Do not change other design. */
+#sh-add .sh{
+  max-height:90vh !important;
+  overflow-y:auto !important;
+  padding-bottom:24px !important;
+}
+
+/* Activity list is still scrollable, but no longer pushes Start / End away. */
+#sh-add #sh-alist{
+  max-height:38vh !important;
+  min-height:150px !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
+}
+
+/* Start / End row must always be shown under the activities. */
+#sh-add .sh-row{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  margin-top:10px !important;
+  margin-bottom:12px !important;
+  position:relative !important;
+  z-index:20 !important;
+  background:var(--bg) !important;
+}
+
+#sh-add .sh-row .sh-lbl,
+#sh-add .sh-row .sh-inp{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+
+#sh-add #sh-st,
+#sh-add #sh-end{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  height:auto !important;
+  min-height:46px !important;
+}
+</style>
+<script>
+(function(){
+  function keepStartEndVisible(){
+    try{
+      var list=document.getElementById('sh-alist');
+      if(list){
+        list.style.maxHeight='38vh';
+        list.style.minHeight='150px';
+        list.style.overflowY='auto';
+      }
+      var row=document.querySelector('#sh-add .sh-row');
+      if(row){
+        row.style.display='grid';
+        row.style.visibility='visible';
+        row.style.opacity='1';
+      }
+      ['sh-st','sh-end'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el){
+          el.style.display='block';
+          el.style.visibility='visible';
+          el.style.opacity='1';
+        }
+      });
+    }catch(e){}
+  }
+
+  if(typeof openAdd==='function'){
+    var previousOpenAddStartEnd=openAdd;
+    openAdd=function(t){
+      previousOpenAddStartEnd(t);
+      setTimeout(keepStartEndVisible,0);
+      setTimeout(keepStartEndVisible,80);
+    };
+  }
+
+  if(typeof renderActivityPicker==='function'){
+    var previousRenderActivityPickerStartEnd=renderActivityPicker;
+    renderActivityPicker=function(){
+      previousRenderActivityPickerStartEnd();
+      keepStartEndVisible();
+    };
+  }
+
+  setTimeout(keepStartEndVisible,100);
+})();
+</script>
+<!-- FINAL FIX: START END VISIBLE IN ADD ACTIVITY WINDOW END -->
