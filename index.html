@@ -1921,5 +1921,2473 @@ setTimeout(()=>{
 }
 </style>
 
+
+<!-- ONLY REQUESTED 6 FIXES PATCH START -->
+<style>
+/* 2. A little more space between calendar blocks, without changing design */
+.ev{
+  margin-top:2px !important;
+  margin-bottom:2px !important;
+}
+
+/* 5. File option inside Add sheet */
+#lb-file-wrap{
+  margin:10px 0 12px !important;
+}
+#lb-file-wrap input{
+  width:100% !important;
+}
+
+/* 6. Keep calendar top visible while scrolling */
+.cal-header{
+  position:relative !important;
+  z-index:40 !important;
+}
+
+/* 6. Plus button for adding an activity/calendar block */
+#lb-plus-add{
+  position:fixed;
+  right:18px;
+  bottom:98px;
+  width:54px;
+  height:54px;
+  border-radius:50%;
+  border:none;
+  background:var(--gd);
+  color:#fff;
+  font-size:34px;
+  line-height:54px;
+  text-align:center;
+  box-shadow:0 8px 24px rgba(168,120,40,.35);
+  z-index:70;
+  cursor:pointer;
+}
+</style>
+
+<script>
+(function(){
+  /* 1. Always open on today's exact date */
+  function forceTodayOnOpen(){
+    try{
+      const n=new Date();
+      S.vy=n.getFullYear();
+      S.vm=n.getMonth();
+      S.sy=n.getFullYear();
+      S.sm=n.getMonth();
+      S.sd=n.getDate();
+      save();
+    }catch(e){}
+  }
+
+  /* 4. Copy priorities from the previous day when a new day has no priorities yet */
+  const originalGetBig3 = getBig3;
+  getBig3 = function(k){
+    if(!S.big3[k]){
+      try{
+        const parts=k.split('-').map(Number);
+        const d=new Date(parts[0],parts[1]-1,parts[2]);
+        d.setDate(d.getDate()-1);
+        const yk=dkey(d);
+        if(S.big3[yk]){
+          S.big3[k]=S.big3[yk].map(x=>({id:uid(),text:x.text||'',done:false}));
+          return S.big3[k];
+        }
+      }catch(e){}
+    }
+    return originalGetBig3(k);
+  };
+
+  /* 5. Add file input without changing layout */
+  function ensureFileInput(){
+    const btn=document.getElementById('sh-add-btn');
+    if(!btn || document.getElementById('lb-files')) return;
+    const wrap=document.createElement('div');
+    wrap.id='lb-file-wrap';
+    wrap.innerHTML='<div class="sh-lbl">Files</div><input id="lb-files" class="sh-inp" type="file" multiple>';
+    btn.parentNode.insertBefore(wrap,btn);
+  }
+
+  if(typeof openAdd==='function'){
+    const previousOpenAdd=openAdd;
+    openAdd=function(t){
+      previousOpenAdd(t);
+      ensureFileInput();
+    };
+  }
+  if(typeof renderSelectedTasks==='function'){
+    const previousRenderSelectedTasks=renderSelectedTasks;
+    renderSelectedTasks=function(){
+      previousRenderSelectedTasks();
+      ensureFileInput();
+    };
+  }
+
+  function pickedFiles(){
+    const inp=document.getElementById('lb-files');
+    return inp && inp.files ? Array.from(inp.files).map(f=>({name:f.name,size:f.size,type:f.type||''})) : [];
+  }
+
+  function addOneBlock(dk,startMin,dur,tasks,blockTitle,files){
+    getDay(dk).push({
+      id:uid(),title:blockTitle,activityTitle:aSel.activity.title,
+      sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,
+      band:aSel.sphere.band,startMin,dur,tasks,done:false,files:files||[]
+    });
+  }
+
+  /* 3 + 5. Allow sleep/time blocks across midnight and save file names */
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    const sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    let eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    const dk=selDk();
+    const files=pickedFiles();
+    const baseTasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]).map(t=>({id:uid(),sourceTaskId:t.id,text:t.text,done:false}));
+    const blockTitle=baseTasks.length===1 ? baseTasks[0].text : (baseTasks.length>1 ? baseTasks[0].text+' + '+(baseTasks.length-1)+' more' : aSel.activity.title);
+
+    if(eMin===sMin){toast('End time must be different');return;}
+
+    if(eMin>sMin){
+      addOneBlock(dk,sMin,eMin-sMin,baseTasks,blockTitle,files);
+    }else{
+      addOneBlock(dk,sMin,1440-sMin,baseTasks.map(t=>({...t,id:uid()})),blockTitle,files);
+      const d=new Date(S.sy,S.sm,S.sd);d.setDate(d.getDate()+1);
+      const nk=dkey(d);
+      addOneBlock(nk,0,eMin,baseTasks.map(t=>({...t,id:uid(),done:false})),blockTitle,files);
+    }
+    save();csh(null,'sh-add');renderCal();toast('Block added');
+  };
+
+  /* 3. Allow editing an existing block to cross midnight by splitting it */
+  const previousSaveEditDet=saveEditDet;
+  saveEditDet=function(){
+    const ev=getDay(dDk).find(e=>e.id===dId);if(!ev)return;
+    const title=(document.getElementById('det-title')?.value||'').trim();
+    const activity=(document.getElementById('det-activity')?.value||'').trim();
+    const st=document.getElementById('det-start')?.value||'09:00';
+    const en=document.getElementById('det-end')?.value||'10:00';
+    const sMin=toMin(st),eMin=toMin(en);
+    if(!title){toast('Title is required');return;}
+    if(eMin===sMin){toast('End time must be different');return;}
+    if(eMin>sMin){previousSaveEditDet();return;}
+
+    ev.title=title;
+    ev.activityTitle=activity;
+    ev.startMin=sMin;
+    ev.dur=1440-sMin;
+    if(ev.tasks&&ev.tasks.length){
+      ev.tasks=ev.tasks.map((t,i)=>({...t,text:(document.getElementById('det-task-'+i)?.value||t.text).trim()||t.text}));
+    }
+    const d=new Date(...dDk.split('-').map((v,i)=>i===1?Number(v)-1:Number(v)));
+    d.setDate(d.getDate()+1);
+    const nk=dkey(d);
+    getDay(nk).push({...ev,id:uid(),startMin:0,dur:eMin,tasks:(ev.tasks||[]).map(t=>({...t,id:uid(),done:false})),done:false});
+    save();openDet(ev,dDk);renderCal();toast('Block updated');
+  };
+
+  /* 2. Make existing event blocks slightly shorter after render, to create visible gaps */
+  const previousRenderGrid=renderGrid;
+  renderGrid=function(dk){
+    previousRenderGrid(dk);
+    document.querySelectorAll('.ev').forEach(el=>{
+      const h=parseFloat(el.style.height||'0');
+      if(h>48) el.style.height=(h-6)+'px';
+    });
+  };
+
+  /* 5. Show attached file names in details */
+  const previousOpenDet=openDet;
+  openDet=function(ev,dk){
+    previousOpenDet(ev,dk);
+    try{
+      if(ev.files && ev.files.length){
+        const box=document.getElementById('det-in');
+        const list=document.createElement('div');
+        list.style.cssText='margin:10px 0 18px;font-size:16px;color:var(--mt)';
+        list.innerHTML='<div class="sh-lbl">Files</div>'+ev.files.map(f=>'• '+esc(f.name)).join('<br>');
+        const act=box.querySelector('.d-act');
+        box.insertBefore(list,act||null);
+      }
+    }catch(e){}
+  };
+
+  /* 6. Add + button, without moving existing elements */
+  function ensurePlusButton(){
+    if(document.getElementById('lb-plus-add')) return;
+    const b=document.createElement('button');
+    b.id='lb-plus-add';
+    b.type='button';
+    b.textContent='+';
+    b.onclick=function(){openAdd(p2(new Date().getHours())+':00');ensureFileInput();};
+    document.body.appendChild(b);
+  }
+
+  forceTodayOnOpen();
+  setTimeout(()=>{try{renderCal();ensurePlusButton();ensureFileInput();}catch(e){}},50);
+})();
+</script>
+<!-- ONLY REQUESTED 6 FIXES PATCH END -->
+
+
+
+<!-- ONLY REQUESTED SLEEP 23-6 + ADD ACTIVITY TEXT PATCH START -->
+<style>
+/* Sleep colour only for 23:00–06:00 */
+.hr.zsl{background:#EEF4FF !important;}
+.hband.sl{background:#3B82F6 !important;}
+
+/* + button now says Add activity */
+#lb-plus-add,
+.fab{
+  width:132px !important;
+  height:54px !important;
+  border-radius:28px !important;
+  font-size:16px !important;
+  font-weight:700 !important;
+  line-height:54px !important;
+  letter-spacing:.01em !important;
+  white-space:nowrap !important;
+}
+</style>
+
+<script>
+(function(){
+  function isSleepSelection(){
+    try{return aSel && aSel.sphere && aSel.sphere.band==='sleep';}catch(e){return false;}
+  }
+  function isSleepEvent(ev){
+    try{
+      const sph=ev.sphId ? gsp(ev.sphId) : null;
+      return ev.band==='sleep' || (sph && sph.band==='sleep');
+    }catch(e){return ev && ev.band==='sleep';}
+  }
+  function eventEndMin(ev){return (ev.startMin + ev.dur) % 1440;}
+  function eventTimeText(ev){return tm(ev.startMin)+' – '+tm(eventEndMin(ev));}
+
+  /* Change + button text only */
+  function labelAddButtons(){
+    document.querySelectorAll('#lb-plus-add,.fab').forEach(b=>{
+      b.textContent='+ Add activity';
+      b.setAttribute('aria-label','Add activity');
+    });
+  }
+
+  const oldEnsurePlusButton = typeof ensurePlusButton==='function' ? ensurePlusButton : null;
+  if(oldEnsurePlusButton){
+    ensurePlusButton=function(){oldEnsurePlusButton();labelAddButtons();};
+  }
+
+  /* Sleep 23:00–06:00 stays one folded block, not two split blocks */
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    const sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    let eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    const dk=selDk();
+    const inp=document.getElementById('lb-files');
+    const files=inp && inp.files ? Array.from(inp.files).map(f=>({name:f.name,size:f.size,type:f.type||''})) : [];
+    const baseTasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]).map(t=>({id:uid(),sourceTaskId:t.id,text:t.text,done:false}));
+    const blockTitle=baseTasks.length===1 ? baseTasks[0].text : (baseTasks.length>1 ? baseTasks[0].text+' + '+(baseTasks.length-1)+' more' : aSel.activity.title);
+    if(eMin===sMin){toast('End time must be different');return;}
+
+    let dur=eMin>sMin ? eMin-sMin : 1440-sMin+eMin;
+    getDay(dk).push({
+      id:uid(),title:blockTitle,activityTitle:aSel.activity.title,
+      sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,
+      band:aSel.sphere.band,startMin:sMin,dur,tasks:baseTasks,done:false,files
+    });
+    save();csh(null,'sh-add');renderCal();toast('Block added');
+  };
+
+  /* Render: sleep hours are blue only 23–06; sleep block is folded and shows 23–06 */
+  renderGrid=function(dk){
+    const tg=document.getElementById('tg');
+    const evts=getDay(dk);
+    const now=new Date();
+    const nMin=now.getHours()*60+now.getMinutes();
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const isToday=selDate.toDateString()===now.toDateString();
+    let html='';
+    for(let h=CAL_S;h<CAL_E;h++){
+      let z,b;
+      if(h<6||h>=23){z='sl';b='sl';}
+      else if(h>=9&&h<18){z='wk';b='wk';}
+      else{z='lf';b='lf';}
+      const lbl=p2(h);
+      html+=`<div class="hr z${z}"><div class="hband ${b}"></div><div class="hlbl"><div class="hlbl-n">${lbl}</div></div><div class="hcol" style="min-height:${HR_H}px"><div class="hhalf"></div></div></div>`;
+    }
+    tg.innerHTML=html;
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      const nl=document.createElement('div');
+      nl.className='nowl';
+      nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';
+      nl.innerHTML='<div class="nowd"></div>';
+      tg.appendChild(nl);
+    }
+    evts.forEach(ev=>{
+      const sph=gsp(ev.sphId), c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';
+      const sleep=isSleepEvent(ev);
+      let top=(ev.startMin-CAL_S*60)/60*HR_H;
+      let ht=Math.max(Math.min(ev.dur,(CAL_E*60)-ev.startMin)/60*HR_H-3,42);
+      if(sleep && ev.dur>180){
+        top=(ev.startMin-CAL_S*60)/60*HR_H;
+        ht=50;
+      }
+      const el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(sleep?' sleep-folded':'');
+      el.style.cssText=`top:${top}px;height:${ht}px;left:94px;right:12px;background:color-mix(in srgb, ${c} 14%, #F9F4EA);border-left-color:${c};color:${c}`;
+      const tc=ev.tasks?.filter(t=>t.done).length||0, ta=ev.tasks?.length||0;
+      el.innerHTML=`<div class="ev-n">${esc(ev.title)}</div>
+        <div class="ev-t">${eventTimeText(ev)}</div>
+        ${sph?`<div class="ev-s">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''}</div>`:''}
+        ${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}
+        <div class="ev-check" onclick="toggleEventDone('${dk}','${ev.id}',event)">${ev.done?'✓':''}</div>`;
+      el.onclick=e=>{ if(!e.target.classList.contains('ev-check')) openDet(ev,dk); };
+      tg.appendChild(el);
+    });
+    tg.querySelectorAll('.hcol').forEach((col,i)=>{
+      col.onclick=()=>{
+        const t=p2(CAL_S+i)+':00';
+        document.getElementById('sh-st').value=t;
+        openAdd(t);
+      };
+    });
+    labelAddButtons();
+  };
+
+  /* Details also show the folded end time correctly, e.g. 23:00 – 06:00 */
+  const oldOpenDetSleepPatch = openDet;
+  openDet=function(ev,dk){
+    oldOpenDetSleepPatch(ev,dk);
+    try{
+      if(isSleepEvent(ev)){
+        document.querySelectorAll('#det-in div').forEach(x=>{
+          if(x.textContent && x.textContent.includes('·') && x.textContent.includes('h')){
+            x.innerHTML=x.innerHTML.replace(/\d{2}:\d{2}\s*[–-]\s*\d{2}:\d{2}/, eventTimeText(ev));
+          }
+        });
+      }
+    }catch(e){}
+  };
+
+  setTimeout(()=>{labelAddButtons();try{renderCal();}catch(e){}},80);
+})();
+</script>
+<!-- ONLY REQUESTED SLEEP 23-6 + ADD ACTIVITY TEXT PATCH END -->
+
+
+<!-- FINAL DUPLICATE ADD ACTIVITY BUTTON FIX START -->
+<style>
+/* Keep only the original calendar add button. Hide the extra duplicate button added by the patch. */
+#lb-plus-add{
+  display:none !important;
+}
+.fab{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:132px !important;
+  height:54px !important;
+  border-radius:28px !important;
+  font-size:16px !important;
+  font-weight:700 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+</style>
+<script>
+(function(){
+  function keepOnlyOriginalAddButton(){
+    document.querySelectorAll('#lb-plus-add').forEach(b=>b.remove());
+    document.querySelectorAll('.fab').forEach(b=>{
+      b.textContent='+ Add activity';
+      b.setAttribute('aria-label','Add activity');
+    });
+  }
+  keepOnlyOriginalAddButton();
+  setTimeout(keepOnlyOriginalAddButton,100);
+  setTimeout(keepOnlyOriginalAddButton,500);
+})();
+</script>
+<!-- FINAL DUPLICATE ADD ACTIVITY BUTTON FIX END -->
+
+
+
+<!-- FINAL REQUEST: HIDE ADD TITLE + SLEEP 23-06 FOLDED START -->
+<style>
+/* Hide this text in the Add sheet only */
+#sh-add .sh-title,
+#sh-add .sh-sub{
+  display:none !important;
+}
+#sh-add .sh{
+  padding-top:18px !important;
+}
+
+/* Sleep visual: compact folded sleep block */
+.ev.sleep-folded{
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+}
+.hr.zsl{
+  background:#EEF4FF !important;
+}
+.hband.sl{
+  background:#3B82F6 !important;
+}
+</style>
+
+<script>
+(function(){
+  function isSleepByEventFinal(ev){
+    try{
+      const sph = ev && ev.sphId ? gsp(ev.sphId) : null;
+      const name = ((ev && (ev.title||ev.activityTitle)) || '').toLowerCase();
+      return ev && (ev.band === 'sleep' || (sph && sph.band === 'sleep') || name.includes('sleep'));
+    }catch(e){ return ev && ev.band === 'sleep'; }
+  }
+  function isSleepBySelectionFinal(){
+    try{
+      const name = ((aSel && aSel.activity && aSel.activity.title) || '').toLowerCase();
+      return aSel && aSel.sphere && (aSel.sphere.band === 'sleep' || name.includes('sleep'));
+    }catch(e){ return false; }
+  }
+  function endOfEventFinal(ev){ return (ev.startMin + ev.dur) % 1440; }
+  function timeTextFinal(ev){ return tm(ev.startMin) + ' – ' + tm(endOfEventFinal(ev)); }
+  function isFoldedSleepTimeFinal(startMin,dur,ev){
+    const end=(startMin+dur)%1440;
+    return isSleepByEventFinal(ev) && (dur > 180 || startMin >= 23*60 || end <= 6*60);
+  }
+  function selectedFilesFinal(){
+    const inp=document.getElementById('lb-files');
+    return inp && inp.files ? Array.from(inp.files).map(f=>({name:f.name,size:f.size,type:f.type||''})) : [];
+  }
+
+  /* Add: 23:00 to 06:00 stays one compact block, not split */
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    const sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    const eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    if(eMin===sMin){toast('End time must be different');return;}
+    const dur = eMin>sMin ? eMin-sMin : (1440-sMin+eMin);
+    const dk=selDk();
+    const baseTasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]).map(t=>({id:uid(),sourceTaskId:t.id,text:t.text,done:false}));
+    const blockTitle=baseTasks.length===1 ? baseTasks[0].text : (baseTasks.length>1 ? baseTasks[0].text+' + '+(baseTasks.length-1)+' more' : aSel.activity.title);
+    const forceSleep = isSleepBySelectionFinal() || (sMin>=23*60 && eMin<=6*60 && eMin<sMin);
+    getDay(dk).push({
+      id:uid(),
+      title:blockTitle,
+      activityTitle:aSel.activity.title,
+      sphId:aSel.sphere.id,
+      goalId:aSel.goal.id,
+      activityId:aSel.activity.id,
+      band:forceSleep ? 'sleep' : aSel.sphere.band,
+      startMin:sMin,
+      dur:dur,
+      tasks:baseTasks,
+      done:false,
+      files:selectedFilesFinal()
+    });
+    save();csh(null,'sh-add');renderCal();toast('Block added');
+  };
+
+  /* Edit: also allow 23:00–06:00 as one next-day block */
+  saveEditDet=function(){
+    const ev=getDay(dDk).find(e=>e.id===dId);if(!ev)return;
+    const title=(document.getElementById('det-title')?.value||'').trim();
+    const activity=(document.getElementById('det-activity')?.value||'').trim();
+    const st=document.getElementById('det-start')?.value||'09:00';
+    const en=document.getElementById('det-end')?.value||'10:00';
+    const sMin=toMin(st),eMin=toMin(en);
+    if(!title){toast('Title is required');return;}
+    if(eMin===sMin){toast('End time must be different');return;}
+    ev.title=title;
+    ev.activityTitle=activity;
+    ev.startMin=sMin;
+    ev.dur=eMin>sMin ? eMin-sMin : (1440-sMin+eMin);
+    if(isSleepByEventFinal(ev) || (sMin>=23*60 && eMin<=6*60 && eMin<sMin)) ev.band='sleep';
+    if(ev.tasks&&ev.tasks.length){
+      ev.tasks=ev.tasks.map((t,i)=>({...t,text:(document.getElementById('det-task-'+i)?.value||t.text).trim()||t.text}));
+    }
+    save();openDet(ev,dDk);renderCal();toast('Block updated');
+  };
+
+  /* Render sleep hours only 23–06; sleep block compact and labelled 23:00–06:00 */
+  renderGrid=function(dk){
+    const tg=document.getElementById('tg');
+    const evts=getDay(dk);
+    const now=new Date();
+    const nMin=now.getHours()*60+now.getMinutes();
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const isToday=selDate.toDateString()===now.toDateString();
+    let html='';
+    for(let h=CAL_S;h<CAL_E;h++){
+      let z,b;
+      if(h<6||h>=23){z='sl';b='sl';}
+      else if(h>=9&&h<18){z='wk';b='wk';}
+      else{z='lf';b='lf';}
+      html+=`<div class="hr z${z}"><div class="hband ${b}"></div><div class="hlbl"><div class="hlbl-n">${p2(h)}</div></div><div class="hcol" style="min-height:${HR_H}px"><div class="hhalf"></div></div></div>`;
+    }
+    tg.innerHTML=html;
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      const nl=document.createElement('div');nl.className='nowl';nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);
+    }
+    evts.forEach(ev=>{
+      const sph=gsp(ev.sphId), c=isSleepByEventFinal(ev)?'#3B82F6':(sph?sph.color:BAND[ev.band]?.color||'var(--gd)');
+      const folded=isFoldedSleepTimeFinal(ev.startMin,ev.dur,ev);
+      const visibleDur=Math.min(ev.dur,Math.max(0,(CAL_E*60)-ev.startMin));
+      const top=(ev.startMin-CAL_S*60)/60*HR_H;
+      const ht=folded ? 50 : Math.max(visibleDur/60*HR_H-7,42);
+      const el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' sleep-folded':'');
+      el.style.cssText=`top:${top}px;height:${ht}px;left:94px;right:12px;background:color-mix(in srgb, ${c} 14%, #F9F4EA);border-left-color:${c};color:${c}`;
+      const tc=ev.tasks?.filter(t=>t.done).length||0, ta=ev.tasks?.length||0;
+      el.innerHTML=`<div class="ev-n">${esc(ev.title)}</div>
+        <div class="ev-t">${timeTextFinal(ev)}</div>
+        ${sph?`<div class="ev-s">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''}</div>`:''}
+        ${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}
+        <div class="ev-check" onclick="toggleEventDone('${dk}','${ev.id}',event)">${ev.done?'✓':''}</div>`;
+      el.onclick=e=>{ if(!e.target.classList.contains('ev-check')) openDet(ev,dk); };
+      tg.appendChild(el);
+    });
+    tg.querySelectorAll('.hcol').forEach((col,i)=>{col.onclick=()=>{const t=p2(CAL_S+i)+':00';document.getElementById('sh-st').value=t;openAdd(t);};});
+    document.querySelectorAll('.fab').forEach(b=>{b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+    document.querySelectorAll('#lb-plus-add').forEach(b=>b.remove());
+  };
+
+  /* Detail sheet time also shows next-day end correctly */
+  const oldOpenDetFinalRequest=openDet;
+  openDet=function(ev,dk){
+    oldOpenDetFinalRequest(ev,dk);
+    try{
+      if(isSleepByEventFinal(ev) || ev.dur>1440-ev.startMin){
+        const box=document.getElementById('det-in');
+        if(box) box.innerHTML=box.innerHTML.replace(/\d{2}:\d{2}\s*[–-]\s*\d{2}:\d{2}/, timeTextFinal(ev));
+      }
+    }catch(e){}
+  };
+
+  setTimeout(()=>{try{renderCal();}catch(e){}},100);
+})();
+</script>
+<!-- FINAL REQUEST: HIDE ADD TITLE + SLEEP 23-06 FOLDED END -->
+
+
+
+<!-- FINAL FIX: SLEEP COVERED AND FOLDED START -->
+<style>
+/* Sleep coverage stays over all sleep hours, while the visible sleep card stays folded/compact */
+.sleep-coverage{
+  position:absolute;
+  left:94px;
+  right:12px;
+  border-radius:13px;
+  background:#EAF2FF !important;
+  border-left:5px solid #3B82F6 !important;
+  opacity:.62;
+  pointer-events:none;
+  z-index:4;
+}
+.ev.sleep-overnight,
+.ev.sleep-carry{
+  height:50px !important;
+  z-index:12 !important;
+}
+</style>
+<script>
+(function(){
+  function _prevKeyFold(k){
+    var p=k.split('-').map(Number);
+    var d=new Date(p[0],p[1]-1,p[2]);
+    d.setDate(d.getDate()-1);
+    return dkey(d);
+  }
+  function _isSleepFold(ev){
+    try{
+      var sph=ev&&ev.sphId?gsp(ev.sphId):null;
+      var txt=((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'');
+      txt=txt.toLowerCase();
+      return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.includes('sleep')));
+    }catch(e){return !!(ev&&ev.band==='sleep');}
+  }
+  function _endFold(ev){return (ev.startMin+ev.dur)%1440;}
+  function _fullTimeFold(ev){return tm(ev.startMin)+' – '+tm(_endFold(ev));}
+  function _spillsFold(ev){return ev&&_isSleepFold(ev)&&ev.startMin+ev.dur>1440;}
+  function _itemsFold(k){
+    var out=(getDay(k)||[]).map(function(ev){return {ev:ev,sourceKey:k,carry:false,displayStart:ev.startMin,displayDur:ev.dur};});
+    var pk=_prevKeyFold(k);
+    (getDay(pk)||[]).forEach(function(ev){
+      if(_spillsFold(ev)){
+        var spill=(ev.startMin+ev.dur)-1440;
+        if(spill>0) out.unshift({ev:ev,sourceKey:pk,carry:true,displayStart:0,displayDur:spill});
+      }
+    });
+    return out;
+  }
+
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'), items=_itemsFold(dk), now=new Date();
+    var nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    var html='';
+    for(var h=CAL_S;h<CAL_E;h++){
+      var isSleepHour=(h<6||h>=23), z=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf'), b=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf');
+      html+='<div class="hr z'+z+(isSleepHour?' sleep-hour':'')+'"><div class="hband '+b+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(h)+'</div></div><div class="hcol" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+    }
+    tg.innerHTML=html;
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      var nl=document.createElement('div');
+      nl.className='nowl';
+      nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';
+      nl.innerHTML='<div class="nowd"></div>';
+      tg.appendChild(nl);
+    }
+
+    items.forEach(function(item){
+      var ev=item.ev, sph=gsp(ev.sphId), sleep=_isSleepFold(ev);
+      var c=sleep?'#3B82F6':(sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');
+      var top=(item.displayStart-CAL_S*60)/60*HR_H;
+      var overnight=_spillsFold(ev);
+      var folded=sleep&&overnight;
+      var visible=Math.min(item.displayDur,(CAL_E*60)-item.displayStart);
+
+      /* Full-hour coverage behind the compact folded sleep card */
+      if(folded){
+        var cover=document.createElement('div');
+        cover.className='sleep-coverage';
+        cover.style.top=top+'px';
+        cover.style.height=Math.max(visible/60*HR_H-3,42)+'px';
+        tg.appendChild(cover);
+      }
+
+      var ht=folded?50:Math.max(visible/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' sleep-overnight':'')+(item.carry?' sleep-carry':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      var tc=(ev.tasks||[]).filter(function(t){return t.done;}).length, ta=(ev.tasks||[]).length;
+      var timeText=sleep&&overnight?_fullTimeFold(ev):(tm(item.displayStart)+' – '+tm(item.displayStart+item.displayDur));
+      el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+timeText+(sleep&&overnight?' ('+Math.round(ev.dur/60*10)/10+' h)':'')+'</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+dk+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,item.sourceKey);};
+      tg.appendChild(el);
+    });
+
+    tg.querySelectorAll('.hcol').forEach(function(col,i){
+      col.onclick=function(){var t=p2(CAL_S+i)+':00';document.getElementById('sh-st').value=t;openAdd(t);};
+    });
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+  setTimeout(function(){try{renderCal();}catch(e){}},80);
+})();
+</script>
+<!-- FINAL FIX: SLEEP COVERED AND FOLDED END -->
+
+
+
+<!-- FINAL TRUE FOLDED SLEEP PATCH START -->
+<style>
+/* Sleep hours stay covered, but the sleep card itself is compact/folded */
+.hr.sleep-hour,
+.hr.zsl{
+  background:#EEF4FF !important;
+}
+.hr.sleep-hour .hband,
+.hband.sl{
+  background:#3B82F6 !important;
+}
+.ev.sleep-overnight,
+.ev.sleep-carry{
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  overflow:hidden !important;
+  z-index:16 !important;
+}
+.ev.sleep-carry{
+  top:0 !important;
+}
+</style>
+<script>
+(function(){
+  function prevKey(k){var p=k.split('-').map(Number);var d=new Date(p[0],p[1]-1,p[2]);d.setDate(d.getDate()-1);return dkey(d);}
+  function isSleep(ev){
+    try{
+      var sph=ev&&ev.sphId?gsp(ev.sphId):null;
+      var txt=((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'');
+      txt=txt.toLowerCase();
+      return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.includes('sleep')));
+    }catch(e){return !!(ev&&ev.band==='sleep');}
+  }
+  function spills(ev){return ev&&isSleep(ev)&&ev.startMin+ev.dur>1440;}
+  function endMin(ev){return (ev.startMin+ev.dur)%1440;}
+  function fullTime(ev){return tm(ev.startMin)+' – '+tm(endMin(ev));}
+  function itemsForDay(k){
+    var out=(getDay(k)||[]).map(function(ev){return {ev:ev,sourceKey:k,carry:false,displayStart:ev.startMin,displayDur:ev.dur};});
+    (getDay(prevKey(k))||[]).forEach(function(ev){
+      if(spills(ev)){
+        var spill=(ev.startMin+ev.dur)-1440;
+        if(spill>0) out.unshift({ev:ev,sourceKey:prevKey(k),carry:true,displayStart:0,displayDur:spill});
+      }
+    });
+    return out;
+  }
+
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg');
+    var items=itemsForDay(dk);
+    var now=new Date();
+    var nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd);
+    var isToday=selDate.toDateString()===now.toDateString();
+    var html='';
+    for(var h=CAL_S;h<CAL_E;h++){
+      var isSleepHour=(h<6||h>=23);
+      var z=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf');
+      var b=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf');
+      html+='<div class="hr z'+z+(isSleepHour?' sleep-hour':'')+'"><div class="hband '+b+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(h)+'</div></div><div class="hcol" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+    }
+    tg.innerHTML=html;
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      var nl=document.createElement('div');
+      nl.className='nowl';
+      nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';
+      nl.innerHTML='<div class="nowd"></div>';
+      tg.appendChild(nl);
+    }
+    items.forEach(function(item){
+      var ev=item.ev;
+      var sph=gsp(ev.sphId);
+      var sleep=isSleep(ev);
+      var c=sleep?'#3B82F6':(sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');
+      var overnight=spills(ev);
+      var folded=sleep&&overnight;
+      var visible=Math.min(item.displayDur,(CAL_E*60)-item.displayStart);
+      var top=(item.displayStart-CAL_S*60)/60*HR_H;
+      var ht=folded?50:Math.max(visible/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' sleep-overnight':'')+(item.carry?' sleep-carry':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      var tc=(ev.tasks||[]).filter(function(t){return t.done;}).length;
+      var ta=(ev.tasks||[]).length;
+      var timeText=(sleep&&overnight)?fullTime(ev):(tm(item.displayStart)+' – '+tm(item.displayStart+item.displayDur));
+      el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+timeText+((sleep&&overnight)?' ('+Math.round(ev.dur/60*10)/10+' h)':'')+'</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+dk+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,item.sourceKey);};
+      tg.appendChild(el);
+    });
+    tg.querySelectorAll('.hcol').forEach(function(col,i){
+      col.onclick=function(){var t=p2(CAL_S+i)+':00';document.getElementById('sh-st').value=t;openAdd(t);};
+    });
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+  setTimeout(function(){try{renderCal();}catch(e){}},80);
+})();
+</script>
+<!-- FINAL TRUE FOLDED SLEEP PATCH END -->
+
+
+
+<!-- FINAL EXACT SLEEP FOLD 23-06 PATCH START -->
+<style>
+/* When sleep is 23–06, hide the inside hours and show a compact folded row. */
+.sleep-fold-row{
+  display:flex;
+  align-items:flex-start;
+  position:relative;
+  min-height:62px;
+  background:#EEF4FF !important;
+}
+.sleep-fold-row .hband{background:#3B82F6 !important;}
+.sleep-fold-row .hlbl-n{color:#8D7C68 !important;}
+.sleep-fold-card{
+  position:absolute;
+  left:94px;
+  right:12px;
+  top:6px;
+  height:50px;
+  border-radius:18px;
+  border-left:6px solid #3B82F6;
+  background:#EAF2FF;
+  color:#3B82F6;
+  padding:8px 58px 8px 16px;
+  box-shadow:0 2px 10px rgba(59,130,246,.10);
+  overflow:hidden;
+  cursor:pointer;
+}
+.sleep-fold-card .ev-n{font-size:20px !important;line-height:1.05 !important;max-width:48% !important;}
+.sleep-fold-card .ev-t{right:58px !important;font-size:17px !important;}
+.sleep-fold-card .ev-s{max-width:48% !important;}
+.sleep-fold-card .ev-check{right:14px !important;}
+.hr.sleep-hidden-hour{display:none !important;}
+</style>
+<script>
+(function(){
+  function _keyMinusOne(k){var p=k.split('-').map(Number);var d=new Date(p[0],p[1]-1,p[2]);d.setDate(d.getDate()-1);return dkey(d);}
+  function _isSleep(ev){try{var sph=ev&&ev.sphId?gsp(ev.sphId):null;var txt=(((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'')).toLowerCase();return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.includes('sleep')));}catch(e){return !!(ev&&ev.band==='sleep');}}
+  function _end(ev){return (ev.startMin+ev.dur)%1440;}
+  function _isOvernightSleep(ev){return ev&&_isSleep(ev)&&ev.startMin+ev.dur>1440;}
+  function _fullTime(ev){return tm(ev.startMin)+' – '+tm(_end(ev));}
+  function _prevSleepForDay(k){var pk=_keyMinusOne(k);return (getDay(pk)||[]).find(function(ev){return _isOvernightSleep(ev)&&((ev.startMin+ev.dur)-1440)>0;})||null;}
+  function _todaySleepStart(k){return (getDay(k)||[]).find(function(ev){return _isOvernightSleep(ev);})||null;}
+  function _cardHTML(ev,dk,sourceKey){var sph=gsp(ev.sphId);var ta=(ev.tasks||[]).length,tc=(ev.tasks||[]).filter(function(t){return t.done;}).length;return '<div class="sleep-fold-card ev'+(ev.done?' done':'')+'" onclick="openDet((getDay(\''+sourceKey+'\')||[]).find(function(x){return x.id===\''+ev.id+'\'}),\''+sourceKey+'\')">'+
+    '<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+_fullTime(ev)+' ('+Math.round(ev.dur/60*10)/10+' h)</div>'+
+    (sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+
+    (ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+
+    '<div class="ev-check" onclick="toggleEventDone(\''+sourceKey+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div></div>';}
+
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'); if(!tg)return;
+    var now=new Date(), nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    var prevSleep=_prevSleepForDay(dk);
+    var todaySleep=_todaySleepStart(dk);
+    var html='';
+
+    /* If yesterday has sleep 23–06, show only 23 and then 06. Hide 00–05 completely. */
+    if(prevSleep){
+      var pk=_keyMinusOne(dk);
+      html+='<div class="sleep-fold-row"><div class="hband sl"></div><div class="hlbl"><div class="hlbl-n">23</div></div><div class="hcol" style="min-height:62px"></div>'+_cardHTML(prevSleep,dk,pk)+'</div>';
+      for(var h=6;h<CAL_E;h++){
+        var z=(h>=23)?'sl':(h>=9&&h<18?'wk':'lf'), b=(h>=23)?'sl':(h>=9&&h<18?'wk':'lf');
+        html+='<div class="hr z'+z+'"><div class="hband '+b+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(h)+'</div></div><div class="hcol" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+      }
+    }else{
+      for(var h2=CAL_S;h2<CAL_E;h2++){
+        var isSleepHour=(h2<6||h2>=23), z2=isSleepHour?'sl':(h2>=9&&h2<18?'wk':'lf'), b2=isSleepHour?'sl':(h2>=9&&h2<18?'wk':'lf');
+        html+='<div class="hr z'+z2+(isSleepHour?' sleep-hour':'')+'"><div class="hband '+b2+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(h2)+'</div></div><div class="hcol" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+      }
+    }
+
+    tg.innerHTML=html;
+
+    /* Normal events: do not draw the 23–06 sleep as a tall block. It is shown by the folded row only. */
+    var events=(getDay(dk)||[]).filter(function(ev){return !(_isOvernightSleep(ev));});
+    events.forEach(function(ev){
+      if(prevSleep && ev.startMin<360)return; /* 00–05 is folded away */
+      var sph=gsp(ev.sphId), sleep=_isSleep(ev), c=sleep?'#3B82F6':(sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');
+      var visualStart=ev.startMin;
+      var top;
+      if(prevSleep){ top=62+((visualStart-360)/60*HR_H); }
+      else { top=(visualStart-CAL_S*60)/60*HR_H; }
+      var visible=Math.min(ev.dur,(CAL_E*60)-ev.startMin);
+      var ht=Math.max(visible/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      var ta=(ev.tasks||[]).length, tc=(ev.tasks||[]).filter(function(t){return t.done;}).length;
+      el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+tm(ev.startMin)+' – '+tm((ev.startMin+ev.dur)%1440)+'</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+dk+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,dk);};
+      tg.appendChild(el);
+    });
+
+    /* If today starts sleep 23–06, put compact folded card at 23, not a tall block. */
+    if(todaySleep){
+      var top23=prevSleep ? 62+((1380-360)/60*HR_H) : (1380/60*HR_H);
+      var holder=document.createElement('div');
+      holder.innerHTML=_cardHTML(todaySleep,dk,dk);
+      var card=holder.firstChild;
+      card.style.top=(top23+6)+'px';
+      tg.appendChild(card);
+    }
+
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      var nowTop=prevSleep ? (nMin<360?31:62+((nMin-360)/60*HR_H)) : ((nMin-CAL_S*60)/60*HR_H);
+      var nl=document.createElement('div');nl.className='nowl';nl.style.top=nowTop+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);
+    }
+
+    tg.querySelectorAll('.hcol').forEach(function(col,i){col.onclick=function(){
+      var label=col.parentNode.querySelector('.hlbl-n');
+      var h=label?parseInt(label.textContent,10):9;
+      if(isNaN(h))h=9;
+      var t=p2(h)+':00';
+      document.getElementById('sh-st').value=t;
+      openAdd(t);
+    };});
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+
+  setTimeout(function(){try{renderCal();}catch(e){}},80);
+})();
+</script>
+<!-- FINAL EXACT SLEEP FOLD 23-06 PATCH END -->
+
+
+
+<!-- FINAL REAL SLEEP 23-06 FOLD/JUMP PATCH START -->
+<style>
+/* For an overnight sleep block, do not show the inside hours 00-05. */
+.hr.sleep-hidden-hour{display:none !important;}
+.sleep-fold-jump{
+  display:flex;align-items:flex-start;position:relative;min-height:70px;
+}
+.sleep-fold-jump .hband{background:#3B82F6 !important;}
+.sleep-fold-jump .hlbl-n{color:#8D7C68 !important;}
+.sleep-fold-note{
+  flex:1;border-top:1.5px solid var(--ln);min-height:70px;position:relative;
+  display:flex;align-items:center;color:#3B82F6;font-size:18px;
+}
+.sleep-fold-note::before{
+  content:'▼ folded';
+  margin-left:18px;
+  opacity:.75;
+  font-family:'Cormorant Garamond', Georgia, serif;
+}
+.ev.sleep-fold-card{
+  height:50px !important;
+  min-height:50px !important;
+}
+</style>
+<script>
+(function(){
+  function prevKey(k){var p=k.split('-').map(Number),d=new Date(p[0],p[1]-1,p[2]);d.setDate(d.getDate()-1);return dkey(d);}
+  function isSleep(ev){try{var sph=ev&&ev.sphId?gsp(ev.sphId):null;var txt=(((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'')).toLowerCase();return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.indexOf('sleep')>-1));}catch(e){return !!(ev&&ev.band==='sleep');}}
+  function endMin(ev){return (ev.startMin+(ev.dur||0))%1440;}
+  function spills(ev){return ev&&isSleep(ev)&&(ev.startMin+(ev.dur||0)>1440);}
+  function fullTime(ev){return tm(ev.startMin)+' – '+tm(endMin(ev));}
+  function hasSleep23to06Today(k){return (getDay(k)||[]).some(function(ev){return isSleep(ev)&&ev.startMin===23*60&&endMin(ev)===6*60&&spills(ev);});}
+  function carrySleepFromYesterday(k){var pk=prevKey(k);return (getDay(pk)||[]).filter(function(ev){return isSleep(ev)&&ev.startMin===23*60&&endMin(ev)===6*60&&spills(ev);});}
+  function rowTop(rowIndex){return rowIndex*HR_H;}
+
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg');
+    var evts=getDay(dk)||[];
+    var carries=carrySleepFromYesterday(dk);
+    var hasOvernight=hasSleep23to06Today(dk);
+    var now=new Date(), nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    var html='', hourRowIndex={};
+
+    /* Normal day: 00-23. Sleep-fold day: hide 00-05 and insert 06 directly after 23. */
+    var hours=[];
+    for(var h=0;h<24;h++) hours.push(h);
+    if(hasOvernight){hours=hours.filter(function(h){return h<0||h>5;});}
+
+    hours.forEach(function(h,idx){
+      hourRowIndex[h]=idx;
+      var isSleepHour=(h<6||h>=23), z=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf'), b=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf');
+      html+='<div class="hr z'+z+'"><div class="hband '+b+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(h)+'</div></div><div class="hcol" data-hour="'+h+'" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+      if(hasOvernight && h===23){
+        hourRowIndex[6]=idx+1;
+        html+='<div class="sleep-fold-jump"><div class="hband sl"></div><div class="hlbl"><div class="hlbl-n">06</div></div><div class="sleep-fold-note"></div></div>';
+      }
+    });
+
+    tg.innerHTML=html;
+
+    if(isToday && !hasOvernight && nMin>=0 && nMin<1440){
+      var nl=document.createElement('div');nl.className='nowl';nl.style.top=(nMin/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);
+    }
+
+    var items=evts.map(function(ev){return {ev:ev,sourceKey:dk,carry:false,displayStart:ev.startMin,displayDur:ev.dur};});
+    carries.forEach(function(ev){items.unshift({ev:ev,sourceKey:prevKey(dk),carry:true,displayStart:0,displayDur:360});});
+
+    items.forEach(function(item){
+      var ev=item.ev, sleep=isSleep(ev), sph=gsp(ev.sphId), c=sleep?'#3B82F6':(sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');
+      var foldedStartDay=sleep && hasOvernight && ev.startMin===23*60 && endMin(ev)===6*60 && !item.carry;
+      var foldedCarry=sleep && item.carry && endMin(ev)===6*60;
+      var displayHour=Math.floor((foldedStartDay?23:(foldedCarry?6:item.displayStart))/60);
+      if(hourRowIndex[displayHour]===undefined) return;
+      var top=rowTop(hourRowIndex[displayHour]);
+      var ht=(foldedStartDay||foldedCarry)?50:Math.max(Math.min(item.displayDur,1440-item.displayStart)/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+((foldedStartDay||foldedCarry)?' sleep-fold-card':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      var tc=(ev.tasks||[]).filter(function(t){return t.done;}).length, ta=(ev.tasks||[]).length;
+      var timeText=(sleep&&(spills(ev)||item.carry))?fullTime(ev):(tm(item.displayStart)+' – '+tm(item.displayStart+item.displayDur));
+      el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+timeText+'</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+item.sourceKey+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,item.sourceKey);};
+      tg.appendChild(el);
+    });
+
+    tg.querySelectorAll('.hcol').forEach(function(col){col.onclick=function(){var h=Number(col.getAttribute('data-hour'));var t=p2(h)+':00';document.getElementById('sh-st').value=t;openAdd(t);};});
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+
+  setTimeout(function(){try{renderCal();}catch(e){}},100);
+})();
+</script>
+<!-- FINAL REAL SLEEP 23-06 FOLD/JUMP PATCH END -->
+
+
+
+<!-- FINAL ALL TASKS HIDE INSIDE HOURS PATCH START -->
+<style>
+/* Any task longer than one hour folds the hour labels inside it.
+   Example: 16–18 shows 16, folded, 18; hour 17 is hidden. */
+.any-fold-row{
+  display:flex !important;
+  align-items:flex-start !important;
+  position:relative !important;
+  min-height:70px !important;
+  background:transparent !important;
+}
+.any-fold-row .hband{opacity:.65 !important;}
+.any-fold-note{
+  flex:1 !important;
+  border-top:1.5px solid var(--ln) !important;
+  min-height:70px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  color:#8A7860 !important;
+  font-size:17px !important;
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+}
+.any-fold-note::before{content:'▼ folded' !important; opacity:.72 !important;}
+.ev.any-fold-card{
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  overflow:hidden !important;
+  z-index:20 !important;
+}
+</style>
+<script>
+(function(){
+  function _p2(n){return String(n).padStart(2,'0');}
+  function _prevKey(k){var p=k.split('-').map(Number);var d=new Date(p[0],p[1]-1,p[2]);d.setDate(d.getDate()-1);return dkey(d);}
+  function _end(ev){return (ev.startMin+(ev.dur||0))%1440;}
+  function _isOvernight(ev){return !!(ev && ev.dur>0 && ev.startMin+(ev.dur||0)>1440);}
+  function _band(ev){try{var sph=ev&&ev.sphId?gsp(ev.sphId):null;return (sph&&sph.band)||ev.band||'life';}catch(e){return ev.band||'life';}}
+  function _color(ev){try{var sph=ev&&ev.sphId?gsp(ev.sphId):null;return sph?sph.color:((BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');}catch(e){return 'var(--gd)';}}
+  function _rowClassForBand(b){return b==='sleep'?'sl':(b==='work'?'wk':'lf');}
+  function _defaultBandForHour(h){return (h<6||h>=23)?'sleep':(h>=9&&h<18?'work':'life');}
+  function _time(ev){return tm(ev.startMin)+' – '+tm(_end(ev));}
+  function _durationText(ev){return ' ('+Math.round((ev.dur||0)/60*10)/10+' h)';}
+  function _makeRow(h, bandOverride){
+    var band=bandOverride||_defaultBandForHour(h), z=_rowClassForBand(band);
+    return '<div class="hr z'+z+'"><div class="hband '+z+'"></div><div class="hlbl"><div class="hlbl-n">'+_p2(h)+'</div></div><div class="hcol" data-hour="'+h+'" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+  }
+  function _makeFoldRow(h, band){
+    var z=_rowClassForBand(band||_defaultBandForHour(h));
+    return '<div class="any-fold-row"><div class="hband '+z+'"></div><div class="hlbl"><div class="hlbl-n">'+_p2(h)+'</div></div><div class="any-fold-note hcol" data-hour="'+h+'"></div></div>';
+  }
+  function _eventHtml(ev, sourceKey, folded){
+    var sph=gsp(ev.sphId), ta=(ev.tasks||[]).length, tc=(ev.tasks||[]).filter(function(t){return t.done;}).length;
+    return '<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+_time(ev)+(folded?_durationText(ev):'')+'</div>'+ (sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'') + (ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'') + '<div class="ev-check" onclick="toggleEventDone(\''+sourceKey+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+  }
+  function _foldInfo(ev){
+    if(!ev || !ev.dur || ev.dur<=60) return null;
+    var startH=Math.floor(ev.startMin/60), endH=Math.floor(_end(ev)/60);
+    if(_isOvernight(ev)){
+      return {ev:ev,startH:startH,endH:endH,hidden:function(h){return h<endH || h>startH;}};
+    }
+    if(startH+1<endH){
+      return {ev:ev,startH:startH,endH:endH,hidden:function(h){return h>startH && h<endH;}};
+    }
+    return null;
+  }
+  function _firstCarry(k){
+    var pk=_prevKey(k);
+    var list=(getDay(pk)||[]).filter(function(ev){return _isOvernight(ev)&&((ev.startMin+ev.dur)-1440)>0;});
+    if(!list.length) return null;
+    return {ev:list[0],sourceKey:pk,carry:true};
+  }
+  function _mainFoldsForDay(k){
+    var folds=[];
+    (getDay(k)||[]).forEach(function(ev){var f=_foldInfo(ev); if(f) folds.push(f);});
+    folds.sort(function(a,b){return a.startH-b.startH;});
+    return folds;
+  }
+
+  /* Add any start/end as one task. If end is earlier, it is next day. */
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    var sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    var eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    if(eMin===sMin){toast('End time must be different');return;}
+    var dur=eMin>sMin ? eMin-sMin : 1440-sMin+eMin;
+    var tasks=(aSel.activity.tasks||[]).filter(function(t){return aChecked[t.id];}).map(function(t){return {id:uid(),sourceTaskId:t.id,text:t.text,done:false};});
+    var blockTitle=tasks.length===1?tasks[0].text:(tasks.length>1?tasks[0].text+' + '+(tasks.length-1)+' more':aSel.activity.title);
+    var inp=document.getElementById('lb-files');
+    var files=inp&&inp.files?Array.from(inp.files).map(function(f){return {name:f.name,size:f.size,type:f.type||''};}):[];
+    getDay(selDk()).push({id:uid(),title:blockTitle,activityTitle:aSel.activity.title,sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,band:aSel.sphere.band,startMin:sMin,dur:dur,tasks:tasks,done:false,files:files});
+    save();csh(null,'sh-add');renderCal();toast('Block added');
+  };
+
+  saveEditDet=function(){
+    var ev=getDay(dDk).find(function(e){return e.id===dId;});if(!ev)return;
+    var title=(document.getElementById('det-title')&&document.getElementById('det-title').value||'').trim();
+    var activity=(document.getElementById('det-activity')&&document.getElementById('det-activity').value||'').trim();
+    var st=(document.getElementById('det-start')&&document.getElementById('det-start').value)||'09:00';
+    var en=(document.getElementById('det-end')&&document.getElementById('det-end').value)||'10:00';
+    var sMin=toMin(st), eMin=toMin(en);
+    if(!title){toast('Title is required');return;}
+    if(eMin===sMin){toast('End time must be different');return;}
+    ev.title=title; ev.activityTitle=activity; ev.startMin=sMin; ev.dur=eMin>sMin?eMin-sMin:1440-sMin+eMin;
+    if(ev.tasks&&ev.tasks.length){ev.tasks=ev.tasks.map(function(t,i){var el=document.getElementById('det-task-'+i);return Object.assign({},t,{text:((el&&el.value)||t.text).trim()||t.text});});}
+    save();openDet(ev,dDk);renderCal();toast('Block updated');
+  };
+
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'); if(!tg)return;
+    var carry=_firstCarry(dk);
+    var folds=_mainFoldsForDay(dk);
+    var rowMap={}, rows=[], html='', skip={}, foldAfter={};
+
+    if(carry){
+      var cf=_foldInfo(carry.ev);
+      var cBand=_band(carry.ev);
+      rows.push({h:Math.floor(carry.ev.startMin/60),kind:'hour',band:cBand,virtual:true});
+      rows.push({h:cf?cf.endH:Math.floor(_end(carry.ev)/60),kind:'fold',band:cBand,carry:true});
+      for(var ch=(cf?cf.endH:Math.floor(_end(carry.ev)/60))+1; ch<24; ch++) rows.push({h:ch,kind:'hour'});
+    }else{
+      folds.forEach(function(f){
+        var band=_band(f.ev);
+        foldAfter[f.startH]={h:f.endH,band:band,ev:f.ev};
+        for(var h=0;h<24;h++){ if(f.hidden(h)) skip[h]=true; }
+        skip[f.endH]=true; /* end hour is shown as the folded row, not duplicated */
+      });
+      for(var h0=0;h0<24;h0++){
+        if(skip[h0] && !foldAfter[h0]) continue;
+        rows.push({h:h0,kind:'hour'});
+        if(foldAfter[h0]) rows.push({h:foldAfter[h0].h,kind:'fold',band:foldAfter[h0].band,ev:foldAfter[h0].ev});
+      }
+    }
+
+    rows.forEach(function(r,idx){
+      if(rowMap[r.h]===undefined) rowMap[r.h]=idx;
+      html += r.kind==='fold' ? _makeFoldRow(r.h,r.band) : _makeRow(r.h,r.band);
+    });
+    tg.innerHTML=html;
+
+    var items=(getDay(dk)||[]).map(function(ev){return {ev:ev,sourceKey:dk,carry:false};});
+    if(carry) items.unshift(carry);
+    items.forEach(function(item){
+      var ev=item.ev, f=_foldInfo(ev), folded=!!f || !!item.carry;
+      var displayHour=item.carry?Math.floor(carry.ev.startMin/60):Math.floor(ev.startMin/60);
+      if(!item.carry && carry && ev.startMin < _end(carry.ev)) return;
+      if(rowMap[displayHour]===undefined) return;
+      var c=_color(ev), top=rowMap[displayHour]*HR_H + (folded?0:((ev.startMin%60)/60*HR_H));
+      var ht=folded?50:Math.max(Math.min(ev.dur,1440-ev.startMin)/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' any-fold-card':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      el.innerHTML=_eventHtml(ev,item.sourceKey,folded);
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,item.sourceKey);};
+      tg.appendChild(el);
+    });
+
+    var now=new Date(), nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    if(isToday && !folds.length && !carry && nMin>=0 && nMin<1440){
+      var nl=document.createElement('div');nl.className='nowl';nl.style.top=(nMin/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);
+    }
+    tg.querySelectorAll('.hcol').forEach(function(col){col.onclick=function(){var h=Number(col.getAttribute('data-hour'));document.getElementById('sh-st').value=_p2(h)+':00';openAdd(_p2(h)+':00');};});
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+  setTimeout(function(){try{renderCal();}catch(e){}},100);
+})();
+</script>
+<!-- FINAL ALL TASKS HIDE INSIDE HOURS PATCH END -->
+
+
+<!-- FINAL DELETE BUTTON NEXT TO EDIT + DUSTY RED START -->
+<style>
+:root{ --delete-soft:#A97B75; }
+/* delete color: soft dusty rosemary red, matching cream/gold app */
+.sh-delete-mini,
+.grm,
+.delete-sphere-small,
+.d-btn.d-del{
+  color:var(--delete-soft) !important;
+}
+.d-btn.d-del{
+  background:#F3E7E4 !important;
+  border:1.5px solid rgba(169,123,117,.35) !important;
+  box-shadow:none !important;
+}
+.d-btn.d-del:active{transform:scale(.95);}
+</style>
+<script>
+(function(){
+  function _deleteColor(){return '#A97B75';}
+  function _eventTimeText(ev){return tm(ev.startMin)+' – '+tm((ev.startMin+(ev.dur||0))%1440);}
+  function _deleteCalendarBlock(){
+    try{
+      var ev=getDay(dDk).find(function(e){return e.id===dId;});
+      if(!ev)return;
+      if(!confirm('Delete "'+(ev.title||'this block')+'"?'))return;
+      detRm();
+      toast('Deleted');
+    }catch(e){}
+  }
+  window.deleteCalendarBlockFinal=_deleteCalendarBlock;
+
+  /* Detail sheet: Edit + Delete side by side */
+  openDet=function(ev,dk){
+    dDk=dk; dId=ev.id;
+    var sph=gsp(ev.sphId), c=sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)';
+    var ta=(ev.tasks||[]).length;
+    var taskHtml=ta?'<div style="font-size:15px;font-weight:400;text-transform:uppercase;letter-spacing:.12em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">'+
+      (ev.tasks||[]).map(function(t,i){return '<div class="dtask-row" onclick="togDT('+i+')"><div class="dtask-chk'+(t.done?' done':'')+'" style="border-color:'+c+(t.done?';background:'+c:'')+';color:'+(t.done?'#fff':'transparent')+'">'+(t.done?'✓':'')+'</div><div style="flex:1;font-size:20px;font-weight:400;color:#2A1C12'+(t.done?';opacity:.45':'')+'">'+esc(t.text)+'</div></div>';}).join('')+
+      '</div>':'';
+    document.getElementById('det-in').innerHTML=
+      '<div style="margin-bottom:20px"><div style="font-family:\'Cormorant Garamond\',serif;font-size:30px;font-weight:400;color:#2A1C12;margin-bottom:8px">'+esc(ev.title)+'</div>'+ 
+      '<div style="font-family:\'Cormorant Garamond\',serif;font-size:21px;color:var(--mt)">'+_eventTimeText(ev)+' · '+(Math.round((ev.dur||0)/60*10)/10)+'h</div>'+ 
+      (sph?'<div style="font-size:18px;margin-top:6px;color:'+c+';font-weight:400">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+' · '+(BAND[sph.band]?BAND[sph.band].label:'')+'</div>':'')+
+      (ev.activityTitle?'<div style="font-size:17px;margin-top:4px;color:var(--mt)">Activity: '+esc(ev.activityTitle)+'</div>':'')+'</div>'+taskHtml+
+      '<div class="d-act"><button class="d-btn d-ok" style="background:'+c+'" onclick="openEditDet()">Edit</button><button class="d-btn d-del" onclick="deleteCalendarBlockFinal()">Delete</button></div>';
+    document.getElementById('sh-det').classList.add('O');
+  };
+
+  /* Edit sheet: Save + Delete, no Cancel */
+  openEditDet=function(){
+    var ev=getDay(dDk).find(function(e){return e.id===dId;}); if(!ev)return;
+    var sph=gsp(ev.sphId), c=sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)';
+    var start=tm(ev.startMin), end=tm((ev.startMin+(ev.dur||0))%1440);
+    var tasks=(ev.tasks&&ev.tasks.length)?'<div class="sh-lbl">Tasks in this block</div><div class="sh-tasks">'+ev.tasks.map(function(t,i){return '<div class="sh-tr"><input class="sh-ti" id="det-task-'+i+'" value="'+esc(t.text)+'"><div class="sh-tx" style="color:'+_deleteColor()+'" onclick="removeDetTask('+i+')">×</div></div>';}).join('')+'</div>':'';
+    document.getElementById('det-in').innerHTML='<div class="sh-title" style="color:'+c+'">Edit calendar block</div><div class="sh-sub">Change the task/activity name and exact time.</div><div class="sh-lbl">Title shown in calendar</div><input class="sh-inp" id="det-title" value="'+esc(ev.title)+'" style="margin-bottom:14px"><div class="sh-lbl">Activity</div><input class="sh-inp" id="det-activity" value="'+esc(ev.activityTitle||'')+'" placeholder="Activity name" style="margin-bottom:14px"><div class="sh-row"><div><div class="sh-lbl">Start</div><input type="time" class="sh-inp" id="det-start" value="'+start+'"></div><div><div class="sh-lbl">End</div><input type="time" class="sh-inp" id="det-end" value="'+end+'"></div></div>'+tasks+'<div class="d-act"><button class="d-btn d-ok" style="background:'+c+'" onclick="saveEditDet()">Save</button><button class="d-btn d-del" onclick="deleteCalendarBlockFinal()">Delete</button></div>';
+  };
+
+  setTimeout(function(){
+    try{document.querySelectorAll('.sh-delete-mini,.grm,.delete-sphere-small').forEach(function(x){x.style.color=_deleteColor();});}catch(e){}
+  },100);
+})();
+</script>
+<!-- FINAL DELETE BUTTON NEXT TO EDIT + DUSTY RED END -->
+
+
+
+<!-- FINAL REAL DELETE FIX START -->
+<style>
+:root{
+  --edit-soft-final:#A8B895;
+  --delete-soft-final:#A97B75;
+  --delete-soft-final-dark:#8F625D;
+}
+.d-act.detail-actions-real{
+  display:flex !important;
+  gap:12px !important;
+  margin-top:24px !important;
+}
+.d-act.detail-actions-real .d-btn{
+  flex:1 !important;
+  border-radius:100px !important;
+  padding:16px 12px !important;
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-size:22px !important;
+  font-weight:400 !important;
+  color:#2A1C12 !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+.d-act.detail-actions-real .detail-edit-btn{ background:var(--edit-soft-final) !important; }
+.d-act.detail-actions-real .detail-delete-btn{ background:var(--delete-soft-final) !important; }
+.d-act.detail-actions-real .detail-delete-btn:active{ background:var(--delete-soft-final-dark) !important; }
+.sh-delete-mini,.grm{ color:var(--delete-soft-final) !important; }
+</style>
+<script>
+(function(){
+  function _safeEscFinal(s){
+    try{return esc(s);}catch(e){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+  }
+  function _endFinal(ev){ return (Number(ev.startMin||0)+Number(ev.dur||0))%1440; }
+  function _timeFinal(ev){ return tm(Number(ev.startMin||0))+' – '+tm(_endFinal(ev)); }
+  function _hoursFinal(ev){ return Math.round((Number(ev.dur||0)/60)*10)/10; }
+  function _colorFinal(ev){
+    var sph=null;try{sph=ev&&ev.sphId?gsp(ev.sphId):null;}catch(e){}
+    return sph?sph.color:((BAND[ev&&ev.band]&&BAND[ev.band].color)||'var(--gd)');
+  }
+  function _sphereLineFinal(ev){
+    var sph=null;try{sph=ev&&ev.sphId?gsp(ev.sphId):null;}catch(e){}
+    if(!sph)return '';
+    var goal='';try{goal=getGoalText(ev)||'';}catch(e){}
+    var band='';try{band=(BAND[sph.band]&&BAND[sph.band].label)||'';}catch(e){}
+    return _safeEscFinal(sph.name)+(goal?' · '+_safeEscFinal(goal):'')+(band?' · '+_safeEscFinal(band):'');
+  }
+
+  window.deleteCalendarBlockByIdFinal=function(dk,id,e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    try{
+      var foundKey=dk;
+      var ev=(S.cal && S.cal[foundKey] ? S.cal[foundKey] : []).find(function(x){return x.id===id;});
+      if(!ev && S.cal){
+        Object.keys(S.cal).some(function(k){
+          var f=(S.cal[k]||[]).find(function(x){return x.id===id;});
+          if(f){foundKey=k;ev=f;return true;}
+          return false;
+        });
+      }
+      if(!ev){toast('Nothing to delete');return false;}
+      if(!confirm('Delete "'+(ev.title||'this task')+'"?')) return false;
+      S.cal[foundKey]=(S.cal[foundKey]||[]).filter(function(x){return x.id!==id;});
+      save();
+      var sh=document.getElementById('sh-det');
+      if(sh)sh.classList.remove('O');
+      dDk='';dId='';
+      renderCal();
+      toast('Deleted');
+      return false;
+    }catch(err){
+      console.error(err);
+      try{toast('Delete failed');}catch(e2){}
+      return false;
+    }
+  };
+
+  /* Keep old names working too */
+  window.deleteCurrentCalendarBlockFinal=function(e){return window.deleteCalendarBlockByIdFinal(dDk,dId,e);};
+  window.detRm=function(){return window.deleteCalendarBlockByIdFinal(dDk,dId,event);};
+
+  openDet=function(ev,dk){
+    dDk=dk; dId=ev.id;
+    var c=_colorFinal(ev);
+    var sphereLine=_sphereLineFinal(ev);
+    var tasksHtml='';
+    if(ev.tasks&&ev.tasks.length){
+      tasksHtml='<div style="font-size:15px;font-weight:400;text-transform:uppercase;letter-spacing:.12em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">'+ev.tasks.map(function(t,i){
+        return '<div class="dtask-row" onclick="togDT('+i+')"><div class="dtask-chk'+(t.done?' done':'')+'" style="border-color:'+c+(t.done?';background:'+c:'')+';color:'+(t.done?'#fff':'transparent')+'">'+(t.done?'✓':'')+'</div><div style="flex:1;font-size:20px;font-weight:400;color:#2A1C12;text-decoration:none!important;'+(t.done?'opacity:.45;':'')+'">'+_safeEscFinal(t.text)+'</div></div>';
+      }).join('')+'</div>';
+    }
+    document.getElementById('det-in').innerHTML=
+      '<div style="margin-bottom:20px">'+
+        '<div style="font-family:\'Cormorant Garamond\',serif;font-size:38px;font-weight:400;color:#2A1C12;margin-bottom:16px;line-height:1.05">'+_safeEscFinal(ev.title)+'</div>'+
+        '<div style="font-family:\'Cormorant Garamond\',serif;font-size:25px;color:var(--mt);margin-bottom:14px">'+_timeFinal(ev)+' · '+_hoursFinal(ev)+'h</div>'+
+        (sphereLine?'<div style="font-size:24px;margin-top:6px;color:'+c+';font-weight:400">'+sphereLine+'</div>':'')+
+        (ev.activityTitle?'<div style="font-size:22px;margin-top:12px;color:var(--mt)">Activity: '+_safeEscFinal(ev.activityTitle)+'</div>':'')+
+      '</div>'+tasksHtml+
+      '<div class="d-act detail-actions-real">'+
+        '<button type="button" class="d-btn detail-edit-btn" onclick="openEditDet();return false;">Edit</button>'+
+        '<button type="button" class="d-btn detail-delete-btn" onclick="return deleteCalendarBlockByIdFinal(\''+dk+'\',\''+ev.id+'\',event);">Delete</button>'+
+      '</div>';
+    document.getElementById('sh-det').classList.add('O');
+  };
+
+  /* Edit screen also has working Delete next to Save */
+  var _oldOpenEditDetFinal = typeof openEditDet==='function' ? openEditDet : null;
+  openEditDet=function(){
+    if(_oldOpenEditDetFinal)_oldOpenEditDetFinal();
+    try{
+      var box=document.getElementById('det-in');
+      var ev=(S.cal&&S.cal[dDk]?S.cal[dDk]:[]).find(function(x){return x.id===dId;});
+      if(!box||!ev)return;
+      var act=box.querySelector('.d-act');
+      if(act){
+        act.className='d-act detail-actions-real';
+        act.innerHTML='<button type="button" class="d-btn detail-edit-btn" onclick="saveEditDet();return false;">Save</button><button type="button" class="d-btn detail-delete-btn" onclick="return deleteCalendarBlockByIdFinal(\''+dDk+'\',\''+dId+'\',event);">Delete</button>';
+      }
+    }catch(e){}
+  };
+
+  setTimeout(function(){try{renderCal();}catch(e){}},80);
+})();
+</script>
+<!-- FINAL REAL DELETE FIX END -->
+
 </body>
 </html>
+<!-- FINAL SLEEP REALLY WORKING PATCH START -->
+<style>
+/* no big Add sheet title/subtitle */
+#sh-add .sh-title,#sh-add .sh-sub{display:none!important;}
+
+/* one Add activity button only */
+#lb-plus-add{display:none!important;}
+.fab{
+  width:132px!important;height:54px!important;border-radius:28px!important;
+  font-size:16px!important;font-weight:700!important;line-height:54px!important;
+  white-space:nowrap!important;
+}
+
+/* compact overnight sleep card */
+.ev.sleep-overnight{
+  height:50px!important;min-height:50px!important;max-height:50px!important;
+  background:#EEF4FF!important;border-left-color:#3B82F6!important;color:#3B82F6!important;
+}
+.hr.sleep-hour{background:#EEF4FF!important;}
+.hr.sleep-hour .hband{background:#3B82F6!important;}
+</style>
+<script>
+(function(){
+  function _toMin(v){
+    v=String(v||'').trim();
+    if(/^\d{1,2}$/.test(v)) v=v.padStart(2,'0')+':00';
+    var m=v.match(/^(\d{1,2}):(\d{2})$/);
+    if(!m) return 0;
+    return (Number(m[1])%24)*60+Number(m[2]);
+  }
+  function _isSleepSphereOrActivity(){
+    try{
+      var n=((aSel&&aSel.activity&&aSel.activity.title)||'').toLowerCase();
+      return !!(aSel&&aSel.sphere&&(aSel.sphere.band==='sleep'||aSel.sphere.id==='sleep'||n.includes('sleep')));
+    }catch(e){return false;}
+  }
+  function _isSleepEvent(ev){
+    try{
+      var sph=ev&&ev.sphId?gsp(ev.sphId):null;
+      var n=((ev&&ev.title)||''+' '+((ev&&ev.activityTitle)||'')).toLowerCase();
+      return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||n.includes('sleep')));
+    }catch(e){return !!(ev&&ev.band==='sleep');}
+  }
+  function _end(ev){return (ev.startMin+ev.dur)%1440;}
+  function _time(ev){return tm(ev.startMin)+' – '+tm(_end(ev));}
+  function _isOvernight(ev){return ev&&ev.dur>0&&(ev.startMin+ev.dur>1440 || _isSleepEvent(ev)&&ev.startMin>=23*60 || _isSleepEvent(ev)&&_end(ev)<=6*60);}
+  function _files(){var i=document.getElementById('lb-files');return i&&i.files?Array.from(i.files).map(function(f){return {name:f.name,size:f.size,type:f.type||''};}):[];}
+  function _labelButton(){
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  }
+  function _sleepDefaultTimes(){
+    try{
+      if(_isSleepSphereOrActivity()){
+        var st=document.getElementById('sh-st'), en=document.getElementById('sh-end');
+        if(st) st.value='23:00';
+        if(en) en.value='06:00';
+      }
+    }catch(e){}
+  }
+
+  /* When selecting a sleep activity, automatically set 23:00 → 06:00 */
+  var oldPickActivity = typeof pickActivity==='function' ? pickActivity : null;
+  if(oldPickActivity){
+    pickActivity=function(sid,gid,aid){oldPickActivity(sid,gid,aid);_sleepDefaultTimes();renderSelectedTasks();};
+  }
+
+  /* Add calendar block: overnight is valid and saved as ONE event, never split */
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    var sMin=_toMin(document.getElementById('sh-st').value||'09:00');
+    var eMin=_toMin(document.getElementById('sh-end').value||'10:00');
+    if(eMin===sMin){toast('End time must be different');return;}
+    var dur=eMin>sMin ? eMin-sMin : 1440-sMin+eMin;
+    var tasks=(aSel.activity.tasks||[]).filter(function(t){return aChecked[t.id];}).map(function(t){return {id:uid(),sourceTaskId:t.id,text:t.text,done:false};});
+    var blockTitle=tasks.length===1?tasks[0].text:(tasks.length>1?tasks[0].text+' + '+(tasks.length-1)+' more':aSel.activity.title);
+    var sleep=_isSleepSphereOrActivity() || (sMin>=23*60 && eMin<=6*60 && eMin<sMin);
+    getDay(selDk()).push({
+      id:uid(),title:blockTitle,activityTitle:aSel.activity.title,
+      sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,
+      band:sleep?'sleep':aSel.sphere.band,startMin:sMin,dur:dur,
+      tasks:tasks,done:false,files:_files()
+    });
+    save();csh(null,'sh-add');renderCal();toast('Block added');
+  };
+
+  /* Render: sleep area is 23–06 and overnight sleep is one folded card */
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'), evts=getDay(dk), now=new Date();
+    var nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    var html='';
+    for(var h=CAL_S;h<CAL_E;h++){
+      var isSleepHour=(h<6||h>=23), z=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf'), b=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf');
+      html+='<div class="hr z'+z+(isSleepHour?' sleep-hour':'')+'"><div class="hband '+b+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(h)+'</div></div><div class="hcol" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+    }
+    tg.innerHTML=html;
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){var nl=document.createElement('div');nl.className='nowl';nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);}
+    evts.forEach(function(ev){
+      var sph=gsp(ev.sphId), sleep=_isSleepEvent(ev), c=sleep?'#3B82F6':(sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');
+      var top=(ev.startMin-CAL_S*60)/60*HR_H;
+      var folded=sleep&&_isOvernight(ev);
+      var visible=Math.max(0,Math.min(ev.dur,(CAL_E*60)-ev.startMin));
+      var ht=folded?50:Math.max(visible/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' sleep-overnight':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      var tc=(ev.tasks||[]).filter(function(t){return t.done;}).length, ta=(ev.tasks||[]).length;
+      el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+_time(ev)+(folded?' ('+Math.round(ev.dur/60*10)/10+' h)':'')+'</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+dk+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,dk);};
+      tg.appendChild(el);
+    });
+    tg.querySelectorAll('.hcol').forEach(function(col,i){col.onclick=function(){var t=p2(CAL_S+i)+':00';document.getElementById('sh-st').value=t;openAdd(t);};});
+    _labelButton();
+  };
+
+  /* Detail sheet: show 23:00 – 06:00, not wrong same-day time */
+  var oldOpenDet = typeof openDet==='function' ? openDet : null;
+  if(oldOpenDet){
+    openDet=function(ev,dk){
+      oldOpenDet(ev,dk);
+      try{var box=document.getElementById('det-in');if(box&&_isSleepEvent(ev)){box.innerHTML=box.innerHTML.replace(/\d{2}:\d{2}\s*[–-]\s*\d{2}:\d{2}/,_time(ev));}}catch(e){}
+    };
+  }
+
+  setTimeout(function(){try{_labelButton();renderCal();}catch(e){}},120);
+})();
+</script>
+<!-- FINAL SLEEP REALLY WORKING PATCH END -->
+
+
+<!-- FINAL NEXT-DAY SLEEP COVERAGE PATCH START -->
+<script>
+(function(){
+  function _prevKey(k){
+    var p=k.split('-').map(Number);
+    var d=new Date(p[0],p[1]-1,p[2]);
+    d.setDate(d.getDate()-1);
+    return dkey(d);
+  }
+  function _isSleepEvent(ev){
+    try{
+      var sph=ev&&ev.sphId?gsp(ev.sphId):null;
+      var txt=((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'');
+      txt=txt.toLowerCase();
+      return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.includes('sleep')));
+    }catch(e){return !!(ev&&ev.band==='sleep');}
+  }
+  function _end(ev){return (ev.startMin+ev.dur)%1440;}
+  function _time(ev){return tm(ev.startMin)+' – '+tm(_end(ev));}
+  function _spillsToNext(ev){return ev&&_isSleepEvent(ev)&&ev.startMin+ev.dur>1440;}
+  function _displayEventsForDay(k){
+    var today=(getDay(k)||[]).map(function(ev){return {ev:ev,sourceKey:k,carry:false,displayStart:ev.startMin,displayDur:ev.dur};});
+    var pk=_prevKey(k);
+    (getDay(pk)||[]).forEach(function(ev){
+      if(_spillsToNext(ev)){
+        var spillEnd=(ev.startMin+ev.dur)-1440;
+        if(spillEnd>0){
+          today.unshift({ev:ev,sourceKey:pk,carry:true,displayStart:0,displayDur:spillEnd});
+        }
+      }
+    });
+    return today;
+  }
+
+  /* Checkbox works also on the next-day carried sleep block */
+  toggleEventDone=function(dk,id,event){
+    if(event){event.stopPropagation();event.preventDefault();}
+    var ev=(getDay(dk)||[]).find(function(x){return x.id===id;});
+    if(!ev){
+      var pk=_prevKey(dk);
+      ev=(getDay(pk)||[]).find(function(x){return x.id===id;});
+    }
+    if(ev){ev.done=!ev.done;save();renderCal();}
+  };
+
+  /* Calendar grid: show previous day's 23–06 sleep on the next day until 06:00 */
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'), items=_displayEventsForDay(dk), now=new Date();
+    var nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    var html='';
+    for(var h=CAL_S;h<CAL_E;h++){
+      var isSleepHour=(h<6||h>=23), z=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf'), b=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf');
+      html+='<div class="hr z'+z+(isSleepHour?' sleep-hour':'')+'"><div class="hband '+b+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(h)+'</div></div><div class="hcol" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+    }
+    tg.innerHTML=html;
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      var nl=document.createElement('div');nl.className='nowl';nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);
+    }
+    items.forEach(function(item){
+      var ev=item.ev, sph=gsp(ev.sphId), sleep=_isSleepEvent(ev), c=sleep?'#3B82F6':(sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');
+      var top=(item.displayStart-CAL_S*60)/60*HR_H;
+      var overnight=_spillsToNext(ev);
+      var folded=sleep&&overnight;
+      var ht=folded?50:Math.max(Math.min(item.displayDur,(CAL_E*60)-item.displayStart)/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' sleep-overnight':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      var tc=(ev.tasks||[]).filter(function(t){return t.done;}).length, ta=(ev.tasks||[]).length;
+      var timeText=folded?_time(ev):tm(item.displayStart)+' – '+tm(item.displayStart+item.displayDur);
+      el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+timeText+(folded?' ('+Math.round(ev.dur/60*10)/10+' h)':'')+'</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+dk+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,item.sourceKey);};
+      tg.appendChild(el);
+    });
+    tg.querySelectorAll('.hcol').forEach(function(col,i){col.onclick=function(){var t=p2(CAL_S+i)+':00';document.getElementById('sh-st').value=t;openAdd(t);};});
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+
+  /* Make sleep total on next day include the carried 00:00–06:00 part */
+  var _oldRenderDayDetail = renderDayDetail;
+  renderDayDetail=function(){
+    _oldRenderDayDetail();
+    try{
+      var dk=selDk(), pk=_prevKey(dk), carried=0;
+      (getDay(pk)||[]).forEach(function(ev){if(_spillsToNext(ev)) carried += ((ev.startMin+ev.dur)-1440)/60;});
+      if(carried>0){
+        var sleepVal=document.querySelector('#bal-bar .bb:nth-child(5) .bb-vl');
+        var sleepFill=document.querySelector('#bal-bar .bb:nth-child(5) .bb-fil');
+        if(sleepVal){
+          var current=parseFloat((sleepVal.textContent||'0').replace('h',''))||0;
+          var total=current+carried;
+          sleepVal.textContent=total.toFixed(1)+'h';
+          sleepVal.style.color='#3B82F6';
+          if(sleepFill) sleepFill.style.width=Math.min(100,total/8*100)+'%';
+        }
+      }
+    }catch(e){}
+  };
+
+  setTimeout(function(){try{renderCal();}catch(e){}},100);
+})();
+</script>
+<!-- FINAL NEXT-DAY SLEEP COVERAGE PATCH END -->
+
+<!-- FINAL FIX: NEXT DAY SLEEP MUST COVER 00-06 START -->
+<script>
+(function(){
+  function _prevKeyFinal(k){
+    var p=k.split('-').map(Number);
+    var d=new Date(p[0],p[1]-1,p[2]);
+    d.setDate(d.getDate()-1);
+    return dkey(d);
+  }
+  function _isSleepEventFinal(ev){
+    try{
+      var sph=ev&&ev.sphId?gsp(ev.sphId):null;
+      var txt=((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'');
+      txt=txt.toLowerCase();
+      return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.includes('sleep')));
+    }catch(e){return !!(ev&&ev.band==='sleep');}
+  }
+  function _endFinal(ev){return (ev.startMin+ev.dur)%1440;}
+  function _fullTimeFinal(ev){return tm(ev.startMin)+' – '+tm(_endFinal(ev));}
+  function _spillsFinal(ev){return ev&&_isSleepEventFinal(ev)&&ev.startMin+ev.dur>1440;}
+  function _itemsFinal(k){
+    var out=(getDay(k)||[]).map(function(ev){return {ev:ev,sourceKey:k,carry:false,displayStart:ev.startMin,displayDur:ev.dur};});
+    var pk=_prevKeyFinal(k);
+    (getDay(pk)||[]).forEach(function(ev){
+      if(_spillsFinal(ev)){
+        var spill=(ev.startMin+ev.dur)-1440;
+        if(spill>0) out.unshift({ev:ev,sourceKey:pk,carry:true,displayStart:0,displayDur:spill});
+      }
+    });
+    return out;
+  }
+
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'), items=_itemsFinal(dk), now=new Date();
+    var nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    var html='';
+    for(var h=CAL_S;h<CAL_E;h++){
+      var isSleepHour=(h<6||h>=23), z=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf'), b=isSleepHour?'sl':(h>=9&&h<18?'wk':'lf');
+      html+='<div class="hr z'+z+(isSleepHour?' sleep-hour':'')+'"><div class="hband '+b+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(h)+'</div></div><div class="hcol" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+    }
+    tg.innerHTML=html;
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      var nl=document.createElement('div');
+      nl.className='nowl';
+      nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';
+      nl.innerHTML='<div class="nowd"></div>';
+      tg.appendChild(nl);
+    }
+    items.forEach(function(item){
+      var ev=item.ev, sph=gsp(ev.sphId), sleep=_isSleepEventFinal(ev);
+      var c=sleep?'#3B82F6':(sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');
+      var top=(item.displayStart-CAL_S*60)/60*HR_H;
+      var overnight=_spillsFinal(ev);
+      /* IMPORTANT: only the first day 23-06 card is folded. The carried next-day part covers 00-06. */
+      var folded=sleep&&overnight&&!item.carry;
+      var visible=Math.min(item.displayDur,(CAL_E*60)-item.displayStart);
+      var ht=folded?50:Math.max(visible/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' sleep-overnight':'')+(item.carry?' sleep-carry':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      var tc=(ev.tasks||[]).filter(function(t){return t.done;}).length, ta=(ev.tasks||[]).length;
+      var timeText=sleep&&overnight?_fullTimeFinal(ev):(tm(item.displayStart)+' – '+tm(item.displayStart+item.displayDur));
+      el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+timeText+(sleep&&overnight?' ('+Math.round(ev.dur/60*10)/10+' h)':'')+'</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+dk+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,item.sourceKey);};
+      tg.appendChild(el);
+    });
+    tg.querySelectorAll('.hcol').forEach(function(col,i){
+      col.onclick=function(){var t=p2(CAL_S+i)+':00';document.getElementById('sh-st').value=t;openAdd(t);};
+    });
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+  setTimeout(function(){try{renderCal();}catch(e){}},80);
+})();
+</script>
+<!-- FINAL FIX: NEXT DAY SLEEP MUST COVER 00-06 END -->
+
+
+<!-- FINAL REAL FIX: SLEEP 23-06 JUMPS 23 → 06, NO 00-05 START -->
+<style>
+#sh-add .sh-title,#sh-add .sh-sub{display:none!important;}
+#lb-plus-add{display:none!important;}
+.fab{display:flex!important;align-items:center!important;justify-content:center!important;width:132px!important;height:54px!important;border-radius:28px!important;font-size:16px!important;font-weight:700!important;line-height:1!important;white-space:nowrap!important;}
+.sleep-jump-row{display:flex;align-items:flex-start;position:relative;min-height:70px;background:#EEF4FF!important;}
+.sleep-jump-row .hband{background:#3B82F6!important;}
+.sleep-jump-row .hlbl-n{color:#8D7C68!important;}
+.sleep-jump-fold{flex:1;border-top:1.5px solid var(--ln);min-height:70px;display:flex;align-items:center;color:#3B82F6;font-size:18px;font-family:'Cormorant Garamond',Georgia,serif;opacity:.75;}
+.sleep-jump-fold::before{content:'▼ folded';margin-left:20px;}
+.ev.sleep-jump-card{height:50px!important;min-height:50px!important;max-height:50px!important;background:#EEF4FF!important;border-left-color:#3B82F6!important;color:#3B82F6!important;z-index:30!important;}
+</style>
+<script>
+(function(){
+  function keyMinusOne(k){var p=k.split('-').map(Number),d=new Date(p[0],p[1]-1,p[2]);d.setDate(d.getDate()-1);return dkey(d);}
+  function isSleep(ev){try{var sph=ev&&ev.sphId?gsp(ev.sphId):null;var txt=(((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'')).toLowerCase();return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.indexOf('sleep')>-1));}catch(e){return !!(ev&&ev.band==='sleep');}}
+  function evEnd(ev){return (ev.startMin+(ev.dur||0))%1440;}
+  function isSleep23to6(ev){return !!(ev&&isSleep(ev)&&ev.startMin===23*60&&evEnd(ev)===6*60&&(ev.startMin+(ev.dur||0)>1440));}
+  function timeText(ev){return tm(ev.startMin)+' – '+tm(evEnd(ev));}
+  function hasTodaySleep(dk){return (getDay(dk)||[]).find(isSleep23to6)||null;}
+  function carryFromYesterday(dk){var pk=keyMinusOne(dk);var ev=(getDay(pk)||[]).find(isSleep23to6)||null;return ev?{ev:ev,sourceKey:pk}:null;}
+  function topForHour(hour, mode){
+    // mode carry: rows are 23, 06, 07...23. mode today: rows 06...23, 06-next.
+    if(mode==='carry'){
+      if(hour===23) return 0;
+      if(hour>=6) return (hour-5)*HR_H; // 06 immediately after 23
+      return null;
+    }
+    if(mode==='today'){
+      if(hour>=6 && hour<=23) return (hour-6)*HR_H;
+      return null;
+    }
+    return hour*HR_H;
+  }
+  function rowHtml(hour, extra){
+    var sleep=(hour<6||hour>=23), z=sleep?'sl':(hour>=9&&hour<18?'wk':'lf'), b=sleep?'sl':(hour>=9&&hour<18?'wk':'lf');
+    return '<div class="hr z'+z+(extra||'')+'"><div class="hband '+b+'"></div><div class="hlbl"><div class="hlbl-n">'+p2(hour)+'</div></div><div class="hcol" data-hour="'+hour+'" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+  }
+  function sleepCard(ev, sourceKey, top){
+    var sph=gsp(ev.sphId), ta=(ev.tasks||[]).length, tc=(ev.tasks||[]).filter(function(t){return t.done;}).length;
+    var el=document.createElement('div');
+    el.className='ev sleep-jump-card'+(ev.done?' done':'');
+    el.style.cssText='top:'+top+'px;height:50px;left:94px;right:12px;background:#EEF4FF;border-left-color:#3B82F6;color:#3B82F6';
+    el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+timeText(ev)+' ('+Math.round(ev.dur/60*10)/10+' h)</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+sourceKey+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+    el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,sourceKey);};
+    return el;
+  }
+
+  var oldConfirm = typeof confirmAdd==='function' ? confirmAdd : null;
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    var sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    var eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    if(eMin===sMin){toast('End time must be different');return;}
+    var dur=eMin>sMin?eMin-sMin:1440-sMin+eMin;
+    var tasks=(aSel.activity.tasks||[]).filter(function(t){return aChecked[t.id];}).map(function(t){return {id:uid(),sourceTaskId:t.id,text:t.text,done:false};});
+    var title=tasks.length===1?tasks[0].text:(tasks.length>1?tasks[0].text+' + '+(tasks.length-1)+' more':aSel.activity.title);
+    var name=((aSel.activity&&aSel.activity.title)||'').toLowerCase();
+    var sleep=(aSel.sphere&&(aSel.sphere.band==='sleep'||aSel.sphere.id==='sleep'))||name.indexOf('sleep')>-1||(sMin===23*60&&eMin===6*60);
+    getDay(selDk()).push({id:uid(),title:title,activityTitle:aSel.activity.title,sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,band:sleep?'sleep':aSel.sphere.band,startMin:sMin,dur:dur,tasks:tasks,done:false});
+    save();csh(null,'sh-add');renderCal();toast('Block added');
+  };
+
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'); if(!tg)return;
+    var todaySleep=hasTodaySleep(dk);
+    var carry=carryFromYesterday(dk);
+    var mode=carry?'carry':(todaySleep?'today':'normal');
+    var html='';
+    if(mode==='carry'){
+      html += '<div class="sleep-jump-row"><div class="hband sl"></div><div class="hlbl"><div class="hlbl-n">23</div></div><div class="sleep-jump-fold"></div></div>';
+      for(var h=6;h<24;h++) html += rowHtml(h);
+    }else if(mode==='today'){
+      for(var h2=6;h2<24;h2++) html += rowHtml(h2);
+      html += '<div class="sleep-jump-row"><div class="hband sl"></div><div class="hlbl"><div class="hlbl-n">06</div></div><div class="sleep-jump-fold"></div></div>';
+    }else{
+      for(var h3=0;h3<24;h3++) html += rowHtml(h3);
+    }
+    tg.innerHTML=html;
+
+    var now=new Date(), nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    if(isToday && mode==='normal'){
+      var nl=document.createElement('div');nl.className='nowl';nl.style.top=(nMin/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);
+    }
+
+    if(carry) tg.appendChild(sleepCard(carry.ev, carry.sourceKey, 6));
+
+    (getDay(dk)||[]).forEach(function(ev){
+      if(isSleep23to6(ev)){
+        if(mode==='today') tg.appendChild(sleepCard(ev, dk, topForHour(23,mode)+6));
+        return;
+      }
+      if(mode==='carry' && ev.startMin<6*60) return; // 00-05 are hidden/folded
+      var hour=Math.floor(ev.startMin/60), baseTop=topForHour(hour,mode);
+      if(baseTop===null) return;
+      var top=baseTop + ((ev.startMin%60)/60*HR_H);
+      var sph=gsp(ev.sphId), sleep=isSleep(ev), c=sleep?'#3B82F6':(sph?sph.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');
+      var ht=Math.max(Math.min(ev.dur,1440-ev.startMin)/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      var ta=(ev.tasks||[]).length, tc=(ev.tasks||[]).filter(function(t){return t.done;}).length;
+      el.innerHTML='<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+tm(ev.startMin)+' – '+tm((ev.startMin+ev.dur)%1440)+'</div>'+(sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+(ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+'<div class="ev-check" onclick="toggleEventDone(\''+dk+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,dk);};
+      tg.appendChild(el);
+    });
+
+    tg.querySelectorAll('.hcol').forEach(function(col){col.onclick=function(){var h=Number(col.getAttribute('data-hour'));document.getElementById('sh-st').value=p2(h)+':00';openAdd(p2(h)+':00');};});
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+  setTimeout(function(){try{renderCal();}catch(e){}},120);
+})();
+</script>
+<!-- FINAL REAL FIX: SLEEP 23-06 JUMPS 23 → 06, NO 00-05 END -->
+<!-- FINAL ALL OVERNIGHT TASKS FOLD PATCH START -->
+<style>
+/* Any overnight task (end time earlier than start time) folds the hours between. */
+.overnight-fold-row{
+  display:flex !important;
+  align-items:flex-start !important;
+  position:relative !important;
+  min-height:70px !important;
+  background:transparent !important;
+}
+.overnight-fold-row .hband{opacity:.65 !important;}
+.overnight-fold-note{
+  flex:1 !important;
+  border-top:1.5px solid var(--ln) !important;
+  min-height:70px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  color:#8A7860 !important;
+  font-size:17px !important;
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+}
+.overnight-fold-note::before{
+  content:'▼ folded' !important;
+  opacity:.75 !important;
+}
+.ev.overnight-fold-card{
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  overflow:hidden !important;
+  z-index:18 !important;
+}
+</style>
+<script>
+(function(){
+  function _p2(n){return String(n).padStart(2,'0');}
+  function _prevKey(k){var p=k.split('-').map(Number);var d=new Date(p[0],p[1]-1,p[2]);d.setDate(d.getDate()-1);return dkey(d);}
+  function _end(ev){return (ev.startMin+(ev.dur||0))%1440;}
+  function _isOvernight(ev){return !!(ev && ev.dur>0 && ev.startMin+(ev.dur||0)>1440);}
+  function _band(ev){
+    try{var sph=ev&&ev.sphId?gsp(ev.sphId):null;return (sph&&sph.band)||ev.band||'life';}catch(e){return ev.band||'life';}
+  }
+  function _color(ev){
+    try{var sph=ev&&ev.sphId?gsp(ev.sphId):null;return sph?sph.color:((BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)');}catch(e){return 'var(--gd)';}
+  }
+  function _time(ev){return tm(ev.startMin)+' – '+tm(_end(ev));}
+  function _rowClassForBand(b){return b==='sleep'?'sl':(b==='work'?'wk':'lf');}
+  function _defaultBandForHour(h){return (h<6||h>=23)?'sleep':(h>=9&&h<18?'work':'life');}
+  function _primaryOvernight(dk){
+    var today=(getDay(dk)||[]).filter(_isOvernight);
+    if(today.length) return {ev:today[0],sourceKey:dk,carry:false};
+    var pk=_prevKey(dk);
+    var prev=(getDay(pk)||[]).filter(_isOvernight).filter(function(ev){return (ev.startMin+ev.dur)-1440>0;});
+    if(prev.length) return {ev:prev[0],sourceKey:pk,carry:true};
+    return null;
+  }
+  function _makeRow(h, bandOverride){
+    var band=bandOverride||_defaultBandForHour(h);
+    var z=_rowClassForBand(band);
+    return '<div class="hr z'+z+'"><div class="hband '+z+'"></div><div class="hlbl"><div class="hlbl-n">'+_p2(h)+'</div></div><div class="hcol" data-hour="'+h+'" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+  }
+  function _eventHtml(ev, sourceKey, folded){
+    var sph=gsp(ev.sphId), c=_color(ev);
+    var ta=(ev.tasks||[]).length, tc=(ev.tasks||[]).filter(function(t){return t.done;}).length;
+    return '<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+(_isOvernight(ev)?_time(ev):(tm(ev.startMin)+' – '+tm((ev.startMin+ev.dur)%1440)))+(folded?' ('+Math.round(ev.dur/60*10)/10+' h)':'')+'</div>'+
+      (sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+
+      (ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+
+      '<div class="ev-check" onclick="toggleEventDone(\''+sourceKey+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+  }
+
+  /* Add any task across midnight as ONE folded overnight event, not split. */
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    var sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    var eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    if(eMin===sMin){toast('End time must be different');return;}
+    var dur=eMin>sMin ? eMin-sMin : 1440-sMin+eMin;
+    var tasks=(aSel.activity.tasks||[]).filter(function(t){return aChecked[t.id];}).map(function(t){return {id:uid(),sourceTaskId:t.id,text:t.text,done:false};});
+    var blockTitle=tasks.length===1?tasks[0].text:(tasks.length>1?tasks[0].text+' + '+(tasks.length-1)+' more':aSel.activity.title);
+    var inp=document.getElementById('lb-files');
+    var files=inp&&inp.files?Array.from(inp.files).map(function(f){return {name:f.name,size:f.size,type:f.type||''};}):[];
+    getDay(selDk()).push({
+      id:uid(),title:blockTitle,activityTitle:aSel.activity.title,
+      sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,
+      band:aSel.sphere.band,startMin:sMin,dur:dur,tasks:tasks,done:false,files:files
+    });
+    save();csh(null,'sh-add');renderCal();toast('Block added');
+  };
+
+  /* Editing also allows overnight for all categories. */
+  saveEditDet=function(){
+    var ev=getDay(dDk).find(function(e){return e.id===dId;});if(!ev)return;
+    var title=(document.getElementById('det-title')&&document.getElementById('det-title').value||'').trim();
+    var activity=(document.getElementById('det-activity')&&document.getElementById('det-activity').value||'').trim();
+    var st=(document.getElementById('det-start')&&document.getElementById('det-start').value)||'09:00';
+    var en=(document.getElementById('det-end')&&document.getElementById('det-end').value)||'10:00';
+    var sMin=toMin(st), eMin=toMin(en);
+    if(!title){toast('Title is required');return;}
+    if(eMin===sMin){toast('End time must be different');return;}
+    ev.title=title; ev.activityTitle=activity; ev.startMin=sMin; ev.dur=eMin>sMin?eMin-sMin:1440-sMin+eMin;
+    if(ev.tasks&&ev.tasks.length){ev.tasks=ev.tasks.map(function(t,i){var el=document.getElementById('det-task-'+i);return Object.assign({},t,{text:((el&&el.value)||t.text).trim()||t.text});});}
+    save();openDet(ev,dDk);renderCal();toast('Block updated');
+  };
+
+  /* Main renderer: if any overnight task exists, hide inside hours and jump start → end. */
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'); if(!tg)return;
+    var primary=_primaryOvernight(dk);
+    var now=new Date(), nMin=now.getHours()*60+now.getMinutes();
+    var selDate=new Date(S.sy,S.sm,S.sd), isToday=selDate.toDateString()===now.toDateString();
+    var rowMap={}, rows=[], html='';
+
+    if(primary){
+      var evp=primary.ev, startH=Math.floor(evp.startMin/60), endH=Math.floor(_end(evp)/60), band=_band(evp);
+      if(primary.carry){
+        rows.push({h:startH,kind:'hour',band:band});
+        rows.push({h:endH,kind:'fold',band:band});
+        for(var h=endH+1;h<24;h++) rows.push({h:h,kind:'hour'});
+      }else{
+        for(var h0=0;h0<=startH;h0++) rows.push({h:h0,kind:'hour'});
+        rows.push({h:endH,kind:'fold',band:band});
+        for(var h1=endH+1;h1<24;h1++) rows.push({h:h1,kind:'hour'});
+      }
+    }else{
+      for(var h2=0;h2<24;h2++) rows.push({h:h2,kind:'hour'});
+    }
+
+    rows.forEach(function(r,idx){
+      if(rowMap[r.h]===undefined) rowMap[r.h]=idx;
+      if(r.kind==='fold'){
+        var z=_rowClassForBand(r.band||_defaultBandForHour(r.h));
+        html+='<div class="overnight-fold-row"><div class="hband '+z+'"></div><div class="hlbl"><div class="hlbl-n">'+_p2(r.h)+'</div></div><div class="overnight-fold-note"></div></div>';
+      }else{
+        html+=_makeRow(r.h,r.band);
+      }
+    });
+    tg.innerHTML=html;
+
+    var items=(getDay(dk)||[]).map(function(ev){return {ev:ev,sourceKey:dk,carry:false};});
+    if(primary&&primary.carry) items.unshift(primary);
+
+    items.forEach(function(item){
+      var ev=item.ev;
+      if(primary && primary.carry && item.sourceKey===dk && ev.startMin < _end(primary.ev)) return;
+      if(primary && primary.ev.id===ev.id && primary.sourceKey===item.sourceKey && item!==primary && primary.carry) return;
+      var folded=primary && primary.ev.id===ev.id && primary.sourceKey===item.sourceKey;
+      var displayStart=folded ? (primary.carry ? primary.ev.startMin : ev.startMin) : ev.startMin;
+      var h=Math.floor(displayStart/60);
+      if(rowMap[h]===undefined) return;
+      var c=_color(ev), top=rowMap[h]*HR_H;
+      var ht=folded?50:Math.max(Math.min(ev.dur,1440-ev.startMin)/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' overnight-fold-card':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      el.innerHTML=_eventHtml(ev,item.sourceKey,folded);
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,item.sourceKey);};
+      tg.appendChild(el);
+    });
+
+    if(isToday && !primary && nMin>=0 && nMin<1440){
+      var nl=document.createElement('div');nl.className='nowl';nl.style.top=(nMin/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);
+    }
+    tg.querySelectorAll('.hcol').forEach(function(col){col.onclick=function(){var h=Number(col.getAttribute('data-hour'));document.getElementById('sh-st').value=_p2(h)+':00';openAdd(_p2(h)+':00');};});
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+
+  setTimeout(function(){try{renderCal();}catch(e){}},100);
+})();
+</script>
+<!-- FINAL ALL OVERNIGHT TASKS FOLD PATCH END -->
+
+
+<!-- FINAL UNIVERSAL ACTIVITY FOLD PATCH START -->
+<style>
+/* Make Add new activity visible, not collapsed */
+#sh-add .quick-add-box .quick-add-body{display:block !important;}
+#sh-add .quick-add-box{padding:11px 12px !important;border:1.5px dashed var(--ln2) !important;background:#fffaf2 !important;}
+#sh-add .quick-add-head{display:none !important;}
+
+/* Universal folded task cards */
+.ev.activity-fold-card{
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  overflow:hidden !important;
+  z-index:18 !important;
+}
+.activity-fold-note{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:1;
+  min-height:54px;
+  border-top:1.5px solid var(--ln);
+  color:#8A7860;
+  font-size:17px;
+  opacity:.75;
+}
+.activity-fold-note::before{
+  content:'▼ folded';
+  font-family:'Cormorant Garamond', Georgia, serif;
+}
+.activity-fold-row{
+  display:flex;
+  align-items:flex-start;
+  position:relative;
+  min-height:54px;
+}
+</style>
+<script>
+(function(){
+  function p2x(n){return String(n).padStart(2,'0');}
+  function bandOf(ev){try{var s=ev&&ev.sphId?gsp(ev.sphId):null;return (ev&&ev.band)||((s&&s.band)||'life');}catch(e){return 'life';}}
+  function colorOf(ev){try{var s=ev&&ev.sphId?gsp(ev.sphId):null;return s?s.color:(BAND[ev.band]&&BAND[ev.band].color)||'var(--gd)';}catch(e){return 'var(--gd)';}}
+  function endMin(ev){return (ev.startMin+(ev.dur||0))%1440;}
+  function timeText(ev){return tm(ev.startMin)+' – '+tm(endMin(ev));}
+  function rowBand(h){if(h<6||h>=23)return 'sl'; if(h>=9&&h<18)return 'wk'; return 'lf';}
+  function eventEndsHour(ev){return Math.ceil(endMin(ev)/60)%24;}
+  function eventStartHour(ev){return Math.floor((ev.startMin||0)/60);}
+  function isFoldable(ev){
+    if(!ev || !ev.dur) return false;
+    var sH=eventStartHour(ev), eH=eventEndsHour(ev);
+    if(ev.startMin+ev.dur>1440) return true;
+    return eH-sH>1;
+  }
+  function hiddenHoursFor(ev){
+    var out=[]; if(!isFoldable(ev)) return out;
+    var sH=eventStartHour(ev), eH=eventEndsHour(ev);
+    if(ev.startMin+ev.dur>1440){
+      for(var h=sH+1;h<24;h++) out.push(h);
+      for(var h2=0;h2<eH;h2++) out.push(h2);
+    }else{
+      for(var h3=sH+1;h3<eH;h3++) out.push(h3);
+    }
+    return out;
+  }
+  function previousKey(k){var p=k.split('-').map(Number),d=new Date(p[0],p[1]-1,p[2]);d.setDate(d.getDate()-1);return dkey(d);}
+  function carryingEvents(k){
+    var pk=previousKey(k);
+    return (getDay(pk)||[]).filter(function(ev){return ev.startMin+(ev.dur||0)>1440;}).map(function(ev){return {ev:ev,sourceKey:pk,carry:true};});
+  }
+  function eventHtml(ev,sourceKey,folded){
+    var sph=gsp(ev.sphId), ta=(ev.tasks||[]).length, tc=(ev.tasks||[]).filter(function(t){return t.done;}).length;
+    return '<div class="ev-n">'+esc(ev.title)+'</div><div class="ev-t">'+timeText(ev)+(folded?' ('+Math.round((ev.dur||0)/60*10)/10+' h)':'')+'</div>'+
+      (sph?'<div class="ev-s">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+'</div>':'')+
+      (ta?'<div class="ev-tk">'+tc+'/'+ta+' tasks</div>':'')+
+      '<div class="ev-check" onclick="toggleEventDone(\''+sourceKey+'\',\''+ev.id+'\',event)">'+(ev.done?'✓':'')+'</div>';
+  }
+
+  /* Valid for every new activity: start=end is blocked, end before start means next day. */
+  if(typeof confirmAdd==='function'){
+    confirmAdd=function(){
+      if(!aSel){toast('Choose an activity');return;}
+      var sMin=toMin(document.getElementById('sh-st').value||'09:00');
+      var eMin=toMin(document.getElementById('sh-end').value||'10:00');
+      if(eMin===sMin){toast('End time must be different');return;}
+      var dur=eMin>sMin?eMin-sMin:1440-sMin+eMin;
+      var inp=document.getElementById('lb-files');
+      var files=inp&&inp.files?Array.from(inp.files).map(function(f){return {name:f.name,size:f.size,type:f.type||''};}):[];
+      var tasks=(aSel.activity.tasks||[]).filter(function(t){return aChecked[t.id];}).map(function(t){return {id:uid(),sourceTaskId:t.id,text:t.text,done:false};});
+      var blockTitle=tasks.length===1?tasks[0].text:(tasks.length>1?tasks[0].text+' + '+(tasks.length-1)+' more':aSel.activity.title);
+      getDay(selDk()).push({id:uid(),title:blockTitle,activityTitle:aSel.activity.title,sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,band:aSel.sphere.band,startMin:sMin,dur:dur,tasks:tasks,done:false,files:files});
+      save();csh(null,'sh-add');renderCal();toast('Block added');
+    };
+  }
+
+  renderGrid=function(dk){
+    var tg=document.getElementById('tg'); if(!tg)return;
+    var today=(getDay(dk)||[]).map(function(ev){return {ev:ev,sourceKey:dk,carry:false};});
+    var carries=carryingEvents(dk);
+    var items=carries.concat(today);
+    var hide={};
+    items.forEach(function(it){hiddenHoursFor(it.ev).forEach(function(h){hide[h]=true;});});
+
+    var rows=[], rowMap={}, html='';
+    for(var h=0;h<24;h++){
+      if(hide[h]) continue;
+      rowMap[h]=rows.length;
+      rows.push(h);
+      var rb=rowBand(h);
+      html+='<div class="hr z'+rb+'"><div class="hband '+rb+'"></div><div class="hlbl"><div class="hlbl-n">'+p2x(h)+'</div></div><div class="hcol" data-hour="'+h+'" style="min-height:'+HR_H+'px"><div class="hhalf"></div></div></div>';
+    }
+    tg.innerHTML=html;
+
+    items.forEach(function(it){
+      var ev=it.ev, folded=isFoldable(ev);
+      var startH=it.carry?0:eventStartHour(ev);
+      if(rowMap[startH]===undefined) return;
+      var c=colorOf(ev), top=rowMap[startH]*HR_H;
+      var visible=it.carry?(ev.startMin+ev.dur-1440):Math.min(ev.dur,1440-ev.startMin);
+      var ht=folded?50:Math.max(visible/60*HR_H-7,42);
+      var el=document.createElement('div');
+      el.className='ev'+(ev.done?' done':'')+(folded?' activity-fold-card':'');
+      el.style.cssText='top:'+top+'px;height:'+ht+'px;left:94px;right:12px;background:color-mix(in srgb, '+c+' 14%, #F9F4EA);border-left-color:'+c+';color:'+c;
+      el.innerHTML=eventHtml(ev,it.sourceKey,folded);
+      el.onclick=function(e){if(!e.target.classList.contains('ev-check'))openDet(ev,it.sourceKey);};
+      tg.appendChild(el);
+    });
+
+    var now=new Date(), nMin=now.getHours()*60+now.getMinutes(), selDate=new Date(S.sy,S.sm,S.sd);
+    if(selDate.toDateString()===now.toDateString()){
+      var nh=Math.floor(nMin/60);
+      if(rowMap[nh]!==undefined){
+        var nl=document.createElement('div');nl.className='nowl';nl.style.top=(rowMap[nh]*HR_H+(nMin%60)/60*HR_H)+'px';nl.innerHTML='<div class="nowd"></div>';tg.appendChild(nl);
+      }
+    }
+
+    tg.querySelectorAll('.hcol').forEach(function(col){col.onclick=function(){var h=Number(col.getAttribute('data-hour'));document.getElementById('sh-st').value=p2x(h)+':00';openAdd(p2x(h)+':00');};});
+    document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    document.querySelectorAll('.fab').forEach(function(b){b.textContent='+ Add activity';b.setAttribute('aria-label','Add activity');});
+  };
+
+  setTimeout(function(){try{renderCal();}catch(e){}},120);
+})();
+</script>
+<!-- FINAL UNIVERSAL ACTIVITY FOLD PATCH END -->
+
+<!-- FINAL REQUEST: SHORT WEEKDAYS + DELETE OPTIONS START -->
+<style>
+/* Calendar: leave only single-letter weekdays (M T W...), hide MON/TUE/WED row labels */
+.week-strip .wd-nm{
+  display:none !important;
+}
+.week-strip .wd{
+  padding-top:6px !important;
+}
+
+/* Make remove options clearly visible for goals, activities, tasks */
+.grm,
+.edit-mini,
+.sh-delete-mini{
+  opacity:1 !important;
+  visibility:visible !important;
+}
+.grm,
+.sh-delete-mini{
+  color:#8A7860 !important;
+  font-size:22px !important;
+  line-height:1 !important;
+  padding:4px 8px !important;
+  cursor:pointer !important;
+}
+.sh-delete-mini{
+  border:none !important;
+  background:transparent !important;
+  flex-shrink:0 !important;
+}
+.sh-delete-mini:active{
+  transform:scale(.9);
+}
+</style>
+
+<script>
+(function(){
+  function stop(e){ if(e){e.preventDefault();e.stopPropagation();} }
+
+  window.deleteActivityFromAddSheet=function(sid,gid,aid,e){
+    stop(e);
+    try{
+      var s=gsp(sid), g=s && s.goals && s.goals.find(function(x){return x.id===gid;});
+      if(!g || !Array.isArray(g.activities)) return;
+      var a=g.activities.find(function(x){return x.id===aid;});
+      if(!a) return;
+      if(!confirm('Remove activity "'+(a.title||'')+'"?')) return;
+      g.activities=g.activities.filter(function(x){return x.id!==aid;});
+      if(aSel && aSel.activity && aSel.activity.id===aid){aSel=null;aChecked={};aOpenAct=null;}
+      save();
+      renderActivityPicker();
+      renderSelectedTasks();
+      try{renderSph();}catch(err){}
+      toast('Activity removed');
+    }catch(err){}
+  };
+
+  window.deleteTaskFromAddSheet=function(sid,gid,aid,tid,e){
+    stop(e);
+    try{
+      var s=gsp(sid), g=s && s.goals && s.goals.find(function(x){return x.id===gid;});
+      var a=g && g.activities && g.activities.find(function(x){return x.id===aid;});
+      if(!a || !Array.isArray(a.tasks)) return;
+      var t=a.tasks.find(function(x){return x.id===tid;});
+      if(!t) return;
+      if(!confirm('Remove task "'+(t.text||'')+'"?')) return;
+      a.tasks=a.tasks.filter(function(x){return x.id!==tid;});
+      if(aChecked) delete aChecked[tid];
+      save();
+      renderActivityPicker();
+      renderSelectedTasks();
+      try{renderSph();}catch(err){}
+      toast('Task removed');
+    }catch(err){}
+  };
+
+  window.deleteGoalFromSphere=function(sid,gid,e){
+    stop(e);
+    try{
+      var s=gsp(sid);
+      if(!s || !Array.isArray(s.goals)) return;
+      var g=s.goals.find(function(x){return x.id===gid;});
+      if(!g) return;
+      if(!confirm('Remove goal "'+(g.text||'')+'"?')) return;
+      s.goals=s.goals.filter(function(x){return x.id!==gid;});
+      save();
+      try{renderSph();}catch(err){}
+      try{renderActivityPicker();renderSelectedTasks();}catch(err){}
+      toast('Goal removed');
+    }catch(err){}
+  };
+
+  /* Add-sheet activity list now has visible remove buttons for activities and tasks. */
+  renderActivityPicker=function(){
+    const list=allActivities();
+    const wrap=document.getElementById('sh-alist');
+    if(!wrap) return;
+    if(!list.length){
+      wrap.innerHTML='<div style="font-size:14px;color:var(--mt);padding:14px 4px;text-align:center;font-style:italic">Add goals and activities in Spheres first</div>';
+      return;
+    }
+    const bySphere={};
+    list.forEach(function(x){if(!bySphere[x.sphere.id])bySphere[x.sphere.id]=[];bySphere[x.sphere.id].push(x);});
+    const hasSelection=!!aSel;
+    wrap.innerHTML=Object.keys(bySphere).map(function(sid){
+      const items=bySphere[sid], s=items[0].sphere;
+      return '<div class="sh-group"><div class="sh-group-title" style="color:'+s.color+'">'+esc(s.name)+'</div>'+items.map(function(x){
+        const aid=x.activity.id, gid=x.goal.id, open=aOpenAct===aid, selected=aSel&&aSel.activity.id===aid;
+        const tasks=x.activity.tasks||[];
+        const selectedStyle=selected?'border-color:'+s.color+';background:'+s.color+'14;color:'+s.color:'border-color:'+s.color+'30;color:'+s.color;
+        return '<div class="sh-act'+(selected?' selected':'')+(hasSelection&&!selected?' not-selected':'')+'" style="'+selectedStyle+'">'+
+          '<div class="sh-act-head" onclick="pickActivity(\''+s.id+'\',\''+gid+'\',\''+aid+'\')">'+
+            '<div class="sh-ai-d" style="background:'+s.color+'"></div>'+
+            '<div style="flex:1">'+(selected?'<div class="sh-selected-label" style="color:'+s.color+'">Selected</div>':'')+
+              '<div class="sh-act-name">'+esc(x.activity.title)+'</div>'+
+              '<div class="sh-act-goal">'+esc(s.name)+' · Goal: '+esc(x.goal.text)+'</div>'+ 
+            '</div>'+
+            (selected?'<div class="sh-selected-check" style="color:'+s.color+'">✓</div>':'<div class="act-chevron'+(open?' o':'')+'" style="color:'+s.color+'">›</div>')+
+            '<button class="sh-delete-mini" title="Remove activity" onclick="deleteActivityFromAddSheet(\''+s.id+'\',\''+gid+'\',\''+aid+'\',event)">×</button>'+ 
+          '</div>'+
+          (open?'<div class="sh-act-body">'+(tasks.length?tasks.map(function(t){
+            const on=!!aChecked[t.id];
+            return '<div class="sh-check'+(on?' on':'')+'" style="'+(on?'background:'+s.color+'12;color:'+s.color:'')+'" onclick="togglePickTask(\''+t.id+'\')"><div class="sh-check-box" style="'+(on?'background:'+s.color+';border-color:'+s.color:'')+'">'+(on?'✓':'')+'</div><div style="flex:1">'+esc(t.text)+'</div><button class="sh-delete-mini" title="Remove task" onclick="deleteTaskFromAddSheet(\''+s.id+'\',\''+gid+'\',\''+aid+'\',\''+t.id+'\',event)">×</button></div>';
+          }).join(''):'<div class="sh-selected-note">No tasks yet. Add tasks inside this activity in Spheres.</div>')+'</div>':'')+
+        '</div>';
+      }).join('')+'</div>';
+    }).join('');
+  };
+
+  /* If the Spheres page is already open, rerender it so the existing X buttons are visible. */
+  setTimeout(function(){
+    try{renderCal();}catch(e){}
+    try{if(document.getElementById('V-sph') && document.getElementById('V-sph').classList.contains('on')) renderSph();}catch(e){}
+  },100);
+})();
+</script>
+<!-- FINAL REQUEST: SHORT WEEKDAYS + DELETE OPTIONS END -->
+
+
+<!-- FINAL WORKING DELETE BUTTON IN DETAIL SHEET START -->
+<style>
+/* Softer app colors for detail buttons */
+:root{
+  --edit-soft:#A8B895;
+  --delete-soft:#A97B75;
+  --delete-soft-dark:#8F625D;
+}
+.d-act.detail-actions-final{
+  display:flex !important;
+  gap:12px !important;
+  margin-top:24px !important;
+}
+.d-act.detail-actions-final .d-btn{
+  flex:1 !important;
+  border-radius:100px !important;
+  padding:16px 12px !important;
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-size:22px !important;
+  font-weight:400 !important;
+  color:#2A1C12 !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+.d-act.detail-actions-final .detail-edit-btn{
+  background:var(--edit-soft) !important;
+}
+.d-act.detail-actions-final .detail-delete-btn{
+  background:var(--delete-soft) !important;
+}
+.d-act.detail-actions-final .detail-delete-btn:active{
+  background:var(--delete-soft-dark) !important;
+}
+.sh-delete-mini,
+.grm.delete-red,
+.detail-delete-color{
+  color:var(--delete-soft) !important;
+}
+</style>
+<script>
+(function(){
+  function finalEsc(s){
+    try{return esc(s);}catch(e){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+  }
+  function finalEventEnd(ev){ return (ev.startMin + (ev.dur||0)) % 1440; }
+  function finalTimeText(ev){ return tm(ev.startMin) + ' – ' + tm(finalEventEnd(ev)); }
+  function finalHours(ev){ return Math.round(((ev.dur||0)/60)*10)/10; }
+  function finalColor(ev){
+    var sph = null;
+    try{sph = ev && ev.sphId ? gsp(ev.sphId) : null;}catch(e){}
+    return sph ? sph.color : ((BAND[ev && ev.band] && BAND[ev.band].color) || 'var(--gd)');
+  }
+  function finalSphereLine(ev){
+    var sph = null;
+    try{sph = ev && ev.sphId ? gsp(ev.sphId) : null;}catch(e){}
+    if(!sph) return '';
+    var goal='';
+    try{goal=getGoalText(ev)||'';}catch(e){}
+    var band='';
+    try{band=(BAND[sph.band]&&BAND[sph.band].label)||'';}catch(e){}
+    return finalEsc(sph.name) + (goal?' · '+finalEsc(goal):'') + (band?' · '+finalEsc(band):'');
+  }
+
+  window.deleteCurrentCalendarBlockFinal=function(e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    try{
+      var ev=(getDay(dDk)||[]).find(function(x){return x.id===dId;});
+      if(!ev){toast('Nothing to delete');return;}
+      if(!confirm('Delete "'+(ev.title||'this block')+'"?')) return;
+      S.cal[dDk]=(S.cal[dDk]||[]).filter(function(x){return x.id!==dId;});
+      save();
+      csh(null,'sh-det');
+      renderCal();
+      toast('Deleted');
+    }catch(err){
+      try{toast('Delete failed');}catch(e2){}
+    }
+  };
+
+  openDet=function(ev,dk){
+    dDk=dk; dId=ev.id;
+    var c=finalColor(ev);
+    var sphereLine=finalSphereLine(ev);
+    var tasksHtml='';
+    if(ev.tasks && ev.tasks.length){
+      tasksHtml='<div style="font-size:15px;font-weight:400;text-transform:uppercase;letter-spacing:.12em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">'+
+        ev.tasks.map(function(t,i){
+          return '<div class="dtask-row" onclick="togDT('+i+')"><div class="dtask-chk'+(t.done?' done':'')+'" style="border-color:'+c+(t.done?';background:'+c:'')+';color:'+(t.done?'#fff':'transparent')+'">'+(t.done?'✓':'')+'</div><div style="flex:1;font-size:20px;font-weight:400;color:#2A1C12;text-decoration:none!important;'+(t.done?'opacity:.45;':'')+'">'+finalEsc(t.text)+'</div></div>';
+        }).join('')+'</div>';
+    }
+    document.getElementById('det-in').innerHTML=
+      '<div style="margin-bottom:20px">'+
+        '<div style="font-family:\'Cormorant Garamond\',serif;font-size:38px;font-weight:400;color:#2A1C12;margin-bottom:16px;line-height:1.05">'+finalEsc(ev.title)+'</div>'+
+        '<div style="font-family:\'Cormorant Garamond\',serif;font-size:25px;color:var(--mt);margin-bottom:14px">'+finalTimeText(ev)+' · '+finalHours(ev)+'h</div>'+
+        (sphereLine?'<div style="font-size:24px;margin-top:6px;color:'+c+';font-weight:400">'+sphereLine+'</div>':'')+
+        (ev.activityTitle?'<div style="font-size:22px;margin-top:12px;color:var(--mt)">Activity: '+finalEsc(ev.activityTitle)+'</div>':'')+
+      '</div>'+tasksHtml+
+      '<div class="d-act detail-actions-final">'+
+        '<button class="d-btn detail-edit-btn" onclick="openEditDet()">Edit</button>'+
+        '<button class="d-btn detail-delete-btn" onclick="deleteCurrentCalendarBlockFinal(event)">Delete</button>'+
+      '</div>';
+    document.getElementById('sh-det').classList.add('O');
+  };
+
+  setTimeout(function(){
+    try{renderCal();}catch(e){}
+  },80);
+})();
+</script>
+<!-- FINAL WORKING DELETE BUTTON IN DETAIL SHEET END -->
+
+<!-- REAL FINAL DELETE FIX START -->
+<style>
+.d-act.real-delete-actions{
+  display:flex !important;
+  gap:12px !important;
+  margin-top:24px !important;
+}
+.d-act.real-delete-actions .d-btn{
+  flex:1 !important;
+  border-radius:100px !important;
+  padding:16px 12px !important;
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-size:22px !important;
+  font-weight:400 !important;
+  color:#2A1C12 !important;
+  border:none !important;
+}
+.real-edit-btn{background:#A8B895 !important;}
+.real-delete-btn{background:#A97B75 !important;}
+</style>
+<script>
+(function(){
+  function safeText(v){
+    try{return esc(v);}catch(e){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+  }
+  function getEventByKeyAndId(key,id){
+    var list=(S.cal && S.cal[key]) || [];
+    return list.find(function(x){return x && x.id===id;}) || null;
+  }
+  function findEventKey(id){
+    var cal=S.cal||{};
+    if(dDk && getEventByKeyAndId(dDk,id)) return dDk;
+    for(var k in cal){
+      if((cal[k]||[]).some(function(x){return x && x.id===id;})) return k;
+    }
+    return dDk || selDk();
+  }
+  window.deleteCalendarEventReally=function(key,id,e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    key = key || findEventKey(id || dId);
+    id = id || dId;
+    if(!key || !id){try{toast('Nothing to delete');}catch(err){} return false;}
+    var before=(S.cal[key]||[]).length;
+    S.cal[key]=(S.cal[key]||[]).filter(function(x){return x && x.id!==id;});
+    var after=(S.cal[key]||[]).length;
+    if(before===after){
+      var realKey=findEventKey(id);
+      if(realKey && realKey!==key){
+        S.cal[realKey]=(S.cal[realKey]||[]).filter(function(x){return x && x.id!==id;});
+        key=realKey;
+      }
+    }
+    save();
+    try{csh(null,'sh-det');}catch(err){var sh=document.getElementById('sh-det'); if(sh)sh.classList.remove('O');}
+    renderCal();
+    try{toast('Deleted');}catch(err){}
+    return false;
+  };
+  window.detRm=function(e){return window.deleteCalendarEventReally(dDk,dId,e);};
+  window.deleteCurrentCalendarBlockFinal=function(e){return window.deleteCalendarEventReally(dDk,dId,e);};
+
+  openDet=function(ev,dk){
+    dDk=dk; dId=ev.id;
+    var sph=null,c='var(--gd)',goal='',bandLabel='';
+    try{sph=ev.sphId?gsp(ev.sphId):null;}catch(e){}
+    if(sph){c=sph.color; try{goal=getGoalText(ev)||'';}catch(e){} try{bandLabel=(BAND[sph.band]&&BAND[sph.band].label)||'';}catch(e){}}
+    var end=(ev.startMin+(ev.dur||0))%1440;
+    var hours=Math.round(((ev.dur||0)/60)*10)/10;
+    var tasks='';
+    if(ev.tasks && ev.tasks.length){
+      tasks='<div style="font-size:15px;font-weight:400;text-transform:uppercase;letter-spacing:.12em;color:var(--mt);margin-bottom:10px">Tasks</div><div style="margin-bottom:4px">'+
+      ev.tasks.map(function(t,i){
+        return '<div class="dtask-row" onclick="togDT('+i+')"><div class="dtask-chk'+(t.done?' done':'')+'" style="border-color:'+c+(t.done?';background:'+c:'')+';color:'+(t.done?'#fff':'transparent')+'">'+(t.done?'✓':'')+'</div><div style="flex:1;font-size:20px;font-weight:400;color:#2A1C12;text-decoration:none!important;'+(t.done?'opacity:.45;':'')+'">'+safeText(t.text)+'</div></div>';
+      }).join('')+'</div>';
+    }
+    document.getElementById('det-in').innerHTML=
+      '<div style="margin-bottom:20px">'+
+        '<div style="font-family:\'Cormorant Garamond\',serif;font-size:38px;font-weight:400;color:#2A1C12;margin-bottom:16px;line-height:1.05">'+safeText(ev.title)+'</div>'+
+        '<div style="font-family:\'Cormorant Garamond\',serif;font-size:25px;color:var(--mt);margin-bottom:14px">'+tm(ev.startMin)+' – '+tm(end)+' · '+hours+'h</div>'+
+        (sph?'<div style="font-size:24px;margin-top:6px;color:'+c+';font-weight:400">'+safeText(sph.name)+(goal?' · '+safeText(goal):'')+(bandLabel?' · '+safeText(bandLabel):'')+'</div>':'')+
+        (ev.activityTitle?'<div style="font-size:22px;margin-top:12px;color:var(--mt)">Activity: '+safeText(ev.activityTitle)+'</div>':'')+
+      '</div>'+tasks+
+      '<div class="d-act real-delete-actions">'+
+        '<button type="button" class="d-btn real-edit-btn" onclick="openEditDet();return false;">Edit</button>'+
+        '<button type="button" class="d-btn real-delete-btn" data-delete-key="'+safeText(dk)+'" data-delete-id="'+safeText(ev.id)+'">Delete</button>'+
+      '</div>';
+    document.getElementById('sh-det').classList.add('O');
+  };
+
+  var oldOpenEditDet = typeof openEditDet==='function' ? openEditDet : null;
+  openEditDet=function(){
+    if(oldOpenEditDet) oldOpenEditDet();
+    setTimeout(function(){
+      var act=document.querySelector('#det-in .d-act');
+      if(act){
+        act.className='d-act real-delete-actions';
+        act.innerHTML='<button type="button" class="d-btn real-edit-btn" onclick="saveEditDet();return false;">Save</button><button type="button" class="d-btn real-delete-btn" data-delete-key="'+safeText(dDk)+'" data-delete-id="'+safeText(dId)+'">Delete</button>';
+      }
+    },0);
+  };
+
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest && e.target.closest('.real-delete-btn,[data-delete-id]');
+    if(!btn) return;
+    return window.deleteCalendarEventReally(btn.getAttribute('data-delete-key'),btn.getAttribute('data-delete-id'),e);
+  },true);
+
+  setTimeout(function(){try{renderCal();}catch(e){}},80);
+})();
+</script>
+<!-- REAL FINAL DELETE FIX END -->
