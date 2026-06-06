@@ -4391,3 +4391,123 @@ setTimeout(()=>{
 })();
 </script>
 <!-- REAL FINAL DELETE FIX END -->
+
+
+<!-- FINAL ONLY REQUESTED FIXES: ADD BUTTON + ACTIVITY SCROLL START -->
+<style>
+/* 1) iPhone: keep the floating Add activity button from covering other controls. */
+.fab{
+  right:12px !important;
+  bottom:calc(var(--nh) + env(safe-area-inset-bottom, 0px) + 10px) !important;
+  width:118px !important;
+  height:48px !important;
+  min-height:48px !important;
+  border-radius:24px !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  z-index:38 !important;
+}
+/* When any bottom sheet is open, hide the floating button completely. */
+body:has(#sh-add.O) .fab,
+body:has(#sh-det.O) .fab{
+  display:none !important;
+}
+
+/* 2) Add sheet: bigger stable activity scrolling area. */
+#sh-add .sh{
+  height:92vh !important;
+  max-height:92vh !important;
+  overflow:hidden !important;
+  display:flex !important;
+  flex-direction:column !important;
+  padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+}
+#sh-add .sh-h,
+#sh-add .quick-add-box,
+#sh-add .sh-row,
+#sh-add #lb-file-wrap,
+#sh-add #sh-add-btn{
+  flex:0 0 auto !important;
+}
+#sh-add #sh-alist{
+  flex:1 1 auto !important;
+  min-height:360px !important;
+  max-height:none !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
+  overscroll-behavior:contain !important;
+  padding-right:4px !important;
+  margin-bottom:10px !important;
+}
+/* Keep the activity section title visible while scrolling inside the activity list. */
+#sh-add .sh-lbl.activity-list-title-final{
+  position:sticky !important;
+  top:0 !important;
+  z-index:2 !important;
+  background:var(--bg) !important;
+  padding:6px 0 8px !important;
+  margin-bottom:4px !important;
+}
+</style>
+<script>
+(function(){
+  function finalHideFloatingButtonWhenSheetOpen(){
+    try{
+      var open=document.querySelector('#sh-add.O,#sh-det.O');
+      document.querySelectorAll('.fab').forEach(function(b){
+        b.style.display=open?'none':'flex';
+        b.textContent='+ Add activity';
+        b.setAttribute('aria-label','Add activity');
+      });
+      document.querySelectorAll('#lb-plus-add').forEach(function(x){x.remove();});
+    }catch(e){}
+  }
+
+  function finalMarkActivityTitle(){
+    try{
+      var labels=document.querySelectorAll('#sh-add .sh-lbl');
+      labels.forEach(function(l){
+        if((l.textContent||'').trim().toLowerCase()==='my activities'){
+          l.classList.add('activity-list-title-final');
+        }
+      });
+    }catch(e){}
+  }
+
+  if(typeof openAdd==='function'){
+    var previousOpenAddOnlyScroll=openAdd;
+    openAdd=function(t){
+      previousOpenAddOnlyScroll(t);
+      finalMarkActivityTitle();
+      finalHideFloatingButtonWhenSheetOpen();
+      setTimeout(function(){
+        finalMarkActivityTitle();
+        finalHideFloatingButtonWhenSheetOpen();
+      },0);
+    };
+  }
+
+  if(typeof renderActivityPicker==='function'){
+    var previousRenderActivityPickerOnlyScroll=renderActivityPicker;
+    renderActivityPicker=function(){
+      previousRenderActivityPickerOnlyScroll();
+      finalMarkActivityTitle();
+    };
+  }
+
+  if(typeof csh==='function'){
+    var previousCshOnlyScroll=csh;
+    csh=function(e,id){
+      previousCshOnlyScroll(e,id);
+      setTimeout(finalHideFloatingButtonWhenSheetOpen,0);
+    };
+  }
+
+  document.addEventListener('click',function(){setTimeout(finalHideFloatingButtonWhenSheetOpen,0);},true);
+  setTimeout(function(){
+    finalHideFloatingButtonWhenSheetOpen();
+    finalMarkActivityTitle();
+  },100);
+})();
+</script>
+<!-- FINAL ONLY REQUESTED FIXES: ADD BUTTON + ACTIVITY SCROLL END -->
