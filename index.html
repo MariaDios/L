@@ -1189,6 +1189,41 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 }
 
 </style>
+
+<style id="backup-dots-menu">
+.backup-dots{
+ position:fixed;
+ right:10px;
+ bottom:72px;
+ z-index:300;
+}
+.backup-dots-btn{
+ width:34px;height:34px;border-radius:50%;
+ border:1px solid var(--ln);
+ background:rgba(255,255,255,.92);
+ cursor:pointer;font-size:18px;
+}
+.backup-menu{
+ display:none;
+ position:absolute;
+ right:0;
+ bottom:40px;
+ background:#fff;
+ border:1px solid var(--ln);
+ border-radius:12px;
+ overflow:hidden;
+}
+.backup-menu.open{display:block}
+.backup-menu button{
+ display:block;
+ width:70px;
+ border:none;
+ background:#fff;
+ padding:8px 10px;
+ cursor:pointer;
+}
+</style>
+
 </head>
 <body>
 <div id="app">
@@ -1243,7 +1278,7 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   <div class="V" id="V-sph">
     <div class="spv-hd"><div class="spv-title">Spheres</div><div class="spv-sub">Activities · Goals · Deadlines</div></div>
     <div class="band-tabs" id="band-tabs"></div>
-    <div class="backup-row"><button class="backup-btn" onclick="exportBackup()">Export Backup</button><button class="backup-btn" onclick="document.getElementById('backup-file').click()">Import Backup</button><input id="backup-file" type="file" accept="application/json" style="display:none" onchange="importBackupFile(event)"></div>
+    
     <div class="Vsc" style="padding-bottom:28px" id="sp-cards"></div>
   </div>
 
@@ -4549,6 +4584,21 @@ setTimeout(()=>{
 </script>
 <!-- FINAL CLEAN ADD WINDOW + NAV PATCH END -->
 
+
+<div class="backup-dots">
+ <button class="backup-dots-btn" onclick="toggleBackupMenu()">⋯</button>
+ <div class="backup-menu" id="backup-menu">
+   <button onclick="exportBackup()">Exp</button>
+   <button onclick="document.getElementById('backup-file').click()">Imp</button>
+ </div>
+</div>
+
+<script>
+function toggleBackupMenu(){
+ const m=document.getElementById('backup-menu');
+ if(m)m.classList.toggle('open');
+}
+</script>
 </body>
 </html>
 <!-- FINAL SLEEP REALLY WORKING PATCH START -->
