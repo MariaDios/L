@@ -7101,6 +7101,149 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 })();
 </script>
 
+
+<!-- FINAL: CLICK WORK LIFE SLEEP TO SEE TODAY ACTIVITIES + HOURS -->
+<style id="final-band-day-summary-style">
+#bal-bar .bb{
+  cursor:pointer !important;
+  border-radius:12px !important;
+  padding:4px 6px !important;
+}
+#bal-bar .bb:active{
+  background:rgba(168,120,40,.08) !important;
+}
+.band-summary-card{
+  margin:0 14px 8px !important;
+  padding:12px 14px !important;
+  background:#fff !important;
+  border:1px solid var(--ln) !important;
+  border-radius:16px !important;
+  box-shadow:0 2px 10px rgba(64,48,20,.07) !important;
+}
+.band-summary-head{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  margin-bottom:8px !important;
+}
+.band-summary-title{
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-size:22px !important;
+  color:#2A1C12 !important;
+}
+.band-summary-close{
+  border:none !important;
+  background:transparent !important;
+  color:var(--mt) !important;
+  font-size:24px !important;
+  cursor:pointer !important;
+}
+.band-summary-row{
+  display:flex !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  padding:6px 0 !important;
+  border-top:1px solid rgba(221,212,188,.65) !important;
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-size:19px !important;
+  color:#2A1C12 !important;
+}
+.band-summary-empty{
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-size:18px !important;
+  color:var(--mt) !important;
+  padding-top:4px !important;
+}
+</style>
+
+<script id="final-band-day-summary-js">
+(function(){
+  let activeBandSummary = '';
+
+  function bandLabel(b){
+    return (BAND[b] && BAND[b].label) || b;
+  }
+
+  function hoursText(minutes){
+    const h = minutes / 60;
+    return (Math.round(h * 10) / 10) + 'h';
+  }
+
+  function renderBandSummaryBox(){
+    const old = document.getElementById('band-summary-card');
+    if(old) old.remove();
+    if(!activeBandSummary) return;
+
+    const calHeader = document.querySelector('#V-cal .cal-header');
+    const b3 = document.getElementById('b3w');
+    if(!calHeader || !b3) return;
+
+    const events = (getDay(selDk()) || []).filter(ev => ev.band === activeBandSummary);
+    const totals = {};
+    events.forEach(ev=>{
+      const title = ev.title || ev.activityTitle || 'Activity';
+      totals[title] = (totals[title] || 0) + (ev.dur || 0);
+    });
+
+    const color = (BAND[activeBandSummary] && BAND[activeBandSummary].color) || 'var(--gd)';
+    const rows = Object.keys(totals).length
+      ? Object.entries(totals).map(([name,min]) =>
+          `<div class="band-summary-row"><span>${esc(name)}</span><span style="color:${color}">${hoursText(min)}</span></div>`
+        ).join('')
+      : `<div class="band-summary-empty">No activities for this day</div>`;
+
+    const box = document.createElement('div');
+    box.id = 'band-summary-card';
+    box.className = 'band-summary-card';
+    box.innerHTML = `<div class="band-summary-head">
+      <div class="band-summary-title" style="color:${color}">${bandLabel(activeBandSummary)} today</div>
+      <button class="band-summary-close" onclick="window.closeBandSummary()">×</button>
+    </div>${rows}`;
+    calHeader.insertBefore(box, b3.nextSibling);
+  }
+
+  window.closeBandSummary = function(){
+    activeBandSummary = '';
+    renderBandSummaryBox();
+  };
+
+  window.showBandSummary = function(band){
+    activeBandSummary = activeBandSummary === band ? '' : band;
+    renderBandSummaryBox();
+  };
+
+  const oldRenderDayDetail = window.renderDayDetail;
+  if(typeof oldRenderDayDetail === 'function'){
+    window.renderDayDetail = function(){
+      oldRenderDayDetail();
+      const boxes = document.querySelectorAll('#bal-bar .bb');
+      ['work','life','sleep'].forEach((band,i)=>{
+        if(boxes[i]){
+          boxes[i].setAttribute('onclick', `showBandSummary('${band}')`);
+          boxes[i].setAttribute('title', 'Show activities');
+        }
+      });
+      setTimeout(renderBandSummaryBox,0);
+    };
+  }
+
+  const oldRenderCal = window.renderCal;
+  if(typeof oldRenderCal === 'function'){
+    window.renderCal = function(){
+      oldRenderCal();
+      setTimeout(renderBandSummaryBox,0);
+    };
+  }
+
+  setTimeout(()=>{
+    try{
+      if(typeof renderCal === 'function') renderCal();
+    }catch(e){}
+  },100);
+})();
+</script>
+
 </body>
 </html>
 <!-- FINAL SLEEP REALLY WORKING PATCH START -->
