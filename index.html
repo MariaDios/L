@@ -7010,6 +7010,97 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 })();
 </script>
 
+
+<!-- FINAL PEN BROWN + GOALS IPHONE OVAL FIX -->
+<style id="final-pen-brown-goals-oval-iphone-fix">
+/* Notes pen: always brown, not black */
+#app > .nav .nb[data-v="notes"] .nb-ic,
+.nav .nb[data-v="notes"] .nb-ic,
+.nb[data-v="notes"] .nb-ic{
+  color:var(--gd) !important;
+  -webkit-text-fill-color:var(--gd) !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+/* Keep the Notes pen brown also when inactive/active */
+.nb[data-v="notes"].on .nb-ic{
+  color:var(--gd) !important;
+  -webkit-text-fill-color:var(--gd) !important;
+}
+
+/* Goals page: keep oval/buttons visible and not cut/broken on iPhone */
+.goals-card-head{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  overflow:visible !important;
+}
+
+.goals-card-head > div:first-child{
+  min-width:0 !important;
+  flex:1 1 auto !important;
+}
+
+.goals-period-nav{
+  flex:0 0 auto !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  flex-wrap:nowrap !important;
+  overflow:visible !important;
+  max-width:none !important;
+}
+
+.goals-period-btn,
+.goals-today-btn,
+.goal-file-btn,
+.reflection-tool{
+  flex:0 0 34px !important;
+  width:34px !important;
+  min-width:34px !important;
+  height:34px !important;
+  min-height:34px !important;
+  border-radius:50% !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  white-space:nowrap !important;
+}
+
+/* Prevent any oval/chip from being squeezed into a broken shape */
+.goals-card,
+.goals-card *{
+  max-width:100%;
+}
+</style>
+
+<script id="final-pen-brown-goals-oval-iphone-fix-js">
+(function(){
+  function fixNotesPenBrown(){
+    document.querySelectorAll('.nb[data-v="notes"] .nb-ic').forEach(el=>{
+      el.style.setProperty('color','var(--gd)','important');
+      el.style.setProperty('-webkit-text-fill-color','var(--gd)','important');
+      el.style.setProperty('filter','none','important');
+      el.style.setProperty('opacity','1','important');
+    });
+  }
+  const oldGoV = window.goV;
+  if(typeof oldGoV === 'function'){
+    window.goV = function(v){
+      oldGoV(v);
+      setTimeout(fixNotesPenBrown,0);
+      setTimeout(fixNotesPenBrown,100);
+    };
+  }
+  document.addEventListener('DOMContentLoaded', fixNotesPenBrown);
+  setInterval(fixNotesPenBrown,500);
+})();
+</script>
+
 </body>
 </html>
 <!-- FINAL SLEEP REALLY WORKING PATCH START -->
