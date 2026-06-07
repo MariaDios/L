@@ -9745,3 +9745,128 @@ body.lb-calendar-page #lb-plus-add{
  margin-top:-2px!important;
 }
 </style>
+
+
+
+<style id="goals-page-scroll-fix">
+/* FIX: Goals page must scroll up/down normally */
+#V-goals{
+  overflow:hidden !important;
+  min-height:0 !important;
+}
+
+#V-goals > .Vsc{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  -webkit-overflow-scrolling:touch !important;
+  padding-bottom:110px !important;
+}
+
+#V-goals .goals-page{
+  min-height:auto !important;
+  height:auto !important;
+  overflow:visible !important;
+  padding-bottom:130px !important;
+}
+
+#V-goals .goals-section,
+#goals-content{
+  overflow:visible !important;
+  height:auto !important;
+  min-height:auto !important;
+}
+</style>
+
+
+
+
+
+
+
+<script id="edit-activity-remove-repeat-fix">
+(function(){
+  window.openEditDet=function(){
+    const ev=getDay(dDk).find(e=>e.id===dId); if(!ev)return;
+    const sph=gsp(ev.sphId), c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';
+    const start=tm(ev.startMin), end=tm((ev.startMin+ev.dur)%1440);
+
+    document.getElementById('det-in').innerHTML=`
+      <div class="sh-lbl">Activity</div>
+      <input class="sh-inp" id="det-activity" value="${esc(ev.activityTitle||ev.title||'')}" placeholder="Activity name" style="margin-bottom:14px">
+
+      <div class="sh-lbl">Date</div>
+      <input type="date" class="sh-inp" id="det-date" value="${esc(dDk)}" style="margin-bottom:14px">
+
+      <div class="sh-row">
+        <div><div class="sh-lbl">Start</div><input type="time" class="sh-inp" id="det-start" value="${start}"></div>
+        <div><div class="sh-lbl">End</div><input type="time" class="sh-inp" id="det-end" value="${end}"></div>
+      </div>
+
+      ${ev.tasks?.length?`<div class="sh-lbl">Tasks in this block</div><div class="sh-tasks">${ev.tasks.map((t,i)=>`<div class="sh-tr"><input class="sh-ti" id="det-task-${i}" value="${esc(t.text)}"><div class="sh-tx" onclick="removeDetTask(${i})">×</div></div>`).join('')}</div>`:''}
+
+      <div class="d-act">
+        <button class="d-btn d-ok" style="background:${c}" onclick="saveEditDet()">Save</button>
+        <button class="d-btn d-rm" onclick="openDet(getDay(dDk).find(e=>e.id===dId),dDk)">Cancel</button>
+      </div>`;
+  };
+
+  window.saveEditDet=function(){
+    const ev=getDay(dDk).find(e=>e.id===dId); if(!ev)return;
+
+    const newDk=(document.getElementById('det-date')?.value||dDk).trim()||dDk;
+    const activity=(document.getElementById('det-activity')?.value||'').trim();
+    const st=document.getElementById('det-start')?.value||'09:00';
+    const en=document.getElementById('det-end')?.value||'10:00';
+    const sMin=toMin(st), eMin=toMin(en);
+
+    if(!activity){toast('Activity is required');return;}
+    if(eMin===sMin){toast('End time must be different');return;}
+
+    const editedTasks=(ev.tasks||[]).map((t,i)=>({
+      sourceTaskId:t.sourceTaskId||t.id,
+      text:(document.getElementById('det-task-'+i)?.value||t.text).trim()||t.text,
+      done:!!t.done
+    }));
+
+    /* Remove old block from old date only. Edit Activity does NOT edit repeat series. */
+    S.cal[dDk]=(S.cal[dDk]||[]).filter(e=>e.id!==dId);
+
+    const updated={
+      ...ev,
+      id:uid(),
+      title:(editedTasks.length===1?editedTasks[0].text:activity),
+      activityTitle:activity,
+      startMin:sMin,
+      dur:(eMin>sMin?eMin-sMin:1440-sMin),
+      tasks:editedTasks,
+      repeat:'none',
+      seriesId:''
+    };
+
+    getDay(newDk).push(updated);
+
+    if(eMin<sMin){
+      const d=typeof finalDateFromKey==='function'?finalDateFromKey(newDk):dateFromKey(newDk);
+      d.setDate(d.getDate()+1);
+      getDay(dkey(d)).push({
+        ...updated,
+        id:uid(),
+        startMin:0,
+        dur:eMin,
+        tasks:editedTasks.map(t=>({...t,id:uid(),done:false})),
+        done:false,
+        repeat:'none',
+        seriesId:''
+      });
+    }
+
+    save();
+    csh(null,'sh-det');
+    renderCal();
+    if(typeof applyHourLineColors==='function')setTimeout(applyHourLineColors,0);
+    toast('Block updated');
+  };
+})();
+</script>
