@@ -9660,3 +9660,74 @@ body.lb-calendar-page #lb-plus-add{
 })();
 </script>
 <!-- FINAL PATCH: NO ADD BLINK + NEXT AVAILABLE TIME END -->
+
+
+<!-- FINAL ONLY REQUESTED FIX: bottom labels one line + Goals sphere selector left -->
+<style id="final-only-bottom-nav-goals-spheres-left">
+/* Bottom navigation: keep every word on one line */
+#app > .nav{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  overflow:visible !important;
+}
+
+#app > .nav .nb{
+  flex:1 1 0 !important;
+  min-width:0 !important;
+  max-width:none !important;
+  padding-left:1px !important;
+  padding-right:1px !important;
+}
+
+#app > .nav .nb-lb{
+  display:block !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  font-size:12px !important;
+  line-height:1 !important;
+  letter-spacing:0 !important;
+}
+
+/* Extra narrow iPhone: still one line */
+@media (max-width:390px){
+  #app > .nav .nb-lb{
+    font-size:11px !important;
+    white-space:nowrap !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    letter-spacing:0 !important;
+  }
+}
+
+/* Goals page: move the sphere selector left so it is not hidden */
+.goals-item{
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  overflow:visible !important;
+}
+
+.goals-text{
+  min-width:0 !important;
+  flex:1 1 auto !important;
+}
+
+.goal-sphere-select{
+  margin-left:-14px !important;
+  transform:translateX(-8px) !important;
+  max-width:110px !important;
+  min-width:96px !important;
+  flex:0 0 110px !important;
+}
+
+@media (max-width:390px){
+  .goal-sphere-select{
+    margin-left:-18px !important;
+    transform:translateX(-10px) !important;
+    max-width:104px !important;
+    min-width:92px !important;
+    flex-basis:104px !important;
+  }
+}
+</style>
