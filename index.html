@@ -1345,19 +1345,6 @@ select.sh-inp, select.sh-inp option {
 }
 </style>
 
-
-<style id="final-unified-font">
-body,button,input,textarea,select,option,div,span,p,label,small,strong,b,i,a,td,th,li,ul,ol,
-.mhdr-month,.mhdr-year,.mgd-n,.wd-n,.wd-nm,.dow-cell,.hlbl-n,.hlbl-m,.ev-n,.ev-t,.ev-s,.ev-tk,
-.spv-title,.spv-sub,.sph-name,.sph-btag,.sp-lbl,.sh-title,.sh-sub,.sh-lbl,.sh-sp-n,.sh-ai-n,
-.sh-inp,.sh-ti,.b3ht,.b3hs,.b3i,.b3n,.bb-nm,.bb-vl,.gtxt,.gterm,
-.goals-card-title,.goals-text,.notes-title-input,.notes-list-area,.notes-card-title,
-.notes-card-body,.notes-card-meta{
- font-family:'Cormorant Garamond', Georgia, serif !important;
- font-weight:400 !important;
-}
-</style>
-
 </head>
 <body>
 <div id="app">
@@ -1703,12 +1690,12 @@ function nextNumber(){
 function insertNumberedLine(){
   const a=document.getElementById('note-body');
   const n=nextNumber();
-  a.value=(a.value.trim()?a.value.trim()+'\\n':'')+n+'. ';
+  a.value=(a.value.trim()?a.value.trim()+'\n':'')+n+'. ';
   a.focus();
 }
 function insertBulletLine(){
   const a=document.getElementById('note-body');
-  a.value=(a.value.trim()?a.value.trim()+'\\n':'')+'• ';
+  a.value=(a.value.trim()?a.value.trim()+'\n':'')+'• ';
   a.focus();
 }
 async function showNoteFiles(){
@@ -1723,7 +1710,7 @@ function handleNoteEnter(event){
   const start=a.selectionStart;
   const before=a.value.slice(0,start);
   const after=a.value.slice(a.selectionEnd);
-  const line=before.split('\\n').pop();
+  const line=before.split('\n').pop();
   let prefix='';
   const num=line.match(/^(\\s*)(\\d+)\\.\\s/);
   const bullet=line.match(/^(\\s*)•\\s/);
@@ -1731,8 +1718,8 @@ function handleNoteEnter(event){
   else if(bullet){prefix=bullet[1]+'• ';}
   else{return;}
   event.preventDefault();
-  a.value=before+'\\n'+prefix+after;
-  const pos=(before+'\\n'+prefix).length;
+  a.value=before+'\n'+prefix+after;
+  const pos=(before+'\n'+prefix).length;
   a.selectionStart=a.selectionEnd=pos;
 }
 function saveNote(){
@@ -4770,8 +4757,6 @@ setTimeout(()=>{
     const nav=document.querySelector('#app > .nav');
     if(!nav)return;
     nav.innerHTML = '<div class="nb" data-v="cal" onclick="goV(\'cal\')"><div class="nb-ic">◈</div><div class="nb-lb">Calendar</div></div>'+
-      '
-'+
       '<div class="nb" data-v="sph" onclick="goV(\'sph\')"><div class="nb-ic">◎</div><div class="nb-lb">Spheres</div></div>';
     refreshNavState();
   }
@@ -4950,6 +4935,1775 @@ function toggleBackupMenu(){
  if(m)m.classList.toggle('open');
 }
 </script>
+
+
+
+<!-- FINAL CLEAN SYSTEM PATCH START -->
+<style id="final-clean-system-css">
+/* 1) Dates straight under weekday letters */
+.dow-row{
+  display:grid !important;
+  grid-template-columns:repeat(7,1fr) !important;
+  padding:0 40px 4px !important;
+}
+.week-fold.unfolded{max-height:92px !important;}
+.week-strip-final{
+  display:grid !important;
+  grid-template-columns:28px repeat(7,1fr) 28px !important;
+  gap:2px !important;
+  padding:0 10px 8px !important;
+  align-items:stretch !important;
+}
+.week-strip-final #week-strip{
+  grid-column:2/9 !important;
+  display:grid !important;
+  grid-template-columns:repeat(7,1fr) !important;
+  gap:2px !important;
+  padding:0 !important;
+}
+.week-strip-final .wd{
+  padding:8px 0 9px !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.week-strip-final .wd-nm{display:none !important;}
+.week-strip-final .wd-n{
+  font-family:'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size:18px !important;
+  font-weight:500 !important;
+  line-height:1 !important;
+}
+.week-arrow-final{
+  width:28px !important;
+  border-radius:14px !important;
+  border:1px solid var(--ln) !important;
+  background:var(--c2) !important;
+  color:var(--gd) !important;
+  font-size:22px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+}
+
+/* 4) Repetition removed completely */
+#sh-repeat,#det-repeat,.repeat-final-hide{display:none !important;}
+
+/* remove Export/Import from Spheres page */
+#V-sph .backup-row,
+#V-sph .bottom-backup,
+#V-sph .backup-btn{
+  display:none !important;
+}
+
+/* Dropdown font same everywhere */
+select,select option,.sh-inp,#new-act-sphere,#new-act-goal,.goal-sphere-select{
+  font-family:'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size:15px !important;
+  font-weight:400 !important;
+  color:#2A1C12 !important;
+  letter-spacing:0 !important;
+}
+
+/* Goal sphere selector */
+.goal-sphere-select{
+  min-width:112px !important;
+  padding:8px 10px !important;
+  border:1px solid var(--ln) !important;
+  border-radius:12px !important;
+  background:var(--c2) !important;
+  outline:none !important;
+}
+
+/* Spheres linked view: goals from Goals page, no dates, no tasks */
+.linked-activity-row{
+  background:var(--c2);
+  border:1px solid var(--ln);
+  border-radius:12px;
+  padding:10px 12px;
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.linked-activity-title{flex:1;font-size:16px;color:var(--tx2);}
+.linked-sphere-goal .goal-meta,
+.linked-sphere-goal .task-row-mini,
+.linked-sphere-goal .act-body,
+.linked-sphere-goal .tasks-label{display:none !important;}
+</style>
+
+<script id="final-clean-system-js">
+(function(){
+  function finalDateFromKey(k){
+    const p=String(k).split('-').map(Number);
+    return new Date(p[0],(p[1]||1)-1,p[2]||1);
+  }
+  function finalPrevKey(k){
+    const d=finalDateFromKey(k);
+    d.setDate(d.getDate()-1);
+    return dkey(d);
+  }
+  function finalEnsurePlansObjects(){
+    ensurePlans();
+    ['week','month','season','year'].forEach(type=>{
+      if(!Array.isArray(S.plans[type]))S.plans[type]=[];
+      S.plans[type]=S.plans[type].map(item=>{
+        if(typeof item==='string')return {id:uid(),text:item,sphereId:''};
+        return {id:item.id||uid(),text:item.text||'',sphereId:item.sphereId||''};
+      });
+      if(!S.plans[type].length)S.plans[type]=[{id:uid(),text:'',sphereId:''}];
+    });
+    if(!S.plans.reflections)S.plans.reflections={};
+    if(!S.plans.files)S.plans.files={week:[],month:[],season:[],year:[]};
+  }
+  function finalSphereOptions(selected){
+    return '<option value="">Sphere...</option>'+S.spheres.map(s=>`<option value="${s.id}"${selected===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
+  }
+  function finalGoalKey(text){return String(text||'').trim().toLowerCase();}
+  function finalPlanGoalsForSphere(sid){
+    finalEnsurePlansObjects();
+    const out=[];
+    ['week','month','season','year'].forEach(type=>{
+      (S.plans[type]||[]).forEach(g=>{
+        const text=(g.text||'').trim();
+        if(text && g.sphereId===sid)out.push({id:g.id,text});
+      });
+    });
+    const seen=new Set();
+    return out.filter(g=>{
+      const k=finalGoalKey(g.text);
+      if(seen.has(k))return false;
+      seen.add(k);
+      return true;
+    });
+  }
+  function finalInternalGoalForPlan(sid,goalText){
+    const s=gsp(sid);if(!s)return null;
+    if(!Array.isArray(s.goals))s.goals=[];
+    const key=finalGoalKey(goalText);
+    let g=s.goals.find(x=>finalGoalKey(x.text)===key);
+    if(!g){g={id:uid(),text:goalText,term:'',activities:[],_open:true};s.goals.push(g);}
+    if(!Array.isArray(g.activities))g.activities=[];
+    return g;
+  }
+
+  window.finalAddActivityToPlanGoal=function(sid,goalText){
+    const inp=document.getElementById('linked-act-'+safeId(sid+'-'+goalText));
+    const title=(inp?.value||'').trim();
+    if(!title){toast('Write activity');return;}
+    const g=finalInternalGoalForPlan(sid,goalText);
+    if(!g)return;
+    g.activities.push({id:uid(),title,tasks:[],_open:false});
+    inp.value='';
+    save();renderSph();
+  };
+  window.finalRemoveLinkedActivity=function(sid,goalText,aid){
+    const g=finalInternalGoalForPlan(sid,goalText);
+    if(!g)return;
+    g.activities=(g.activities||[]).filter(a=>a.id!==aid);
+    save();renderSph();
+  };
+
+  /* Priorities: fold/unfold + copy previous day until rewritten */
+  getBig3=function(k){
+    if(!S.big3)S.big3={};
+    if(!S.big3[k]){
+      const pk=finalPrevKey(k);
+      if(S.big3[pk])S.big3[k]=S.big3[pk].map(x=>({id:uid(),text:x.text||'',done:false}));
+      else S.big3[k]=[{id:uid(),text:'',done:false},{id:uid(),text:'',done:false},{id:uid(),text:'',done:false}];
+    }
+    return S.big3[k];
+  };
+  window.finalSetPriority=function(k,i,val){
+    getBig3(k);
+    S.big3[k][i].text=val;
+    save();
+  };
+  togglePriorities=function(){
+    S.prioritiesOpen=!S.prioritiesOpen;
+    save();renderDayDetail();setTimeout(applyHourLineColors,0);
+  };
+  const oldRenderDayDetailClean=renderDayDetail;
+  renderDayDetail=function(){
+    oldRenderDayDetailClean();
+    const dk=selDk();
+    const b3=getBig3(dk);
+    const b3box=document.getElementById('b3w');
+    if(b3box)b3box.classList.toggle('collapsed',!S.prioritiesOpen);
+    const bc=['var(--life)','var(--work)','var(--slp)'];
+    const b3s=document.getElementById('b3s');
+    if(b3s){
+      b3s.innerHTML=b3.map((t,i)=>
+        `<div class="b3r">
+          <div class="b3n${t.done?' done':''}" style="${t.done?'background:'+bc[i]+';border-color:'+bc[i]:''}" onclick="togB3('${dk}',${i})">${t.done?'✓':['I','II','III'][i]}</div>
+          <input class="b3i${t.done?' done':''}" placeholder="Important task ${i+1}..." value="${esc(t.text)}" oninput="finalSetPriority('${dk}',${i},this.value)">
+        </div>`).join('');
+    }
+  };
+
+  /* Week arrows + aligned dates */
+  function finalEnsureWeekStrip(){
+    const wf=document.getElementById('week-fold');
+    if(!wf)return;
+    if(!wf.querySelector('.week-strip-final')){
+      wf.innerHTML=`<div class="week-strip-final">
+        <button class="week-arrow-final" onclick="shiftWeek(-1)">‹</button>
+        <div class="week-strip" id="week-strip"></div>
+        <button class="week-arrow-final" onclick="shiftWeek(1)">›</button>
+      </div>`;
+    }
+  }
+  renderWeekStrip=function(){
+    finalEnsureWeekStrip();
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const dow=(selDate.getDay()+6)%7;
+    const weekMon=new Date(selDate);weekMon.setDate(selDate.getDate()-dow);
+    const now=new Date();
+    const box=document.getElementById('week-strip');
+    if(!box)return;
+    box.innerHTML=Array.from({length:7},(_,i)=>{
+      const d=new Date(weekMon);d.setDate(weekMon.getDate()+i);
+      const isN=d.toDateString()===now.toDateString();
+      const isSel=d.toDateString()===selDate.toDateString();
+      const k=dkey(d);const evts=getDay(k);
+      const sids=[...new Set(evts.map(e=>e.sphId).filter(Boolean))].slice(0,3);
+      const dots=sids.map(id=>{const s=gsp(id);return s?`<div class="wd-dot" style="background:${s.color}"></div>`:''}).join('');
+      return `<div class="wd${isSel?' act':''}${isN&&!isSel?' tod':''}" onclick="selectDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})">
+        <div class="wd-n">${d.getDate()}</div>
+        <div class="wd-dots">${dots}</div>
+      </div>`;
+    }).join('');
+  };
+  const oldApplyFoldClean=applyFold;
+  applyFold=function(){
+    oldApplyFoldClean();
+    finalEnsureWeekStrip();
+    if(S.folded)renderWeekStrip();
+  };
+  shiftWeek=function(dir){
+    const d=new Date(S.sy,S.sm,S.sd);
+    d.setDate(d.getDate()+dir*7);
+    S.sy=d.getFullYear();S.sm=d.getMonth();S.sd=d.getDate();
+    S.vy=S.sy;S.vm=S.sm;
+    save();renderCal();
+  };
+
+  /* Remove repetition completely */
+  function finalRemoveRepeatUI(){
+    document.querySelectorAll('#sh-repeat,#det-repeat').forEach(r=>{
+      const prev=r.previousElementSibling;
+      if(prev && prev.classList && prev.classList.contains('sh-lbl'))prev.remove();
+      r.remove();
+    });
+    document.querySelectorAll('.sh-lbl').forEach(l=>{
+      if((l.textContent||'').trim().toLowerCase()==='repeat')l.remove();
+    });
+  }
+  const oldOpenAddClean=openAdd;
+  openAdd=function(t){
+    oldOpenAddClean(t);
+    finalRemoveRepeatUI();
+  };
+  const oldOpenEditDetClean=openEditDet;
+  openEditDet=function(){
+    oldOpenEditDetClean();
+    finalRemoveRepeatUI();
+  };
+
+  function finalPickedFiles(){
+    const inp=document.getElementById('lb-files');
+    return inp && inp.files ? Array.from(inp.files).map(f=>({name:f.name,size:f.size,type:f.type||''})) : [];
+  }
+  function finalAddOneBlock(dk,startMin,dur,tasks,blockTitle,files){
+    getDay(dk).push({
+      id:uid(),title:blockTitle,activityTitle:aSel.activity.title,
+      sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,
+      band:aSel.sphere.band,startMin,dur,tasks,done:false,files:files||[]
+    });
+  }
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    const sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    const eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    const dk=selDk();
+    const files=finalPickedFiles();
+    const baseTasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]).map(t=>({id:uid(),sourceTaskId:t.id,text:t.text,done:false}));
+    const blockTitle=baseTasks.length===1 ? baseTasks[0].text : (baseTasks.length>1 ? baseTasks[0].text+' + '+(baseTasks.length-1)+' more' : aSel.activity.title);
+    if(eMin===sMin){toast('End time must be different');return;}
+    if(eMin>sMin)finalAddOneBlock(dk,sMin,eMin-sMin,baseTasks,blockTitle,files);
+    else{
+      finalAddOneBlock(dk,sMin,1440-sMin,baseTasks.map(t=>({...t,id:uid()})),blockTitle,files);
+      const d=new Date(S.sy,S.sm,S.sd);d.setDate(d.getDate()+1);
+      finalAddOneBlock(dkey(d),0,eMin,baseTasks.map(t=>({...t,id:uid(),done:false})),blockTitle,files);
+    }
+    save();csh(null,'sh-add');renderCal();setTimeout(applyHourLineColors,0);toast('Block added');
+  };
+  saveEditDet=function(){
+    const ev=getDay(dDk).find(e=>e.id===dId);if(!ev)return;
+    const title=(document.getElementById('det-title')?.value||'').trim();
+    const activity=(document.getElementById('det-activity')?.value||'').trim();
+    const st=document.getElementById('det-start')?.value||'09:00';
+    const en=document.getElementById('det-end')?.value||'10:00';
+    const sMin=toMin(st),eMin=toMin(en);
+    if(!title){toast('Title is required');return;}
+    if(eMin===sMin){toast('End time must be different');return;}
+    ev.title=title;ev.activityTitle=activity;ev.startMin=sMin;ev.dur=eMin>sMin?eMin-sMin:1440-sMin;ev.repeat='none';ev.seriesId='';
+    if(ev.tasks&&ev.tasks.length){
+      ev.tasks=ev.tasks.map((t,i)=>({...t,text:(document.getElementById('det-task-'+i)?.value||t.text).trim()||t.text}));
+    }
+    if(eMin<sMin){
+      const d=finalDateFromKey(dDk);d.setDate(d.getDate()+1);
+      getDay(dkey(d)).push({...ev,id:uid(),startMin:0,dur:eMin,tasks:(ev.tasks||[]).map(t=>({...t,id:uid(),done:false})),done:false});
+    }
+    save();csh(null,'sh-det');renderCal();toast('Block updated');
+  };
+
+  /* Restore full Goals page + add sphere selector */
+  addGoalLine=function(type){
+    finalEnsurePlansObjects();
+    S.plans[type].push({id:uid(),text:'',sphereId:''});
+    save();renderGoals();
+  };
+  setGoalLine=function(type,i,val){
+    finalEnsurePlansObjects();
+    if(!S.plans[type][i])S.plans[type][i]={id:uid(),text:'',sphereId:''};
+    S.plans[type][i].text=val;
+    save();
+  };
+  window.setGoalSphere=function(type,i,val){
+    finalEnsurePlansObjects();
+    if(!S.plans[type][i])S.plans[type][i]={id:uid(),text:'',sphereId:''};
+    S.plans[type][i].sphereId=val;
+    save();
+  };
+  renderGoalBlock=function(type,title){
+    finalEnsurePlansObjects();
+    const items=S.plans[type];
+    return `<div class="goals-card">
+      <div class="goals-card-head">
+        <div>
+          <div class="goals-card-title">${title}</div>
+          <div class="goals-card-sub">${goalSub(type)}</div>
+        </div>
+        <div class="goals-period-nav">
+          <button class="goals-period-btn" onclick="shiftPeriod('${type}',-1)">‹</button>
+          <button class="goals-today-btn" onclick="resetPlanDate()">◉</button>
+          <button class="goals-period-btn" onclick="shiftPeriod('${type}',1)">›</button>
+          <button class="goal-file-btn" onclick="document.getElementById('goal-file-${type}').click()">📎</button>
+        </div>
+      </div>
+      <div class="goals-list">
+        ${items.map((v,i)=>`<div class="goals-item">
+          <div class="goals-num">${i+1}</div>
+          <input class="goals-text" value="${esc(v.text||'')}" placeholder="Add goal..." oninput="setGoalLine('${type}',${i},this.value)">
+          <select class="goal-sphere-select" onchange="setGoalSphere('${type}',${i},this.value)">${finalSphereOptions(v.sphereId||'')}</select>
+        </div>`).join('')}
+      </div>
+      <input id="goal-file-${type}" type="file" multiple style="display:none" onchange="addGoalFiles('${type}')">
+      ${renderGoalFiles(type)}
+      <button class="goals-add" onclick="addGoalLine('${type}')">+ Add line</button>
+    </div>`;
+  };
+  renderGoals=function(){
+    const box=document.getElementById('goals-content');
+    if(!box)return;
+    finalEnsurePlansObjects();
+    box.innerHTML=
+      renderGoalBlock('week','This Week')+
+      renderGoalBlock('month','This Month')+
+      renderGoalBlock('season','This Season')+
+      renderGoalBlock('year','This Year')+
+      `<div class="goals-card">
+        <div class="goals-card-head">
+          <div>
+            <div class="goals-card-title">Reflection of the Month</div>
+            <div class="goals-card-sub">${MONTHS[planBaseDate().getMonth()]} ${planBaseDate().getFullYear()}</div>
+          </div>
+          <div class="goals-period-nav">
+            <button class="goals-period-btn" onclick="shiftPeriod('month',-1)">‹</button>
+            <button class="goals-today-btn" onclick="resetPlanDate()">◉</button>
+            <button class="goals-period-btn" onclick="shiftPeriod('month',1)">›</button>
+          </div>
+        </div>
+        <div style="padding:14px">
+          <textarea class="reflection-area" placeholder="1. " onfocus="ensureReflectionList()" onkeydown="handleReflectionEnter(event)" oninput="setMonthReflection(this.value)">${esc(ensureReflectionStore().text)}</textarea>
+          <div class="reflection-tools">
+            <button class="reflection-tool" onclick="document.getElementById('reflection-file-input').click()">📎</button>
+          </div>
+          <input id="reflection-file-input" type="file" multiple style="display:none" onchange="addMonthReflectionFiles()">
+          <div class="reflection-files">${renderReflectionFiles(ensureReflectionStore().files)}</div>
+        </div>
+      </div>`;
+  };
+
+  /* Spheres: goals from Goals page according to chosen sphere, no date, then activity, no tasks */
+  renderSphereDetail=function(s){
+    const bm=BAND[s.band];
+    const planGoals=finalPlanGoalsForSphere(s.id);
+    return `<div class="sphere-page-head">
+      <button class="sphere-back" onclick="closeSpherePage()">‹ Spheres</button>
+      <div class="spv-title">${esc(s.name)}</div>
+      <div class="spv-sub">${bm.label} · Goals · Activities</div>
+      <button class="delete-sphere-small" onclick="deleteSphere('${s.id}')">Delete sphere</button>
+    </div>
+    <div class="Vsc" style="padding-bottom:28px">
+      <div class="spbody" style="background:transparent">
+        <div class="sp-lbl">Goals</div>
+        ${planGoals.length?planGoals.map(g=>{
+          const internal=finalInternalGoalForPlan(s.id,g.text);
+          const acts=(internal&&internal.activities)||[];
+          const inputId='linked-act-'+safeId(s.id+'-'+g.text);
+          return `<div class="goal-card linked-sphere-goal">
+            <div class="goal-head">
+              <div class="gdot" style="background:${s.color}"></div>
+              <div style="flex:1"><div class="goal-title">${esc(g.text)}</div></div>
+            </div>
+            <div class="goal-body">
+              <div class="sp-lbl">Activities</div>
+              ${acts.length?acts.map(a=>`<div class="linked-activity-row">
+                <div class="task-dot" style="background:${s.color}"></div>
+                <div class="linked-activity-title">${esc(a.title)}</div>
+                <div class="edit-mini" onclick="editActivity('${s.id}','${internal.id}','${a.id}');event.stopPropagation()">✎</div>
+                <div class="grm" onclick="finalRemoveLinkedActivity('${s.id}','${esc(g.text)}','${a.id}')">×</div>
+              </div>`).join(''):`<div class="s80-s">No activities yet</div>`}
+              <div class="mini-add-row">
+                <input class="mini-inp" id="${inputId}" placeholder="Add activity..." onkeydown="if(event.key==='Enter')finalAddActivityToPlanGoal('${s.id}','${esc(g.text)}')">
+                <button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="finalAddActivityToPlanGoal('${s.id}','${esc(g.text)}')">Add</button>
+              </div>
+            </div>
+          </div>`;
+        }).join(''):`<div class="s80-s">No goals assigned to this sphere yet. Add goals in Goals page and choose this sphere.</div>`}
+      </div>
+    </div>`;
+  };
+
+  /* remove Export/Import from Spheres list, keep all other page content */
+  const oldRenderSphClean=renderSph;
+  renderSph=function(){
+    finalEnsurePlansObjects();
+    oldRenderSphClean();
+    document.querySelectorAll('#V-sph .backup-row,#V-sph .bottom-backup').forEach(x=>x.remove());
+  };
+
+  const oldRenderNewActivityOptionsClean=renderNewActivityOptions;
+  renderNewActivityOptions=function(){
+    oldRenderNewActivityOptionsClean();
+    const sel=document.getElementById('new-act-sphere');
+    if(sel)sel.classList.add('sh-inp');
+  };
+
+  setTimeout(()=>{
+    try{
+      finalEnsurePlansObjects();
+      finalRemoveRepeatUI();
+      finalEnsureWeekStrip();
+      renderCal();
+      if(document.getElementById('V-goals')?.classList.contains('on'))renderGoals();
+      if(document.getElementById('V-sph')?.classList.contains('on'))renderSph();
+    }catch(e){console.error(e);}
+  },400);
+})();
+</script>
+<!-- FINAL CLEAN SYSTEM PATCH END -->
+
+
+<!-- FINAL RESTORE GOALS PAGE PATCH START -->
+<style id="final-restore-goals-page-css">
+/* Restore main bottom navigation with all 4 pages */
+#app > .nav{
+  display:flex !important;
+  height:82px !important;
+  z-index:200 !important;
+}
+#V-sph > .nav{display:none !important;}
+
+/* Remove repetition completely */
+#sh-repeat,#det-repeat{display:none !important;}
+.sh-lbl.repeat-final-hide{display:none !important;}
+
+/* Remove Export/Import from Spheres page */
+#V-sph .backup-row,
+#V-sph .bottom-backup,
+#V-sph .backup-btn{
+  display:none !important;
+}
+
+/* Dates straight under weekday letters when week strip is open */
+.dow-row{
+  display:grid !important;
+  grid-template-columns:repeat(7,1fr) !important;
+  padding:0 44px 4px !important;
+}
+.week-fold.unfolded{max-height:92px !important;}
+.week-strip-final{
+  display:grid !important;
+  grid-template-columns:30px 1fr 30px !important;
+  gap:4px !important;
+  padding:0 10px 8px !important;
+  align-items:stretch !important;
+}
+.week-strip-final #week-strip{
+  display:grid !important;
+  grid-template-columns:repeat(7,1fr) !important;
+  gap:2px !important;
+  padding:0 !important;
+}
+.week-strip-final .wd{
+  padding:8px 0 9px !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.week-strip-final .wd-nm{display:none !important;}
+.week-arrow-final{
+  width:30px !important;
+  border-radius:14px !important;
+  border:1px solid var(--ln) !important;
+  background:var(--c2) !important;
+  color:var(--gd) !important;
+  font-size:22px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+}
+
+/* Sphere selector in Goals */
+.goal-sphere-select{
+  min-width:108px !important;
+  padding:8px 10px !important;
+  border:1px solid var(--ln) !important;
+  border-radius:12px !important;
+  background:var(--c2) !important;
+  font-family:'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size:15px !important;
+  font-weight:400 !important;
+  color:#2A1C12 !important;
+}
+
+/* Add page dropdown same font */
+select,select option,.sh-inp,#new-act-sphere,#new-act-goal{
+  font-family:'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size:15px !important;
+  font-weight:400 !important;
+  color:#2A1C12 !important;
+}
+
+/* Spheres linked view: no dates and no tasks */
+.linked-activity-row{
+  background:var(--c2);
+  border:1px solid var(--ln);
+  border-radius:12px;
+  padding:10px 12px;
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.linked-activity-title{flex:1;font-size:16px;color:var(--tx2);}
+.linked-sphere-goal .goal-meta,
+.linked-sphere-goal .task-row-mini,
+.linked-sphere-goal .act-body,
+.linked-sphere-goal .tasks-label{display:none !important;}
+</style>
+
+<script id="final-restore-goals-page-js">
+(function(){
+  function finalCleanEnsureMainNav(){
+    const app=document.getElementById('app');
+    if(!app)return;
+    let nav=app.querySelector(':scope > .nav');
+    if(!nav){
+      nav=document.createElement('div');
+      nav.className='nav';
+      app.appendChild(nav);
+    }
+    nav.innerHTML=
+      `<div class="nb" data-v="cal" onclick="goV('cal')"><div class="nb-ic">◈</div><div class="nb-lb">Calendar</div></div>
+       <div class="nb" data-v="sph" onclick="goV('sph')"><div class="nb-ic">◎</div><div class="nb-lb">Spheres</div></div>
+       <div class="nb" data-v="notes" onclick="goV('notes')"><div class="nb-ic">🖋</div><div class="nb-lb">Notes</div></div>
+       <div class="nb" data-v="goals" onclick="goV('goals')"><div class="nb-ic">✦</div><div class="nb-lb">Goals</div></div>`;
+    document.querySelectorAll('#V-sph > .nav').forEach(x=>x.remove());
+  }
+  function finalDateFromKey(k){
+    const p=String(k).split('-').map(Number);
+    return new Date(p[0],(p[1]||1)-1,p[2]||1);
+  }
+  function finalPrevKey(k){
+    const d=finalDateFromKey(k);
+    d.setDate(d.getDate()-1);
+    return dkey(d);
+  }
+  function finalEnsurePlansObjects(){
+    ensurePlans();
+    ['week','month','season','year'].forEach(type=>{
+      if(!Array.isArray(S.plans[type]))S.plans[type]=[];
+      S.plans[type]=S.plans[type].map(item=>{
+        if(typeof item==='string')return {id:uid(),text:item,sphereId:''};
+        return {id:item.id||uid(),text:item.text||'',sphereId:item.sphereId||''};
+      });
+      if(!S.plans[type].length)S.plans[type]=[{id:uid(),text:'',sphereId:''}];
+    });
+    if(!S.plans.reflections)S.plans.reflections={};
+    if(!S.plans.files)S.plans.files={week:[],month:[],season:[],year:[]};
+  }
+  function finalSphereOptions(selected){
+    return '<option value="">Sphere...</option>'+S.spheres.map(s=>`<option value="${s.id}"${selected===s.id?' selected':''}>${esc(s.name)}</option>`).join('');
+  }
+  function finalGoalKey(text){return String(text||'').trim().toLowerCase();}
+  function finalPlanGoalsForSphere(sid){
+    finalEnsurePlansObjects();
+    const out=[];
+    ['week','month','season','year'].forEach(type=>{
+      (S.plans[type]||[]).forEach(g=>{
+        const text=(g.text||'').trim();
+        if(text && g.sphereId===sid)out.push({id:g.id,text});
+      });
+    });
+    const seen=new Set();
+    return out.filter(g=>{
+      const k=finalGoalKey(g.text);
+      if(seen.has(k))return false;
+      seen.add(k);
+      return true;
+    });
+  }
+  function finalInternalGoalForPlan(sid,goalText){
+    const s=gsp(sid);if(!s)return null;
+    if(!Array.isArray(s.goals))s.goals=[];
+    const key=finalGoalKey(goalText);
+    let g=s.goals.find(x=>finalGoalKey(x.text)===key);
+    if(!g){g={id:uid(),text:goalText,term:'',activities:[],_open:true};s.goals.push(g);}
+    if(!Array.isArray(g.activities))g.activities=[];
+    return g;
+  }
+  window.finalAddActivityToPlanGoal=function(sid,goalText){
+    const inp=document.getElementById('linked-act-'+safeId(sid+'-'+goalText));
+    const title=(inp?.value||'').trim();
+    if(!title){toast('Write activity');return;}
+    const g=finalInternalGoalForPlan(sid,goalText);
+    if(!g)return;
+    g.activities.push({id:uid(),title,tasks:[],_open:false});
+    inp.value='';
+    save();renderSph();
+  };
+  window.finalRemoveLinkedActivity=function(sid,goalText,aid){
+    const g=finalInternalGoalForPlan(sid,goalText);
+    if(!g)return;
+    g.activities=(g.activities||[]).filter(a=>a.id!==aid);
+    save();renderSph();
+  };
+
+  /* Navigation restore */
+  goV=function(v){
+    finalCleanEnsureMainNav();
+    document.querySelectorAll('.sh-ov').forEach(e=>e.classList.remove('O'));
+    document.querySelectorAll('.V').forEach(e=>e.classList.remove('on'));
+    const page=document.getElementById('V-'+v);
+    if(page)page.classList.add('on');
+    document.querySelectorAll('#app > .nav .nb').forEach(e=>e.classList.toggle('on',e.dataset.v===v));
+    if(v==='cal'){renderCal();setupCalendarLineObserver();setTimeout(applyHourLineColors,0);setTimeout(applyHourLineColors,80);}
+    if(v==='sph')renderSph();
+    if(v==='notes')renderNotes();
+    if(v==='goals')renderGoals();
+  };
+
+  /* Priorities copy forward */
+  getBig3=function(k){
+    if(!S.big3)S.big3={};
+    if(!S.big3[k]){
+      const pk=finalPrevKey(k);
+      if(S.big3[pk])S.big3[k]=S.big3[pk].map(x=>({id:uid(),text:x.text||'',done:false}));
+      else S.big3[k]=[{id:uid(),text:'',done:false},{id:uid(),text:'',done:false},{id:uid(),text:'',done:false}];
+    }
+    return S.big3[k];
+  };
+  window.finalSetPriority=function(k,i,val){
+    getBig3(k);
+    S.big3[k][i].text=val;
+    save();
+  };
+  const oldRenderDayDetailRestore=renderDayDetail;
+  renderDayDetail=function(){
+    oldRenderDayDetailRestore();
+    const dk=selDk();
+    const b3=getBig3(dk);
+    const b3box=document.getElementById('b3w');
+    if(b3box)b3box.classList.toggle('collapsed',!S.prioritiesOpen);
+    const bc=['var(--life)','var(--work)','var(--slp)'];
+    const b3s=document.getElementById('b3s');
+    if(b3s){
+      b3s.innerHTML=b3.map((t,i)=>
+        `<div class="b3r">
+          <div class="b3n${t.done?' done':''}" style="${t.done?'background:'+bc[i]+';border-color:'+bc[i]:''}" onclick="togB3('${dk}',${i})">${t.done?'✓':['I','II','III'][i]}</div>
+          <input class="b3i${t.done?' done':''}" placeholder="Important task ${i+1}..." value="${esc(t.text)}" oninput="finalSetPriority('${dk}',${i},this.value)">
+        </div>`).join('');
+    }
+  };
+
+  /* Week arrows and aligned date row */
+  function finalEnsureWeekStrip(){
+    const wf=document.getElementById('week-fold');
+    if(!wf)return;
+    if(!wf.querySelector('.week-strip-final')){
+      wf.innerHTML=`<div class="week-strip-final">
+        <button class="week-arrow-final" onclick="shiftWeek(-1)">‹</button>
+        <div class="week-strip" id="week-strip"></div>
+        <button class="week-arrow-final" onclick="shiftWeek(1)">›</button>
+      </div>`;
+    }
+  }
+  renderWeekStrip=function(){
+    finalEnsureWeekStrip();
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const dow=(selDate.getDay()+6)%7;
+    const weekMon=new Date(selDate);weekMon.setDate(selDate.getDate()-dow);
+    const now=new Date();
+    const box=document.getElementById('week-strip');
+    if(!box)return;
+    box.innerHTML=Array.from({length:7},(_,i)=>{
+      const d=new Date(weekMon);d.setDate(weekMon.getDate()+i);
+      const isN=d.toDateString()===now.toDateString();
+      const isSel=d.toDateString()===selDate.toDateString();
+      const k=dkey(d);const evts=getDay(k);
+      const sids=[...new Set(evts.map(e=>e.sphId).filter(Boolean))].slice(0,3);
+      const dots=sids.map(id=>{const s=gsp(id);return s?`<div class="wd-dot" style="background:${s.color}"></div>`:''}).join('');
+      return `<div class="wd${isSel?' act':''}${isN&&!isSel?' tod':''}" onclick="selectDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})">
+        <div class="wd-n">${d.getDate()}</div>
+        <div class="wd-dots">${dots}</div>
+      </div>`;
+    }).join('');
+  };
+  shiftWeek=function(dir){
+    const d=new Date(S.sy,S.sm,S.sd);
+    d.setDate(d.getDate()+dir*7);
+    S.sy=d.getFullYear();S.sm=d.getMonth();S.sd=d.getDate();
+    S.vy=S.sy;S.vm=S.sm;
+    save();renderCal();
+  };
+  const oldApplyFoldRestore=applyFold;
+  applyFold=function(){
+    oldApplyFoldRestore();
+    finalEnsureWeekStrip();
+    if(S.folded)renderWeekStrip();
+  };
+
+  /* Remove repetition UI and logic */
+  function finalRemoveRepeatUI(){
+    document.querySelectorAll('#sh-repeat,#det-repeat').forEach(r=>{
+      const prev=r.previousElementSibling;
+      if(prev && prev.classList && prev.classList.contains('sh-lbl'))prev.remove();
+      r.remove();
+    });
+    document.querySelectorAll('.sh-lbl').forEach(l=>{
+      if((l.textContent||'').trim().toLowerCase()==='repeat')l.remove();
+    });
+  }
+  const oldOpenAddRestore=openAdd;
+  openAdd=function(t){
+    oldOpenAddRestore(t);
+    finalRemoveRepeatUI();
+  };
+  const oldOpenEditRestore=openEditDet;
+  openEditDet=function(){
+    oldOpenEditRestore();
+    finalRemoveRepeatUI();
+  };
+  function finalPickedFiles(){
+    const inp=document.getElementById('lb-files');
+    return inp && inp.files ? Array.from(inp.files).map(f=>({name:f.name,size:f.size,type:f.type||''})) : [];
+  }
+  function finalAddOneBlock(dk,startMin,dur,tasks,blockTitle,files){
+    getDay(dk).push({
+      id:uid(),title:blockTitle,activityTitle:aSel.activity.title,
+      sphId:aSel.sphere.id,goalId:aSel.goal.id,activityId:aSel.activity.id,
+      band:aSel.sphere.band,startMin,dur,tasks,done:false,files:files||[]
+    });
+  }
+  confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+    const sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    const eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    const dk=selDk();
+    const files=finalPickedFiles();
+    const baseTasks=(aSel.activity.tasks||[]).filter(t=>aChecked[t.id]).map(t=>({id:uid(),sourceTaskId:t.id,text:t.text,done:false}));
+    const blockTitle=baseTasks.length===1 ? baseTasks[0].text : (baseTasks.length>1 ? baseTasks[0].text+' + '+(baseTasks.length-1)+' more' : aSel.activity.title);
+    if(eMin===sMin){toast('End time must be different');return;}
+    if(eMin>sMin)finalAddOneBlock(dk,sMin,eMin-sMin,baseTasks,blockTitle,files);
+    else{
+      finalAddOneBlock(dk,sMin,1440-sMin,baseTasks.map(t=>({...t,id:uid()})),blockTitle,files);
+      const d=new Date(S.sy,S.sm,S.sd);d.setDate(d.getDate()+1);
+      finalAddOneBlock(dkey(d),0,eMin,baseTasks.map(t=>({...t,id:uid(),done:false})),blockTitle,files);
+    }
+    save();csh(null,'sh-add');renderCal();setTimeout(applyHourLineColors,0);toast('Block added');
+  };
+  saveEditDet=function(){
+    const ev=getDay(dDk).find(e=>e.id===dId);if(!ev)return;
+    const title=(document.getElementById('det-title')?.value||'').trim();
+    const activity=(document.getElementById('det-activity')?.value||'').trim();
+    const st=document.getElementById('det-start')?.value||'09:00';
+    const en=document.getElementById('det-end')?.value||'10:00';
+    const sMin=toMin(st),eMin=toMin(en);
+    if(!title){toast('Title is required');return;}
+    if(eMin===sMin){toast('End time must be different');return;}
+    ev.title=title;ev.activityTitle=activity;ev.startMin=sMin;ev.dur=eMin>sMin?eMin-sMin:1440-sMin;ev.repeat='none';ev.seriesId='';
+    if(ev.tasks&&ev.tasks.length){
+      ev.tasks=ev.tasks.map((t,i)=>({...t,text:(document.getElementById('det-task-'+i)?.value||t.text).trim()||t.text}));
+    }
+    if(eMin<sMin){
+      const d=finalDateFromKey(dDk);d.setDate(d.getDate()+1);
+      getDay(dkey(d)).push({...ev,id:uid(),startMin:0,dur:eMin,tasks:(ev.tasks||[]).map(t=>({...t,id:uid(),done:false})),done:false});
+    }
+    save();csh(null,'sh-det');renderCal();toast('Block updated');
+  };
+
+  /* Restore Goals page with sphere selector */
+  addGoalLine=function(type){
+    finalEnsurePlansObjects();
+    S.plans[type].push({id:uid(),text:'',sphereId:''});
+    save();renderGoals();
+  };
+  setGoalLine=function(type,i,val){
+    finalEnsurePlansObjects();
+    if(!S.plans[type][i])S.plans[type][i]={id:uid(),text:'',sphereId:''};
+    S.plans[type][i].text=val;
+    save();
+  };
+  window.setGoalSphere=function(type,i,val){
+    finalEnsurePlansObjects();
+    if(!S.plans[type][i])S.plans[type][i]={id:uid(),text:'',sphereId:''};
+    S.plans[type][i].sphereId=val;
+    save();
+  };
+  renderGoalBlock=function(type,title){
+    finalEnsurePlansObjects();
+    const items=S.plans[type];
+    return `<div class="goals-card">
+      <div class="goals-card-head">
+        <div>
+          <div class="goals-card-title">${title}</div>
+          <div class="goals-card-sub">${goalSub(type)}</div>
+        </div>
+        <div class="goals-period-nav">
+          <button class="goals-period-btn" onclick="shiftPeriod('${type}',-1)">‹</button>
+          <button class="goals-today-btn" onclick="resetPlanDate()">◉</button>
+          <button class="goals-period-btn" onclick="shiftPeriod('${type}',1)">›</button>
+          <button class="goal-file-btn" onclick="document.getElementById('goal-file-${type}').click()">📎</button>
+        </div>
+      </div>
+      <div class="goals-list">
+        ${items.map((v,i)=>`<div class="goals-item">
+          <div class="goals-num">${i+1}</div>
+          <input class="goals-text" value="${esc(v.text||'')}" placeholder="Add goal..." oninput="setGoalLine('${type}',${i},this.value)">
+          <select class="goal-sphere-select" onchange="setGoalSphere('${type}',${i},this.value)">${finalSphereOptions(v.sphereId||'')}</select>
+        </div>`).join('')}
+      </div>
+      <input id="goal-file-${type}" type="file" multiple style="display:none" onchange="addGoalFiles('${type}')">
+      ${renderGoalFiles(type)}
+      <button class="goals-add" onclick="addGoalLine('${type}')">+ Add line</button>
+    </div>`;
+  };
+  renderGoals=function(){
+    const box=document.getElementById('goals-content');
+    if(!box)return;
+    finalEnsurePlansObjects();
+    box.innerHTML=
+      renderGoalBlock('week','This Week')+
+      renderGoalBlock('month','This Month')+
+      renderGoalBlock('season','This Season')+
+      renderGoalBlock('year','This Year')+
+      `<div class="goals-card">
+        <div class="goals-card-head">
+          <div>
+            <div class="goals-card-title">Reflection of the Month</div>
+            <div class="goals-card-sub">${MONTHS[planBaseDate().getMonth()]} ${planBaseDate().getFullYear()}</div>
+          </div>
+          <div class="goals-period-nav">
+            <button class="goals-period-btn" onclick="shiftPeriod('month',-1)">‹</button>
+            <button class="goals-today-btn" onclick="resetPlanDate()">◉</button>
+            <button class="goals-period-btn" onclick="shiftPeriod('month',1)">›</button>
+          </div>
+        </div>
+        <div style="padding:14px">
+          <textarea class="reflection-area" placeholder="1. " onfocus="ensureReflectionList()" onkeydown="handleReflectionEnter(event)" oninput="setMonthReflection(this.value)">${esc(ensureReflectionStore().text)}</textarea>
+          <div class="reflection-tools">
+            <button class="reflection-tool" onclick="document.getElementById('reflection-file-input').click()">📎</button>
+          </div>
+          <input id="reflection-file-input" type="file" multiple style="display:none" onchange="addMonthReflectionFiles()">
+          <div class="reflection-files">${renderReflectionFiles(ensureReflectionStore().files)}</div>
+        </div>
+      </div>`;
+  };
+
+  /* Spheres show goals from Goals page, without date, then activities, no tasks */
+  renderSphereDetail=function(s){
+    const bm=BAND[s.band];
+    const planGoals=finalPlanGoalsForSphere(s.id);
+    return `<div class="sphere-page-head">
+      <button class="sphere-back" onclick="closeSpherePage()">‹ Spheres</button>
+      <div class="spv-title">${esc(s.name)}</div>
+      <div class="spv-sub">${bm.label} · Goals · Activities</div>
+      <button class="delete-sphere-small" onclick="deleteSphere('${s.id}')">Delete sphere</button>
+    </div>
+    <div class="Vsc" style="padding-bottom:28px">
+      <div class="spbody" style="background:transparent">
+        <div class="sp-lbl">Goals</div>
+        ${planGoals.length?planGoals.map(g=>{
+          const internal=finalInternalGoalForPlan(s.id,g.text);
+          const acts=(internal&&internal.activities)||[];
+          const inputId='linked-act-'+safeId(s.id+'-'+g.text);
+          return `<div class="goal-card linked-sphere-goal">
+            <div class="goal-head">
+              <div class="gdot" style="background:${s.color}"></div>
+              <div style="flex:1"><div class="goal-title">${esc(g.text)}</div></div>
+            </div>
+            <div class="goal-body">
+              <div class="sp-lbl">Activities</div>
+              ${acts.length?acts.map(a=>`<div class="linked-activity-row">
+                <div class="task-dot" style="background:${s.color}"></div>
+                <div class="linked-activity-title">${esc(a.title)}</div>
+                <div class="edit-mini" onclick="editActivity('${s.id}','${internal.id}','${a.id}');event.stopPropagation()">✎</div>
+                <div class="grm" onclick="finalRemoveLinkedActivity('${s.id}','${esc(g.text)}','${a.id}')">×</div>
+              </div>`).join(''):`<div class="s80-s">No activities yet</div>`}
+              <div class="mini-add-row">
+                <input class="mini-inp" id="${inputId}" placeholder="Add activity..." onkeydown="if(event.key==='Enter')finalAddActivityToPlanGoal('${s.id}','${esc(g.text)}')">
+                <button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="finalAddActivityToPlanGoal('${s.id}','${esc(g.text)}')">Add</button>
+              </div>
+            </div>
+          </div>`;
+        }).join(''):`<div class="s80-s">No goals assigned to this sphere yet. Add goals in Goals page and choose this sphere.</div>`}
+      </div>
+    </div>`;
+  };
+
+  const oldRenderSphRestore=renderSph;
+  renderSph=function(){
+    finalEnsurePlansObjects();
+    oldRenderSphRestore();
+    finalCleanEnsureMainNav();
+    document.querySelectorAll('#V-sph .backup-row,#V-sph .bottom-backup').forEach(x=>x.remove());
+  };
+
+  const oldRenderNewActivityOptionsRestore=renderNewActivityOptions;
+  renderNewActivityOptions=function(){
+    oldRenderNewActivityOptionsRestore();
+    const sel=document.getElementById('new-act-sphere');
+    if(sel)sel.classList.add('sh-inp');
+  };
+
+  setTimeout(()=>{
+    try{
+      finalCleanEnsureMainNav();
+      finalEnsurePlansObjects();
+      finalRemoveRepeatUI();
+      finalEnsureWeekStrip();
+      const current=document.querySelector('.V.on')?.id?.replace('V-','') || 'cal';
+      goV(current);
+    }catch(e){console.error(e);}
+  },500);
+})();
+</script>
+<!-- FINAL RESTORE GOALS PAGE PATCH END -->
+
+
+<!-- FINAL FONT WEEK ADD NOTES PATCH START -->
+<style id="final-font-week-add-notes-css">
+/* Keep week arrows left and right, dates exactly under weekday letters */
+.dow-row{
+  display:grid !important;
+  grid-template-columns:30px repeat(7,1fr) 30px !important;
+  padding:0 10px 4px !important;
+  align-items:center !important;
+}
+.dow-row::before,
+.dow-row::after{
+  content:"" !important;
+}
+.dow-row .dow-cell{
+  text-align:center !important;
+  padding:4px 0 !important;
+}
+.week-fold.unfolded{max-height:96px !important;}
+.week-strip-final{
+  display:grid !important;
+  grid-template-columns:30px repeat(7,1fr) 30px !important;
+  gap:2px !important;
+  padding:0 10px 8px !important;
+  align-items:stretch !important;
+}
+.week-strip-final #week-strip{
+  grid-column:2 / 9 !important;
+  display:grid !important;
+  grid-template-columns:repeat(7,1fr) !important;
+  gap:2px !important;
+  padding:0 !important;
+}
+.week-strip-final .wd{
+  padding:8px 0 9px !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.week-strip-final .wd-nm{display:none !important;}
+.week-arrow-final{
+  width:30px !important;
+  border-radius:14px !important;
+  border:1px solid var(--ln) !important;
+  background:var(--c2) !important;
+  color:var(--gd) !important;
+  font-size:22px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+}
+.week-arrow-final.left{grid-column:1 / 2 !important;}
+.week-arrow-final.right{grid-column:9 / 10 !important;}
+
+/* Priorities fold/unfold */
+.b3w.collapsed .b3s{display:none !important;}
+.b3w:not(.collapsed) .b3s{display:block !important;}
+
+/* Remove words "My activities" and keep area */
+#my-activities-label-final,
+#sh-add .my-activities-label-final{
+  display:none !important;
+}
+
+/* Same font everywhere, including dropdowns and time fields */
+/* original app font restored */
+
+/* Specific sizes stay calm and consistent */
+select,select option,.sh-inp,#new-act-sphere,#new-act-goal,#sh-st,#sh-end,#det-start,#det-end,.goal-sphere-select{
+  font-size:15px !important;
+  color:#2A1C12 !important;
+}
+.sh-title,.spv-title,.notes-title-main,.notes-title-input{
+  font-size:32px !important;
+  font-weight:500 !important;
+  line-height:1.05 !important;
+  color:#2A1C12 !important;
+}
+.notes-card-title{
+  font-size:22px !important;
+  font-weight:500 !important;
+}
+.notes-list-area,
+.notes-card-body{
+  font-size:18px !important;
+  line-height:1.45 !important;
+}
+</style>
+
+<script id="final-font-week-add-notes-js">
+(function(){
+  function finalEnsureMainNavAgain(){
+    const app=document.getElementById('app');
+    if(!app)return;
+    let nav=app.querySelector(':scope > .nav');
+    if(!nav){
+      nav=document.createElement('div');
+      nav.className='nav';
+      app.appendChild(nav);
+    }
+    if(!nav.querySelector('[data-v="goals"]')){
+      nav.innerHTML=
+        `<div class="nb" data-v="cal" onclick="goV('cal')"><div class="nb-ic">◈</div><div class="nb-lb">Calendar</div></div>
+         <div class="nb" data-v="sph" onclick="goV('sph')"><div class="nb-ic">◎</div><div class="nb-lb">Spheres</div></div>
+         <div class="nb" data-v="notes" onclick="goV('notes')"><div class="nb-ic">🖋</div><div class="nb-lb">Notes</div></div>
+         <div class="nb" data-v="goals" onclick="goV('goals')"><div class="nb-ic">✦</div><div class="nb-lb">Goals</div></div>`;
+    }
+    document.querySelectorAll('#V-sph > .nav').forEach(x=>x.remove());
+  }
+
+  /* Week strip: arrows left/right and date cells aligned with weekday letters */
+  function finalRenderDowAligned(){
+    const row=document.getElementById('dow-row');
+    if(!row)return;
+    row.innerHTML='<div></div>'+DOW_L.map(d=>`<div class="dow-cell">${d}</div>`).join('')+'<div></div>';
+  }
+  function finalEnsureWeekStrip(){
+    const wf=document.getElementById('week-fold');
+    if(!wf)return;
+    if(!wf.querySelector('.week-strip-final')){
+      wf.innerHTML=`<div class="week-strip-final">
+        <button class="week-arrow-final left" onclick="shiftWeek(-1)">‹</button>
+        <div class="week-strip" id="week-strip"></div>
+        <button class="week-arrow-final right" onclick="shiftWeek(1)">›</button>
+      </div>`;
+    }
+  }
+  renderWeekStrip=function(){
+    finalEnsureWeekStrip();
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const dow=(selDate.getDay()+6)%7;
+    const weekMon=new Date(selDate);weekMon.setDate(selDate.getDate()-dow);
+    const now=new Date();
+    const box=document.getElementById('week-strip');
+    if(!box)return;
+    box.innerHTML=Array.from({length:7},(_,i)=>{
+      const d=new Date(weekMon);d.setDate(weekMon.getDate()+i);
+      const isN=d.toDateString()===now.toDateString();
+      const isSel=d.toDateString()===selDate.toDateString();
+      const k=dkey(d);const evts=getDay(k);
+      const sids=[...new Set(evts.map(e=>e.sphId).filter(Boolean))].slice(0,3);
+      const dots=sids.map(id=>{const s=gsp(id);return s?`<div class="wd-dot" style="background:${s.color}"></div>`:''}).join('');
+      return `<div class="wd${isSel?' act':''}${isN&&!isSel?' tod':''}" onclick="selectDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})">
+        <div class="wd-n">${d.getDate()}</div>
+        <div class="wd-dots">${dots}</div>
+      </div>`;
+    }).join('');
+  };
+  shiftWeek=function(dir){
+    const d=new Date(S.sy,S.sm,S.sd);
+    d.setDate(d.getDate()+dir*7);
+    S.sy=d.getFullYear();S.sm=d.getMonth();S.sd=d.getDate();
+    S.vy=S.sy;S.vm=S.sm;
+    save();renderCal();
+  };
+
+  const oldApplyFoldFontWeek=applyFold;
+  applyFold=function(){
+    oldApplyFoldFontWeek();
+    finalEnsureWeekStrip();
+    if(S.folded)renderWeekStrip();
+  };
+
+  /* Patch renderCal so weekday row remains aligned after every render */
+  const oldRenderCalFontWeek=renderCal;
+  renderCal=function(){
+    oldRenderCalFontWeek();
+    finalRenderDowAligned();
+    finalEnsureWeekStrip();
+    if(S.folded)renderWeekStrip();
+    finalEnsureMainNavAgain();
+  };
+
+  /* Priorities fold/unfold guaranteed */
+  togglePriorities=function(){
+    S.prioritiesOpen=!S.prioritiesOpen;
+    save();
+    renderDayDetail();
+    setTimeout(applyHourLineColors,0);
+  };
+  const oldRenderDayDetailFontWeek=renderDayDetail;
+  renderDayDetail=function(){
+    oldRenderDayDetailFontWeek();
+    const b3box=document.getElementById('b3w');
+    if(b3box)b3box.classList.toggle('collapsed',!S.prioritiesOpen);
+  };
+
+  /* Remove the words "My activities" from Add page but keep activities list */
+  function finalRemoveMyActivitiesWords(){
+    document.querySelectorAll('#sh-add .sh-lbl').forEach(el=>{
+      const t=(el.textContent||'').trim().toLowerCase();
+      if(t==='my activities'){
+        el.id='my-activities-label-final';
+        el.textContent='';
+        el.style.display='none';
+      }
+    });
+  }
+
+  /* Force Add dropdown/time font and placeholder font */
+  function finalFixAddFonts(){
+    ['new-act-sphere','new-act-goal','sh-st','sh-end','det-start','det-end'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){
+        el.style.fontFamily="'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+        el.style.fontSize='15px';
+        el.style.fontWeight='400';
+        el.style.color='#2A1C12';
+      }
+    });
+  }
+
+  /* Notes title same app size */
+  function finalFixNotesFonts(){
+    document.querySelectorAll('.notes-title-main,.notes-title-input,#note-title,.notes-card-title').forEach(el=>{
+      el.style.fontFamily="'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      el.style.fontWeight='500';
+    });
+    document.querySelectorAll('.notes-title-main,.notes-title-input,#note-title').forEach(el=>{
+      el.style.fontSize='32px';
+      el.style.lineHeight='1.05';
+    });
+  }
+
+  const oldOpenAddFontWeek=openAdd;
+  openAdd=function(t){
+    oldOpenAddFontWeek(t);
+    finalRemoveMyActivitiesWords();
+    finalFixAddFonts();
+  };
+
+  const oldRenderNewActivityOptionsFontWeek=renderNewActivityOptions;
+  renderNewActivityOptions=function(){
+    oldRenderNewActivityOptionsFontWeek();
+    finalFixAddFonts();
+  };
+
+  const oldRenderNotesFontWeek=renderNotes;
+  renderNotes=function(){
+    oldRenderNotesFontWeek();
+    finalFixNotesFonts();
+  };
+
+  const oldGoVFontWeek=goV;
+  goV=function(v){
+    oldGoVFontWeek(v);
+    finalEnsureMainNavAgain();
+    if(v==='cal'){finalRenderDowAligned();finalEnsureWeekStrip();if(S.folded)renderWeekStrip();}
+    if(v==='notes')finalFixNotesFonts();
+  };
+
+  setTimeout(()=>{
+    try{
+      finalEnsureMainNavAgain();
+      finalRenderDowAligned();
+      finalEnsureWeekStrip();
+      finalRemoveMyActivitiesWords();
+      finalFixAddFonts();
+      finalFixNotesFonts();
+      renderCal();
+      if(document.getElementById('V-notes')?.classList.contains('on'))renderNotes();
+    }catch(e){console.error(e);}
+  },500);
+})();
+</script>
+<!-- FINAL FONT WEEK ADD NOTES PATCH END -->
+
+
+<!-- FINAL ALIGN FONT NO BOLD PATCH START -->
+<style id="final-align-font-no-bold-css">
+.dow-row{
+  display:grid !important;
+  grid-template-columns:34px repeat(7,1fr) 34px !important;
+  gap:2px !important;
+  padding:0 10px 4px !important;
+  align-items:center !important;
+}
+.dow-row::before,.dow-row::after{content:"" !important;display:block !important;}
+.dow-row .dow-cell{text-align:center !important;padding:4px 0 !important;min-width:0 !important;}
+.week-fold.unfolded{max-height:98px !important;}
+.week-strip-final{
+  display:grid !important;
+  grid-template-columns:34px repeat(7,1fr) 34px !important;
+  gap:2px !important;
+  padding:0 10px 8px !important;
+  align-items:stretch !important;
+}
+.week-strip-final #week-strip{
+  grid-column:2 / 9 !important;
+  display:grid !important;
+  grid-template-columns:repeat(7,1fr) !important;
+  gap:2px !important;
+  padding:0 !important;
+}
+.week-strip-final .wd{padding:8px 0 9px !important;align-items:center !important;justify-content:center !important;min-width:0 !important;}
+.week-strip-final .wd-nm{display:none !important;}
+.week-arrow-final{
+  width:34px !important;border-radius:14px !important;border:1px solid var(--ln) !important;
+  background:var(--c2) !important;color:var(--gd) !important;font-size:20px !important;
+  font-weight:400 !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;
+}
+.week-arrow-final.left{grid-column:1 / 2 !important;}
+.week-arrow-final.right{grid-column:9 / 10 !important;}
+
+body,button,input,textarea,select,option,
+div,span,p,label,small,strong,b,i,a,td,th,li,ul,ol,
+.mhdr-month,.mhdr-year,.dow-cell,.mgd-n,.wd-n,.wd-nm,
+.bb-nm,.bb-vl,.b3ht,.b3hs,.b3n,.b3i,.b3arrow,
+.hlbl-n,.hlbl-m,.ev-n,.ev-t,.ev-s,.ev-tk,
+.spv-title,.spv-sub,.btab-n,.btab-c,.sph-name,.sph-btag,.sp-lbl,
+.s80-t,.s80-v,.s80-s,.atag,.ainp,.abtn,.gtxt,.gterm,.gdate,.gdate-lbl,
+.backup-btn,.sh-title,.sh-sub,.sh-lbl,.sh-sp-n,.sh-ai-n,.sh-inp,.sh-ti,.sh-ok,
+.d-btn,.dtask-row,.goal-title,.goal-meta,.act-title,.task-row-mini,.mini-inp,.mini-btn,
+.goals-card-title,.goals-card-sub,.goals-num,.goals-text,.goals-add,
+.reflection-area,.reflection-tool,.reflection-file,.goal-file,.goal-file-btn,
+.notes-title-main,.notes-title-input,.notes-list-area,.notes-card-title,.notes-card-body,.notes-card-meta,
+.nb-lb,.nb-ic,#new-act-sphere,#new-act-goal,#sh-st,#sh-end,#det-start,#det-end,.goal-sphere-select{
+  font-family:'Cormorant Garamond', Georgia, serif !important;
+  font-weight:400 !important;
+  letter-spacing:0 !important;
+}
+
+.mhdr-month,.mhdr-year,.spv-title,.sh-title,.notes-title-main,.notes-title-input{
+  font-size:32px !important;line-height:1.05 !important;font-weight:400 !important;
+}
+.goals-card-title,.notes-card-title,.sph-name,.b3ht{
+  font-size:24px !important;line-height:1.1 !important;font-weight:400 !important;
+}
+.sh-sub,.spv-sub,.goals-card-sub,.notes-card-body,.notes-list-area,.gtxt,.act-title,.goal-title,.s80-v{
+  font-size:20px !important;line-height:1.35 !important;font-weight:400 !important;
+}
+.dow-cell,.wd-nm,.bb-nm,.sp-lbl,.sh-lbl,.gdate-lbl,.sph-btag,.btab-n,.btab-c,.b3hs,.goal-meta,.ev-tk{
+  font-size:15px !important;line-height:1.15 !important;font-weight:400 !important;text-transform:none !important;letter-spacing:0 !important;
+}
+.mgd-n,.wd-n,.hlbl-n,.bb-vl,.b3n,.goals-num,.ev-t{
+  font-size:22px !important;line-height:1 !important;font-weight:400 !important;
+}
+.b3i,.ev-n,.ev-s,.sh-inp,.sh-ti,.ainp,.gdate,.mini-inp,select,select option,
+#new-act-sphere,#new-act-goal,#sh-st,#sh-end,#det-start,#det-end,.goal-sphere-select{
+  font-size:19px !important;line-height:1.25 !important;font-weight:400 !important;
+}
+button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
+  font-size:19px !important;font-weight:400 !important;
+}
+.nb-lb{font-size:15px !important;font-weight:400 !important;text-transform:none !important;letter-spacing:0 !important;}
+.nb-ic{font-size:24px !important;font-weight:400 !important;}
+*.on,* .on,.mgd.sel .mgd-n,.wd.act .wd-n,.sh-sp.on .sh-sp-n,.sh-ai.on .sh-ai-n,.b3n.done,.ev-n,strong,b{
+  font-weight:400 !important;
+}
+.b3w.collapsed .b3s{display:none !important;}
+.b3w:not(.collapsed) .b3s{display:block !important;}
+</style>
+
+<script id="final-align-font-no-bold-js">
+(function(){
+  function finalEnsureDowAndWeek(){
+    const row=document.getElementById('dow-row');
+    if(row){
+      row.innerHTML='<div></div>'+DOW_L.map(d=>`<div class="dow-cell">${d}</div>`).join('')+'<div></div>';
+    }
+    const wf=document.getElementById('week-fold');
+    if(wf && !wf.querySelector('.week-strip-final')){
+      wf.innerHTML=`<div class="week-strip-final">
+        <button class="week-arrow-final left" onclick="shiftWeek(-1)">‹</button>
+        <div class="week-strip" id="week-strip"></div>
+        <button class="week-arrow-final right" onclick="shiftWeek(1)">›</button>
+      </div>`;
+    }
+  }
+
+  renderWeekStrip=function(){
+    finalEnsureDowAndWeek();
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const dow=(selDate.getDay()+6)%7;
+    const weekMon=new Date(selDate);weekMon.setDate(selDate.getDate()-dow);
+    const now=new Date();
+    const box=document.getElementById('week-strip');
+    if(!box)return;
+    box.innerHTML=Array.from({length:7},(_,i)=>{
+      const d=new Date(weekMon);d.setDate(weekMon.getDate()+i);
+      const isN=d.toDateString()===now.toDateString();
+      const isSel=d.toDateString()===selDate.toDateString();
+      const k=dkey(d);const evts=getDay(k);
+      const sids=[...new Set(evts.map(e=>e.sphId).filter(Boolean))].slice(0,3);
+      const dots=sids.map(id=>{const s=gsp(id);return s?`<div class="wd-dot" style="background:${s.color}"></div>`:''}).join('');
+      return `<div class="wd${isSel?' act':''}${isN&&!isSel?' tod':''}" onclick="selectDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})">
+        <div class="wd-n">${d.getDate()}</div>
+        <div class="wd-dots">${dots}</div>
+      </div>`;
+    }).join('');
+  };
+
+  shiftWeek=function(dir){
+    const d=new Date(S.sy,S.sm,S.sd);
+    d.setDate(d.getDate()+dir*7);
+    S.sy=d.getFullYear();S.sm=d.getMonth();S.sd=d.getDate();
+    S.vy=S.sy;S.vm=S.sm;
+    save();renderCal();
+  };
+
+  const prevApplyFoldNoBold=applyFold;
+  applyFold=function(){
+    prevApplyFoldNoBold();
+    finalEnsureDowAndWeek();
+    if(S.folded)renderWeekStrip();
+  };
+
+  const prevRenderCalNoBold=renderCal;
+  renderCal=function(){
+    prevRenderCalNoBold();
+    finalEnsureDowAndWeek();
+    if(S.folded)renderWeekStrip();
+  };
+
+  togglePriorities=function(){
+    S.prioritiesOpen=!S.prioritiesOpen;
+    save();
+    renderDayDetail();
+    setTimeout(applyHourLineColors,0);
+  };
+  const prevRenderDayDetailNoBold=renderDayDetail;
+  renderDayDetail=function(){
+    prevRenderDayDetailNoBold();
+    const b3box=document.getElementById('b3w');
+    if(b3box)b3box.classList.toggle('collapsed',!S.prioritiesOpen);
+  };
+
+  function finalNoBoldInline(){
+    document.querySelectorAll('*').forEach(el=>{
+      const fw=getComputedStyle(el).fontWeight;
+      if(Number(fw)>=600 || fw==='bold')el.style.fontWeight='400';
+    });
+  }
+
+  setTimeout(()=>{
+    try{
+      finalEnsureDowAndWeek();
+      renderCal();
+      finalNoBoldInline();
+    }catch(e){console.error(e);}
+  },500);
+})();
+</script>
+<!-- FINAL ALIGN FONT NO BOLD PATCH END -->
+
+
+
+
+
+
+<!-- FINAL TRUE SHARED WEEK GRID PATCH START -->
+<style id="final-true-shared-week-grid-css">
+/* Hide the old separate weekday row and old separate week strip.
+   We render ONE shared grid where M and 1 are in the same column. */
+#dow-row{
+  display:none !important;
+}
+#week-fold.unfolded{
+  max-height:118px !important;
+  opacity:1 !important;
+}
+#week-fold .shared-week-grid{
+  display:grid !important;
+  grid-template-columns:34px repeat(7,1fr) 34px !important;
+  grid-template-rows:auto auto !important;
+  gap:0 !important;
+  padding:0 12px 8px !important;
+  align-items:center !important;
+}
+.shared-week-grid .week-arrow-final{
+  width:34px !important;
+  min-width:34px !important;
+  height:42px !important;
+  border-radius:14px !important;
+  border:1px solid var(--ln) !important;
+  background:var(--c2) !important;
+  color:var(--gd) !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+  grid-row:1 / 3 !important;
+}
+.shared-week-grid .week-arrow-final.left{grid-column:1 / 2 !important;}
+.shared-week-grid .week-arrow-final.right{grid-column:9 / 10 !important;}
+.shared-week-grid .shared-dow{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  min-width:0 !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:4px 0 3px !important;
+}
+.shared-week-grid .shared-day{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:7px 0 9px !important;
+  border-radius:14px !important;
+  cursor:pointer !important;
+}
+.shared-week-grid .shared-day.act{
+  background:var(--gd) !important;
+  box-shadow:0 4px 16px rgba(168,120,40,.32) !important;
+}
+.shared-week-grid .shared-day.tod:not(.act){
+  background:var(--gdf) !important;
+}
+.shared-week-grid .shared-day-num{
+  width:100% !important;
+  text-align:center !important;
+  line-height:1 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+.shared-week-grid .shared-day.act .shared-day-num{
+  color:#fff !important;
+}
+.shared-week-grid .shared-dots{
+  display:flex !important;
+  gap:2px !important;
+  height:5px !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin-top:4px !important;
+}
+.shared-week-grid .wd-dot{
+  width:4px !important;
+  height:4px !important;
+  border-radius:50% !important;
+  flex-shrink:0 !important;
+}
+.shared-week-grid .shared-day.act .wd-dot{
+  background:rgba(255,255,255,.6) !important;
+}
+
+/* keep your font: do not override global font, only inherit existing */
+.shared-week-grid .shared-dow,
+.shared-week-grid .shared-day-num{
+  font-family:inherit !important;
+  font-weight:inherit !important;
+}
+#sh-add .sh-group-title{
+  display:none !important;
+}
+</style>
+
+<script id="final-true-shared-week-grid-js">
+(function(){
+  function renderSharedWeekGrid(){
+    const wf=document.getElementById('week-fold');
+    if(!wf)return;
+
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const dow=(selDate.getDay()+6)%7;
+    const weekMon=new Date(selDate);
+    weekMon.setDate(selDate.getDate()-dow);
+    const now=new Date();
+
+    let html='<div class="shared-week-grid">';
+    html+='<button class="week-arrow-final left" onclick="shiftWeek(-1)">‹</button>';
+    html+='<button class="week-arrow-final right" onclick="shiftWeek(1)">›</button>';
+
+    for(let i=0;i<7;i++){
+      html+=`<div class="shared-dow" style="grid-column:${i+2};grid-row:1">${DOW_L[i]}</div>`;
+    }
+
+    for(let i=0;i<7;i++){
+      const d=new Date(weekMon);
+      d.setDate(weekMon.getDate()+i);
+      const isN=d.toDateString()===now.toDateString();
+      const isSel=d.toDateString()===selDate.toDateString();
+      const k=dkey(d);
+      const evts=getDay(k);
+      const sids=[...new Set(evts.map(e=>e.sphId).filter(Boolean))].slice(0,3);
+      const dots=sids.map(id=>{const s=gsp(id);return s?`<div class="wd-dot" style="background:${s.color}"></div>`:''}).join('');
+      html+=`<div class="shared-day${isSel?' act':''}${isN&&!isSel?' tod':''}" style="grid-column:${i+2};grid-row:2" onclick="selectDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})">
+        <div class="shared-day-num">${d.getDate()}</div>
+        <div class="shared-dots">${dots}</div>
+      </div>`;
+    }
+
+    html+='</div>';
+    wf.innerHTML=html;
+  }
+
+  renderWeekStrip=function(){
+    renderSharedWeekGrid();
+  };
+
+  shiftWeek=function(dir){
+    const d=new Date(S.sy,S.sm,S.sd);
+    d.setDate(d.getDate()+dir*7);
+    S.sy=d.getFullYear();
+    S.sm=d.getMonth();
+    S.sd=d.getDate();
+    S.vy=S.sy;
+    S.vm=S.sm;
+    save();
+    renderCal();
+  };
+
+  const previousRenderCalShared=renderCal;
+  renderCal=function(){
+    previousRenderCalShared();
+    if(S.folded)renderSharedWeekGrid();
+  };
+
+  const previousApplyFoldShared=applyFold;
+  applyFold=function(){
+    previousApplyFoldShared();
+    if(S.folded)renderSharedWeekGrid();
+  };
+
+  function removeAddGroupNames(){
+    document.querySelectorAll('#sh-add .sh-group-title').forEach(el=>el.remove());
+  }
+
+  const previousRenderActivityPickerShared=renderActivityPicker;
+  renderActivityPicker=function(){
+    previousRenderActivityPickerShared();
+    removeAddGroupNames();
+  };
+
+  const previousOpenAddShared=openAdd;
+  openAdd=function(t){
+    previousOpenAddShared(t);
+    removeAddGroupNames();
+  };
+
+  setTimeout(()=>{
+    try{
+      if(S.folded)renderSharedWeekGrid();
+      removeAddGroupNames();
+      renderCal();
+    }catch(e){console.error(e);}
+  },300);
+})();
+</script>
+<!-- FINAL TRUE SHARED WEEK GRID PATCH END -->
+
+
+<!-- FINAL NOTES SPHERES NAV PATCH START -->
+<style id="final-notes-spheres-nav-css">
+.notes-title-input,
+#note-title{
+  font-size:22px !important;
+  line-height:1.2 !important;
+  font-weight:400 !important;
+}
+.notes-title-input::placeholder,
+#note-title::placeholder{
+  font-size:22px !important;
+  font-weight:400 !important;
+}
+.notes-card{
+  cursor:pointer !important;
+  pointer-events:auto !important;
+}
+.notes-edit-hint{
+  pointer-events:none !important;
+}
+.delete-sphere-small{
+  position:absolute !important;
+  right:18px !important;
+  top:46px !important;
+  margin:0 !important;
+  padding:4px 8px !important;
+  font-size:12px !important;
+  line-height:1 !important;
+  border-radius:999px !important;
+  opacity:.72 !important;
+}
+.sphere-page-head{
+  position:relative !important;
+  padding-right:96px !important;
+}
+</style>
+
+<script id="final-notes-spheres-nav-js">
+(function(){
+  function finalSwapNotesGoalsNav(){
+    const app=document.getElementById('app');
+    if(!app)return;
+    let nav=app.querySelector(':scope > .nav');
+    if(!nav)return;
+    nav.innerHTML=
+      `<div class="nb" data-v="cal" onclick="goV('cal')"><div class="nb-ic">◈</div><div class="nb-lb">Calendar</div></div>
+       <div class="nb" data-v="sph" onclick="goV('sph')"><div class="nb-ic">◎</div><div class="nb-lb">Spheres</div></div>
+       <div class="nb" data-v="goals" onclick="goV('goals')"><div class="nb-ic">✦</div><div class="nb-lb">Goals</div></div>
+       <div class="nb" data-v="notes" onclick="goV('notes')"><div class="nb-ic">🖋</div><div class="nb-lb">Notes</div></div>`;
+    const current=document.querySelector('.V.on')?.id?.replace('V-','')||'cal';
+    nav.querySelectorAll('.nb').forEach(e=>e.classList.toggle('on',e.dataset.v===current));
+  }
+
+  handleNoteEnter=function(event){
+    if(event.key!=='Enter')return;
+    const a=event.target;
+    const start=a.selectionStart;
+    const end=a.selectionEnd;
+    const before=a.value.slice(0,start);
+    const after=a.value.slice(end);
+    const line=before.split('\n').pop();
+
+    const num=line.match(/^(\s*)(\d+)\.\s*(.*)$/);
+    const bullet=line.match(/^(\s*)[•\-]\s*(.*)$/);
+
+    if(num){
+      event.preventDefault();
+      if((num[3]||'').trim()===''){
+        const lineStart=before.lastIndexOf('\n')+1;
+        a.value=a.value.slice(0,lineStart)+after;
+        a.selectionStart=a.selectionEnd=lineStart;
+      }else{
+        const prefix=num[1]+(parseInt(num[2],10)+1)+'. ';
+        a.value=before+'\n'+prefix+after;
+        const pos=(before+'\n'+prefix).length;
+        a.selectionStart=a.selectionEnd=pos;
+      }
+      return;
+    }
+
+    if(bullet){
+      event.preventDefault();
+      if((bullet[2]||'').trim()===''){
+        const lineStart=before.lastIndexOf('\n')+1;
+        a.value=a.value.slice(0,lineStart)+after;
+        a.selectionStart=a.selectionEnd=lineStart;
+      }else{
+        const prefix=bullet[1]+'• ';
+        a.value=before+'\n'+prefix+after;
+        const pos=(before+'\n'+prefix).length;
+        a.selectionStart=a.selectionEnd=pos;
+      }
+    }
+  };
+
+  const previousRenderNotesFinal=renderNotes;
+  renderNotes=function(){
+    previousRenderNotesFinal();
+    document.querySelectorAll('.notes-card').forEach(card=>{
+      const onclick=card.getAttribute('onclick')||'';
+      const m=onclick.match(/editNote\('([^']+)'\)/);
+      const id=m?m[1]:'';
+      if(id){
+        card.onclick=function(e){
+          if(e.target.closest('.notes-del') || e.target.closest('a'))return;
+          editNote(id);
+        };
+      }
+    });
+  };
+
+  const previousEditNoteFinal=editNote;
+  editNote=function(id){
+    previousEditNoteFinal(id);
+    const card=document.getElementById('note-editor-card');
+    if(card){
+      card.classList.add('open');
+      setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),50);
+    }
+  };
+
+  const previousNewNoteFinal=newNote;
+  newNote=function(){
+    previousNewNoteFinal();
+    const card=document.getElementById('note-editor-card');
+    if(card)card.classList.add('open');
+  };
+
+  const previousGoVFinal=goV;
+  goV=function(v){
+    previousGoVFinal(v);
+    finalSwapNotesGoalsNav();
+    if(v==='notes')renderNotes();
+  };
+
+  const previousRenderSphFinal=renderSph;
+  renderSph=function(){
+    previousRenderSphFinal();
+    finalSwapNotesGoalsNav();
+  };
+
+  setTimeout(()=>{
+    try{
+      finalSwapNotesGoalsNav();
+      if(document.getElementById('V-notes')?.classList.contains('on'))renderNotes();
+    }catch(e){console.error(e);}
+  },300);
+})();
+</script>
+<!-- FINAL NOTES SPHERES NAV PATCH END -->
+
 </body>
 </html>
 <!-- FINAL SLEEP REALLY WORKING PATCH START -->
