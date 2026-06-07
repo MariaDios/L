@@ -7244,6 +7244,231 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 })();
 </script>
 
+
+<!-- FINAL IPHONE PEN + GOALS/SPHERES VISIBILITY FIX -->
+<style id="final-iphone-pen-goals-spheres-visible">
+/* iPhone renders emoji pens black. Replace Notes icon with a real CSS/text pen in brown. */
+#app > .nav .nb[data-v="notes"] .nb-ic,
+.nav .nb[data-v="notes"] .nb-ic,
+.nb[data-v="notes"] .nb-ic{
+  font-size:0 !important;
+  color:transparent !important;
+  -webkit-text-fill-color:transparent !important;
+  background:transparent !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+#app > .nav .nb[data-v="notes"] .nb-ic::before,
+.nav .nb[data-v="notes"] .nb-ic::before,
+.nb[data-v="notes"] .nb-ic::before{
+  content:"✒︎" !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:44px !important;
+  height:44px !important;
+  font-family:Georgia, 'Times New Roman', serif !important;
+  font-size:31px !important;
+  line-height:1 !important;
+  color:var(--gd) !important;
+  -webkit-text-fill-color:var(--gd) !important;
+  background:transparent !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+#app > .nav .nb[data-v="notes"].on .nb-ic::before,
+.nav .nb[data-v="notes"].on .nb-ic::before{
+  color:var(--gd) !important;
+  -webkit-text-fill-color:var(--gd) !important;
+}
+
+/* Make bottom nav items, including Spheres, always visible on iPhone */
+#app > .nav{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:flex-start !important;
+  justify-content:space-around !important;
+  overflow:visible !important;
+  height:82px !important;
+  min-height:82px !important;
+  z-index:999 !important;
+}
+
+#app > .nav .nb{
+  display:flex !important;
+  flex:1 1 0 !important;
+  min-width:0 !important;
+  max-width:none !important;
+  overflow:visible !important;
+}
+
+#app > .nav .nb-ic{
+  flex:0 0 44px !important;
+  width:44px !important;
+  height:44px !important;
+  min-width:44px !important;
+  min-height:44px !important;
+  overflow:visible !important;
+}
+
+#app > .nav .nb-lb{
+  display:block !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  font-size:16px !important;
+}
+
+/* Goals page: prevent the round/oval controls from being cut or disappearing on iPhone */
+#V-goals,
+#V-goals .Vsc,
+.goals-page,
+.goals-section,
+.goals-card,
+.goals-card-head{
+  overflow:visible !important;
+}
+
+.goals-card{
+  margin-left:12px !important;
+  margin-right:12px !important;
+}
+
+.goals-card-head{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:8px !important;
+  padding:12px 12px !important;
+  min-width:0 !important;
+}
+
+.goals-card-head > div:first-child{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  max-width:calc(100% - 128px) !important;
+}
+
+.goals-card-title,
+.goals-card-sub{
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.goals-period-nav{
+  flex:0 0 auto !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:5px !important;
+  flex-wrap:nowrap !important;
+  overflow:visible !important;
+  min-width:112px !important;
+  max-width:128px !important;
+}
+
+.goals-period-btn,
+.goals-today-btn,
+.goal-file-btn,
+.reflection-tool{
+  flex:0 0 32px !important;
+  width:32px !important;
+  min-width:32px !important;
+  max-width:32px !important;
+  height:32px !important;
+  min-height:32px !important;
+  max-height:32px !important;
+  border-radius:50% !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:0 !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  overflow:visible !important;
+  line-height:1 !important;
+  font-size:18px !important;
+}
+
+/* Extra narrow iPhone screens */
+@media (max-width:390px){
+  #app > .nav .nb-lb{font-size:14px !important;}
+  .goals-card-title{font-size:21px !important;}
+  .goals-card-sub{font-size:13px !important;}
+  .goals-period-nav{
+    min-width:104px !important;
+    max-width:112px !important;
+    gap:4px !important;
+  }
+  .goals-period-btn,
+  .goals-today-btn,
+  .goal-file-btn,
+  .reflection-tool{
+    flex-basis:30px !important;
+    width:30px !important;
+    min-width:30px !important;
+    max-width:30px !important;
+    height:30px !important;
+    min-height:30px !important;
+    max-height:30px !important;
+    font-size:17px !important;
+  }
+}
+</style>
+
+<script id="final-iphone-pen-goals-spheres-visible-js">
+(function(){
+  function forceIphoneFixes(){
+    try{
+      document.querySelectorAll('.nb[data-v="notes"] .nb-ic').forEach(el=>{
+        el.innerHTML='';
+        el.style.setProperty('font-size','0','important');
+        el.style.setProperty('color','transparent','important');
+        el.style.setProperty('-webkit-text-fill-color','transparent','important');
+      });
+      document.querySelectorAll('#app > .nav .nb[data-v="sph"], #app > .nav .nb[data-v="goals"], #app > .nav .nb[data-v="notes"]').forEach(el=>{
+        el.style.setProperty('display','flex','important');
+        el.style.setProperty('visibility','visible','important');
+        el.style.setProperty('opacity','1','important');
+      });
+      document.querySelectorAll('.goals-period-nav, .goals-period-btn, .goals-today-btn, .goal-file-btn').forEach(el=>{
+        el.style.setProperty('visibility','visible','important');
+        el.style.setProperty('opacity','1','important');
+        el.style.setProperty('overflow','visible','important');
+      });
+    }catch(e){}
+  }
+
+  const oldGoVFinalIphone = window.goV;
+  if(typeof oldGoVFinalIphone === 'function'){
+    window.goV = function(v){
+      oldGoVFinalIphone(v);
+      setTimeout(forceIphoneFixes,0);
+      setTimeout(forceIphoneFixes,120);
+      setTimeout(forceIphoneFixes,400);
+    };
+  }
+
+  const oldRenderGoalsFinalIphone = window.renderGoals;
+  if(typeof oldRenderGoalsFinalIphone === 'function'){
+    window.renderGoals = function(){
+      oldRenderGoalsFinalIphone();
+      setTimeout(forceIphoneFixes,0);
+      setTimeout(forceIphoneFixes,120);
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', forceIphoneFixes);
+  window.addEventListener('resize', forceIphoneFixes);
+  setInterval(forceIphoneFixes,500);
+})();
+</script>
+
 </body>
 </html>
 <!-- FINAL SLEEP REALLY WORKING PATCH START -->
