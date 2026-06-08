@@ -9870,3 +9870,881 @@ body.lb-calendar-page #lb-plus-add{
   };
 })();
 </script>
+
+
+
+
+
+
+
+<style id="goals-text-sphere-real-no-overlap-fix">
+/* REAL FIX: goal text and sphere selector are separate columns, never overlap */
+#V-goals .goals-list{
+  padding:8px 10px 12px !important;
+}
+
+#V-goals .goals-item{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:6px !important;
+  width:100% !important;
+  overflow:hidden !important;
+  position:relative !important;
+}
+
+#V-goals .goals-num{
+  flex:0 0 22px !important;
+  width:22px !important;
+  min-width:22px !important;
+  max-width:22px !important;
+}
+
+#V-goals .goals-text{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  width:auto !important;
+  max-width:none !important;
+  display:block !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+  padding:0 6px 0 0 !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+}
+
+#V-goals .goal-sphere-select{
+  flex:0 0 88px !important;
+  width:88px !important;
+  min-width:88px !important;
+  max-width:88px !important;
+  margin:0 !important;
+  padding:6px 18px 6px 6px !important;
+  font-size:13px !important;
+  line-height:1.1 !important;
+  box-sizing:border-box !important;
+  position:static !important;
+  z-index:2 !important;
+  background:var(--c2) !important;
+}
+
+/* remove any previous negative shifting that caused overlap */
+.goal-sphere-select{
+  margin-left:0 !important;
+  transform:none !important;
+}
+
+@media (max-width:390px){
+  #V-goals .goals-list{
+    padding-left:8px !important;
+    padding-right:8px !important;
+  }
+  #V-goals .goals-item{
+    gap:4px !important;
+  }
+  #V-goals .goals-num{
+    flex-basis:20px !important;
+    width:20px !important;
+    min-width:20px !important;
+    max-width:20px !important;
+    font-size:14px !important;
+  }
+  #V-goals .goal-sphere-select{
+    flex-basis:78px !important;
+    width:78px !important;
+    min-width:78px !important;
+    max-width:78px !important;
+    font-size:12px !important;
+    padding:5px 14px 5px 5px !important;
+  }
+  #V-goals .goals-text{
+    font-size:18px !important;
+  }
+}
+</style>
+
+
+
+
+
+
+
+
+
+<style id="calendar-span-hours-restore-css">
+/* RESTORE: long activities span/fold across their full time range */
+.ev{
+  min-height:30px !important;
+  overflow:hidden !important;
+}
+
+/* Only real overlapping activities become narrower.
+   Normal long activities like 07:00-10:00 stay full width. */
+.ev:not(.ev-real-overlap){
+  left:94px !important;
+  right:12px !important;
+  transform:none !important;
+}
+
+.ev-real-overlap.ev-col-1{left:94px !important;right:52% !important;}
+.ev-real-overlap.ev-col-2{left:50% !important;right:12px !important;}
+</style>
+
+<script id="calendar-span-hours-restore-js">
+(function(){
+  function evEnd(ev){return (ev.startMin||0)+(ev.dur||0);}
+
+  function reallyOverlaps(a,b){
+    /* strict overlap only; touching at 06:30/06:30 is NOT overlap */
+    return (a.startMin||0) < evEnd(b) && (b.startMin||0) < evEnd(a);
+  }
+
+  function makeOverlapColumns(evts){
+    const map={};
+    (evts||[]).forEach(ev=>map[ev.id]={overlap:false,col:0});
+    for(let i=0;i<(evts||[]).length;i++){
+      for(let j=i+1;j<(evts||[]).length;j++){
+        if(reallyOverlaps(evts[i],evts[j])){
+          map[evts[i].id]={overlap:true,col:1};
+          map[evts[j].id]={overlap:true,col:2};
+        }
+      }
+    }
+    return map;
+  }
+
+  window.renderGrid=function(dk){
+    const tg=document.getElementById('tg');
+    const evts=getDay(dk);
+    const colMap=makeOverlapColumns(evts);
+    const now=new Date();
+    const nMin=now.getHours()*60+now.getMinutes();
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const isToday=selDate.toDateString()===now.toDateString();
+
+    let html='';
+    for(let h=CAL_S;h<CAL_E;h++){
+      let b=(h<8||h>=22)?'sl':(h>=9&&h<18?'wk':'lf');
+      html+=`<div class="hr"><div class="hband ${b}"></div><div class="hlbl"><div class="hlbl-n">${p2(h)}</div></div><div class="hcol" style="min-height:${HR_H}px"><div class="hhalf"></div></div></div>`;
+    }
+    tg.innerHTML=html;
+
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      const nl=document.createElement('div');
+      nl.className='nowl';
+      nl.style.top=((nMin-CAL_S*60)/60*HR_H)+'px';
+      nl.innerHTML='<div class="nowd"></div>';
+      tg.appendChild(nl);
+    }
+
+    evts.forEach(ev=>{
+      const sph=gsp(ev.sphId), c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';
+      const top=(ev.startMin-CAL_S*60)/60*HR_H;
+      const visibleDur=Math.max(0, Math.min(ev.dur,(CAL_E*60)-ev.startMin));
+      const ht=Math.max(visibleDur/60*HR_H-3,30);
+      const col=colMap[ev.id]||{overlap:false,col:0};
+
+      const el=document.createElement('div');
+      el.className='ev '+(ev.done?'done ':'')+(col.overlap?'ev-real-overlap ev-col-'+col.col:'');
+      el.style.cssText=`top:${top}px;height:${ht}px;background:color-mix(in srgb, ${c} 14%, #F9F4EA);border-left-color:${c};color:${c}`;
+
+      if(!col.overlap){
+        el.style.left='94px';
+        el.style.right='12px';
+      }
+
+      const tc=ev.tasks?.filter(t=>t.done).length||0, ta=ev.tasks?.length||0;
+      el.innerHTML=`<div class="ev-n">${esc(ev.title)}</div>
+        <div class="ev-t">${tm(ev.startMin)} – ${tm((ev.startMin+ev.dur)%1440)}</div>
+        ${sph?`<div class="ev-s">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''}</div>`:''}
+        ${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}
+        <div class="ev-check" onclick="toggleEventDone('${dk}','${ev.id}',event)">${ev.done?'✓':''}</div>`;
+
+      el.onclick=e=>{if(!e.target.classList.contains('ev-check'))openDet(ev,dk);};
+      tg.appendChild(el);
+    });
+
+    tg.querySelectorAll('.hcol').forEach((col,i)=>{
+      col.onclick=()=>{
+        const t=p2(CAL_S+i)+':00';
+        document.getElementById('sh-st').value=t;
+        openAdd(t);
+      };
+    });
+
+    if(typeof applyHourLineColors==='function')applyHourLineColors();
+  };
+})();
+</script>
+
+
+
+<style id="fold-long-activities-and-add-date-css">
+/* Fold long activities: compressed rows still show one activity block */
+.hr.folded-long{
+  min-height:58px !important;
+}
+.hr.folded-hidden{
+  display:none !important;
+}
+.ev.folded-event{
+  min-height:42px !important;
+}
+.ev-real-overlap.ev-col-1{left:94px !important;right:52% !important;}
+.ev-real-overlap.ev-col-2{left:50% !important;right:12px !important;}
+#lb-add-date-wrap{
+  margin-bottom:14px !important;
+}
+</style>
+
+<script id="fold-long-activities-and-add-date-js">
+(function(){
+  function todayKeyFinal(){
+    const n=new Date();
+    return `${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())}`;
+  }
+
+  function finalEventEnd(ev){
+    return (ev.startMin||0)+(ev.dur||0);
+  }
+
+  function strictOverlap(a,b){
+    return (a.startMin||0) < finalEventEnd(b) && (b.startMin||0) < finalEventEnd(a);
+  }
+
+  function overlapColumns(evts){
+    const map={};
+    (evts||[]).forEach(ev=>map[ev.id]={overlap:false,col:0});
+    for(let i=0;i<(evts||[]).length;i++){
+      for(let j=i+1;j<(evts||[]).length;j++){
+        if(strictOverlap(evts[i],evts[j])){
+          if(!map[evts[i].id].overlap)map[evts[i].id]={overlap:true,col:1};
+          if(!map[evts[j].id].overlap)map[evts[j].id]={overlap:true,col:2};
+        }
+      }
+    }
+    return map;
+  }
+
+  function foldedIntervals(evts){
+    const intervals=[];
+    (evts||[]).forEach(ev=>{
+      const s=Math.max(0, ev.startMin||0);
+      const e=Math.min(1440, finalEventEnd(ev));
+      if(e-s>90){
+        intervals.push({s,e,h:58});
+      }
+    });
+    intervals.sort((a,b)=>a.s-b.s);
+    const merged=[];
+    intervals.forEach(x=>{
+      const last=merged[merged.length-1];
+      if(last && x.s<=last.e){
+        last.e=Math.max(last.e,x.e);
+        last.h=Math.max(last.h,x.h);
+      }else merged.push({...x});
+    });
+    return merged;
+  }
+
+  function yMapper(intervals){
+    function y(min){
+      let out=0, cur=0;
+      for(const it of intervals){
+        if(min<=it.s){
+          out += (min-cur)/60*HR_H;
+          return out;
+        }
+        out += (it.s-cur)/60*HR_H;
+        if(min<=it.e){
+          return out + Math.min(it.h, Math.max(0,(min-it.s)/(it.e-it.s)*it.h));
+        }
+        out += it.h;
+        cur=it.e;
+      }
+      out += (min-cur)/60*HR_H;
+      return out;
+    }
+    return y;
+  }
+
+  window.renderGrid=function(dk){
+    const tg=document.getElementById('tg');
+    const evts=getDay(dk);
+    const intervals=foldedIntervals(evts);
+    const mapY=yMapper(intervals);
+    const colMap=overlapColumns(evts);
+    const now=new Date();
+    const nMin=now.getHours()*60+now.getMinutes();
+    const selDate=new Date(S.sy,S.sm,S.sd);
+    const isToday=selDate.toDateString()===now.toDateString();
+
+    function intervalAtHour(h){
+      const m=h*60;
+      return intervals.find(it=>m>=it.s && m<it.e);
+    }
+    function isInteriorHiddenHour(h){
+      const m=h*60;
+      return intervals.some(it=>m>it.s && (m+60)<=it.e);
+    }
+
+    let html='';
+    for(let h=CAL_S;h<CAL_E;h++){
+      const it=intervalAtHour(h);
+      const hidden=isInteriorHiddenHour(h);
+      let b=(h<8||h>=22)?'sl':(h>=9&&h<18?'wk':'lf');
+      let rowH=HR_H;
+      let cls='';
+      if(hidden){
+        cls=' folded-hidden';
+        rowH=0;
+      }else if(it && h*60<=it.s && it.e-it.s>90){
+        cls=' folded-long';
+        rowH=it.h;
+      }
+      html+=`<div class="hr${cls}"><div class="hband ${b}"></div><div class="hlbl"><div class="hlbl-n">${p2(h)}</div></div><div class="hcol" style="min-height:${rowH}px"><div class="hhalf"></div></div></div>`;
+    }
+
+    tg.innerHTML=html;
+
+    if(isToday&&nMin>=CAL_S*60&&nMin<CAL_E*60){
+      const nl=document.createElement('div');
+      nl.className='nowl';
+      nl.style.top=mapY(nMin)+'px';
+      nl.innerHTML='<div class="nowd"></div>';
+      tg.appendChild(nl);
+    }
+
+    evts.forEach(ev=>{
+      const sph=gsp(ev.sphId), c=sph?sph.color:BAND[ev.band]?.color||'var(--gd)';
+      const s=Math.max(0, ev.startMin||0);
+      const e=Math.min(1440, finalEventEnd(ev));
+      const top=mapY(s);
+      const ht=Math.max(mapY(e)-mapY(s)-3,42);
+      const col=colMap[ev.id]||{overlap:false,col:0};
+
+      const el=document.createElement('div');
+      el.className='ev folded-event '+(ev.done?'done ':'')+(col.overlap?'ev-real-overlap ev-col-'+col.col:'');
+      el.style.cssText=`top:${top}px;height:${ht}px;background:color-mix(in srgb, ${c} 14%, #F9F4EA);border-left-color:${c};color:${c}`;
+      if(!col.overlap){
+        el.style.left='94px';
+        el.style.right='12px';
+      }
+
+      const tc=ev.tasks?.filter(t=>t.done).length||0, ta=ev.tasks?.length||0;
+      el.innerHTML=`<div class="ev-n">${esc(ev.title)}</div>
+        <div class="ev-t">${tm(ev.startMin)} – ${tm((ev.startMin+ev.dur)%1440)}</div>
+        ${sph?`<div class="ev-s">${sph.name}${getGoalText(ev)?' · '+esc(getGoalText(ev)):''}</div>`:''}
+        ${ta?`<div class="ev-tk">${tc}/${ta} tasks</div>`:''}
+        <div class="ev-check" onclick="toggleEventDone('${dk}','${ev.id}',event)">${ev.done?'✓':''}</div>`;
+
+      el.onclick=e=>{if(!e.target.classList.contains('ev-check'))openDet(ev,dk);};
+      tg.appendChild(el);
+    });
+
+    tg.querySelectorAll('.hcol').forEach((col,i)=>{
+      col.onclick=()=>{
+        const labels=[...tg.querySelectorAll('.hr:not(.folded-hidden) .hlbl-n')];
+        const lbl=labels[i]?.textContent || p2(i);
+        const t=lbl+':00';
+        document.getElementById('sh-st').value=t;
+        openAdd(t);
+      };
+    });
+
+    if(typeof applyHourLineColors==='function')applyHourLineColors();
+  };
+
+  function ensureAddDateInput(){
+    const startInput=document.getElementById('sh-st');
+    if(!startInput || document.getElementById('lb-add-date'))return;
+    const wrap=document.createElement('div');
+    wrap.id='lb-add-date-wrap';
+    wrap.innerHTML='<div class="sh-lbl">Date</div><input type="date" class="sh-inp" id="lb-add-date">';
+    const row=startInput.closest('.sh-row');
+    if(row && row.parentNode)row.parentNode.insertBefore(wrap,row);
+    const date=document.getElementById('lb-add-date');
+    if(date)date.value=todayKeyFinal();
+  }
+
+  const oldOpenAddFoldDate=window.openAdd;
+  if(typeof oldOpenAddFoldDate==='function'){
+    window.openAdd=function(t){
+      oldOpenAddFoldDate(t);
+      ensureAddDateInput();
+      const date=document.getElementById('lb-add-date');
+      if(date && !date.value)date.value=todayKeyFinal();
+    };
+  }
+
+  window.confirmAdd=function(){
+    if(!aSel){toast('Choose an activity');return;}
+
+    const chosenDate=(document.getElementById('lb-add-date')?.value||todayKeyFinal()).trim()||todayKeyFinal();
+    const sMin=toMin(document.getElementById('sh-st').value||'09:00');
+    let eMin=toMin(document.getElementById('sh-end').value||'10:00');
+    const repeatMode=(document.getElementById('sh-repeat')?.value)||'none';
+
+    const inp=document.getElementById('lb-files');
+    const files=inp && inp.files ? Array.from(inp.files).map(f=>({name:f.name,size:f.size,type:f.type||''})) : [];
+
+    const baseTasks=(aSel.activity.tasks||[])
+      .filter(t=>aChecked[t.id])
+      .map(t=>({id:uid(),sourceTaskId:t.id,text:t.text,done:false}));
+
+    const blockTitle=baseTasks.length===1
+      ? baseTasks[0].text
+      : (baseTasks.length>1 ? baseTasks[0].text+' + '+(baseTasks.length-1)+' more' : aSel.activity.title);
+
+    if(eMin===sMin){toast('End time must be different');return;}
+
+    const baseEv={
+      title:blockTitle,
+      activityTitle:aSel.activity.title,
+      sphId:aSel.sphere.id,
+      goalId:aSel.goal.id,
+      activityId:aSel.activity.id,
+      band:aSel.sphere.band,
+      startMin:sMin,
+      dur:eMin>sMin ? eMin-sMin : (1440-sMin)+eMin,
+      tasks:baseTasks,
+      done:false,
+      files:files||[]
+    };
+
+    if(repeatMode!=='none' && typeof writeRepeatedEventsDirect==='function'){
+      writeRepeatedEventsDirect(chosenDate,baseEv,repeatMode);
+    }else{
+      getDay(chosenDate).push({...baseEv,id:uid(),repeat:'none',seriesId:''});
+    }
+
+    save();
+    csh(null,'sh-add');
+    renderCal();
+    if(typeof applyHourLineColors==='function')setTimeout(applyHourLineColors,0);
+    toast('Block added');
+  };
+
+  document.addEventListener('DOMContentLoaded', ensureAddDateInput);
+})();
+</script>
+
+
+
+<style id="sphere-activity-delete-option-css">
+/* Delete option for activities inside Work/Life/Sleep sphere pages */
+.linked-activity-row,
+.act-head{
+  position:relative !important;
+}
+
+.sphere-activity-delete-btn{
+  border:none !important;
+  background:transparent !important;
+  color:var(--mt2) !important;
+  font-size:22px !important;
+  line-height:1 !important;
+  padding:0 4px !important;
+  cursor:pointer !important;
+  flex:0 0 auto !important;
+}
+
+.sphere-activity-delete-btn:active{
+  color:#9A4A35 !important;
+  transform:scale(.92) !important;
+}
+</style>
+
+<script id="sphere-activity-delete-option-js">
+(function(){
+  window.deleteSphereActivityFinal=function(sid,gid,aid){
+    try{
+      const s=gsp(sid); if(!s)return;
+      const g=(s.goals||[]).find(x=>x.id===gid); if(!g)return;
+      g.activities=(g.activities||[]).filter(a=>a.id!==aid);
+
+      /* remove matching calendar blocks connected to this activity */
+      Object.keys(S.cal||{}).forEach(k=>{
+        S.cal[k]=(S.cal[k]||[]).filter(ev=>ev.activityId!==aid);
+      });
+
+      save();
+      renderSph();
+      renderCal();
+      toast('Activity deleted');
+    }catch(e){}
+  };
+
+  /* Add delete button to activity rows after sphere render */
+  function addDeleteButtonsToSphereActivities(){
+    try{
+      document.querySelectorAll('#V-sph .act-head').forEach(head=>{
+        if(head.querySelector('.sphere-activity-delete-btn'))return;
+
+        const onclick=head.getAttribute('onclick')||'';
+        const m=onclick.match(/toggleActivity\('([^']+)','([^']+)','([^']+)'\)/);
+        if(!m)return;
+
+        const btn=document.createElement('button');
+        btn.className='sphere-activity-delete-btn';
+        btn.type='button';
+        btn.textContent='×';
+        btn.onclick=function(e){
+          e.stopPropagation();
+          deleteSphereActivityFinal(m[1],m[2],m[3]);
+        };
+        head.appendChild(btn);
+      });
+
+      document.querySelectorAll('#V-sph .linked-activity-row').forEach(row=>{
+        if(row.querySelector('.sphere-activity-delete-btn'))return;
+
+        const rm=row.querySelector('.grm');
+        if(rm){
+          rm.classList.add('sphere-activity-delete-btn');
+          rm.textContent='×';
+          rm.style.display='block';
+        }
+      });
+    }catch(e){}
+  }
+
+  const oldRenderSphDeleteActivity=window.renderSph;
+  if(typeof oldRenderSphDeleteActivity==='function'){
+    window.renderSph=function(){
+      oldRenderSphDeleteActivity();
+      setTimeout(addDeleteButtonsToSphereActivities,0);
+      setTimeout(addDeleteButtonsToSphereActivities,120);
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded',addDeleteButtonsToSphereActivities);
+  setInterval(addDeleteButtonsToSphereActivities,700);
+})();
+</script>
+
+
+
+<style id="real-delete-activities-in-spheres-css">
+.sphere-activity-row-final{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  padding:10px 0 !important;
+  border-bottom:1px solid rgba(0,0,0,.05) !important;
+}
+.sphere-activity-title-final{
+  flex:1 !important;
+  min-width:0 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+  font-size:18px !important;
+  color:var(--tx2) !important;
+}
+.sphere-activity-delete-final{
+  flex:0 0 32px !important;
+  width:32px !important;
+  height:32px !important;
+  border-radius:50% !important;
+  border:1px solid var(--ln) !important;
+  background:var(--c2) !important;
+  color:#9A4A35 !important;
+  font-size:24px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+}
+</style>
+
+<script id="real-delete-activities-in-spheres-js">
+(function(){
+  window.deleteActivityFromSphereFinalReal=function(sid,gid,aid){
+    try{
+      const s=gsp(sid); if(!s)return;
+      const g=(s.goals||[]).find(x=>x.id===gid); if(!g)return;
+      g.activities=(g.activities||[]).filter(a=>a.id!==aid);
+      Object.keys(S.cal||{}).forEach(k=>{
+        S.cal[k]=(S.cal[k]||[]).filter(ev=>ev.activityId!==aid);
+      });
+      save();
+      renderSph();
+      renderCal();
+      toast('Activity deleted');
+    }catch(e){}
+  };
+
+  window.renderSphereDetail=function(s){
+    return `<div class="sphere-page-head">
+      <button class="sphere-back" onclick="closeSpherePage()">‹ Spheres</button>
+      <div class="spv-title">${esc(s.name)}</div>
+      <button class="delete-sphere-small" onclick="deleteSphere('${s.id}')">Delete sphere</button>
+    </div>
+    <div class="Vsc" style="padding-bottom:120px">
+      <div class="spbody" style="background:transparent">
+        <div class="sp-lbl">Goals</div>
+        ${(s.goals||[]).map((g,gi)=>{
+          const activities=(g.activities||[]);
+          return `<div class="goal-card">
+            <div class="goal-head">
+              <div class="gdot" style="background:${s.color}"></div>
+              <div style="flex:1">
+                <div class="goal-title">${esc(g.text||'General')}</div>
+                ${g.term?`<div class="goal-meta">by ${esc(g.term)}</div>`:''}
+              </div>
+              <div class="edit-mini" onclick="editGoal('${s.id}','${g.id}');event.stopPropagation()">✎</div>
+              <div class="grm" onclick="rmGoal('${s.id}',${gi});event.stopPropagation()">×</div>
+            </div>
+            <div class="goal-body">
+              <div class="sp-lbl">Activities</div>
+              ${activities.length ? activities.map(a=>`
+                <div class="sphere-activity-row-final">
+                  <div class="task-dot" style="background:${s.color}"></div>
+                  <div class="sphere-activity-title-final">${esc(a.title||'Activity')}</div>
+                  <div class="edit-mini" onclick="editActivity('${s.id}','${g.id}','${a.id}');event.stopPropagation()">✎</div>
+                  <button class="sphere-activity-delete-final" onclick="event.stopPropagation();deleteActivityFromSphereFinalReal('${s.id}','${g.id}','${a.id}')">×</button>
+                </div>`).join('') : `<div class="s80-s">No activities yet</div>`}
+              <div class="mini-add-row">
+                <input class="mini-inp" id="act-${safeId(g.id)}" placeholder="Add activity..." onkeydown="if(event.key==='Enter')addActivity('${s.id}','${g.id}')">
+                <button class="mini-btn" style="color:${s.color};border-color:${s.color}30" onclick="addActivity('${s.id}','${g.id}')">Add</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('') || `<div class="s80-s">No goals yet</div>`}
+        <div class="gdate-lbl">Goal · target month</div>
+        <div class="g-add-row">
+          <input class="ainp" id="gi-${s.id}" placeholder="Write a goal..." onkeydown="if(event.key==='Enter')addGoal('${s.id}')">
+          <input type="month" class="gdate" id="gm-${s.id}" title="Target">
+        </div>
+        <button class="abtn" style="color:${s.color};border-color:${s.color}30;width:100%;margin-top:10px" onclick="addGoal('${s.id}')">Add goal</button>
+      </div>
+    </div>`;
+  };
+
+  setTimeout(()=>{
+    try{ if(document.getElementById('V-sph')?.classList.contains('on'))renderSph(); }catch(e){}
+  },300);
+})();
+</script>
+
+
+
+<style id="calendar-card-delete-visible-css">
+/* Delete option directly on calendar activity cards */
+.ev{
+  padding-right:72px !important;
+}
+
+.ev-delete-visible{
+  position:absolute !important;
+  right:12px !important;
+  top:10px !important;
+  width:28px !important;
+  height:28px !important;
+  border:none !important;
+  background:transparent !important;
+  color:#8A7860 !important;
+  font-size:26px !important;
+  line-height:24px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+  z-index:20 !important;
+}
+
+.ev-delete-visible:active{
+  color:#9A4A35 !important;
+  transform:scale(.9) !important;
+}
+
+.ev-check{
+  right:14px !important;
+  bottom:8px !important;
+  top:auto !important;
+  transform:none !important;
+}
+</style>
+
+<script id="calendar-card-delete-visible-js">
+(function(){
+  window.deleteCalendarActivityCardFinal=function(dk,id,event){
+    if(event){
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    try{
+      S.cal[dk]=(S.cal[dk]||[]).filter(ev=>ev.id!==id);
+      save();
+      renderCal();
+      if(typeof applyHourLineColors==='function')setTimeout(applyHourLineColors,0);
+      toast('Activity deleted');
+    }catch(e){}
+  };
+
+  const previousRenderGridDeleteVisible=window.renderGrid;
+  if(typeof previousRenderGridDeleteVisible==='function'){
+    window.renderGrid=function(dk){
+      previousRenderGridDeleteVisible(dk);
+
+      document.querySelectorAll('#tg .ev').forEach(el=>{
+        if(el.querySelector('.ev-delete-visible'))return;
+
+        const onclick=el.getAttribute('onclick')||'';
+        /* fallback: use visible order to connect card to event */
+      });
+
+      const evts=getDay(dk)||[];
+      const cards=[...document.querySelectorAll('#tg .ev')];
+
+      cards.forEach((el,i)=>{
+        const ev=evts[i];
+        if(!ev || el.querySelector('.ev-delete-visible'))return;
+
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='ev-delete-visible';
+        btn.textContent='×';
+        btn.onclick=function(event){
+          deleteCalendarActivityCardFinal(dk,ev.id,event);
+        };
+        el.appendChild(btn);
+      });
+    };
+  }
+})();
+</script>
+
+
+
+<style id="calendar-section-activity-delete-css">
+/* Delete option next to activities in Calendar Work/Life/Sleep sections */
+.calendar-section-delete-btn,
+.work-life-sleep-delete-btn{
+  float:right !important;
+  border:none !important;
+  background:transparent !important;
+  color:#8A7860 !important;
+  font-size:26px !important;
+  line-height:1 !important;
+  padding:0 4px !important;
+  margin-left:10px !important;
+  cursor:pointer !important;
+  z-index:50 !important;
+}
+
+.calendar-section-delete-btn:active,
+.work-life-sleep-delete-btn:active{
+  color:#9A4A35 !important;
+  transform:scale(.9) !important;
+}
+</style>
+
+<script id="calendar-section-activity-delete-js">
+(function(){
+  window.deleteCalendarActivityFromSectionFinal=function(dk,id,event){
+    if(event){
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    try{
+      S.cal[dk]=(S.cal[dk]||[]).filter(ev=>ev.id!==id);
+      save();
+      renderCal();
+      if(typeof applyHourLineColors==='function')setTimeout(applyHourLineColors,0);
+      toast('Activity deleted');
+    }catch(e){}
+  };
+
+  function addDeleteToCalendarSections(){
+    try{
+      const dk=selDk();
+      const events=getDay(dk)||[];
+
+      /* Add delete to section/list cards that are NOT timeline cards */
+      document.querySelectorAll('.s80, .grow, .goal-card, .act-card').forEach(card=>{
+        if(card.closest('#V-sph') || card.closest('#V-goals') || card.closest('#V-notes'))return;
+        if(card.closest('#tg'))return;
+        if(card.querySelector('.calendar-section-delete-btn'))return;
+
+        const text=(card.textContent||'').trim();
+        if(!text)return;
+
+        const ev=events.find(e=>{
+          const title=(e.title||'').trim();
+          const activity=(e.activityTitle||'').trim();
+          return title && text.includes(title) || activity && text.includes(activity);
+        });
+        if(!ev)return;
+
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='calendar-section-delete-btn';
+        btn.textContent='×';
+        btn.onclick=function(event){
+          deleteCalendarActivityFromSectionFinal(dk,ev.id,event);
+        };
+
+        card.appendChild(btn);
+      });
+
+      /* Add delete inside any "Work today / Life today / Sleep today" custom rows */
+      document.querySelectorAll('#V-cal *').forEach(el=>{
+        if(el.closest('#tg'))return;
+        if(el.querySelector && el.querySelector('.work-life-sleep-delete-btn'))return;
+
+        const text=(el.textContent||'').trim();
+        if(!text || text.length>180)return;
+
+        const ev=events.find(e=>{
+          const title=(e.title||'').trim();
+          const activity=(e.activityTitle||'').trim();
+          return (title && text.includes(title) && text.includes('h')) ||
+                 (activity && text.includes(activity) && text.includes('h'));
+        });
+
+        if(!ev)return;
+
+        const style=getComputedStyle(el);
+        if(style.display==='none')return;
+
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='work-life-sleep-delete-btn';
+        btn.textContent='×';
+        btn.onclick=function(event){
+          deleteCalendarActivityFromSectionFinal(dk,ev.id,event);
+        };
+
+        el.appendChild(btn);
+      });
+    }catch(e){}
+  }
+
+  const oldRenderCalSectionDelete=window.renderCal;
+  if(typeof oldRenderCalSectionDelete==='function'){
+    window.renderCal=function(){
+      oldRenderCalSectionDelete();
+      setTimeout(addDeleteToCalendarSections,0);
+      setTimeout(addDeleteToCalendarSections,150);
+      setTimeout(addDeleteToCalendarSections,500);
+    };
+  }
+
+  const oldGoVSectionDelete=window.goV;
+  if(typeof oldGoVSectionDelete==='function'){
+    window.goV=function(v){
+      oldGoVSectionDelete(v);
+      if(v==='cal'){
+        setTimeout(addDeleteToCalendarSections,0);
+        setTimeout(addDeleteToCalendarSections,200);
+      }
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded',addDeleteToCalendarSections);
+  setInterval(addDeleteToCalendarSections,800);
+})();
+</script>
