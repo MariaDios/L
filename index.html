@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Life Balance OS</title>
-<!-- version: final-force-colors-v3 -->
+
 <meta name="theme-color" content="#F5EFE4">
 <meta name="description" content="Your personal life operating system. 8·8·8 balance, spheres, goals, calendar.">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -349,8 +349,6 @@ button,input,select,textarea{font-family:inherit}
 .b3arrow{color:var(--mt);font-size:13px;margin-left:6px;transition:transform .2s}
 .b3w.collapsed .b3arrow{transform:rotate(-90deg)}
 
-
-
 /* ── Typography harmonization: calmer, more consistent ── */
 :root{
   --font-main:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -386,8 +384,6 @@ body,button,input,select,textarea{font-family:var(--font-main);font-weight:400;}
 .dtask-row div{font-weight:400;}
 .toast{font-weight:500;}
 
-
-
 /* Typography cleanup: one calmer system, less contrast between fonts */
 body, button, input, select, textarea { font-family:'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .mhdr-month{font-family:'DM Sans',sans-serif;font-size:30px;font-weight:600;letter-spacing:-.03em;}
@@ -419,8 +415,6 @@ body, button, input, select, textarea { font-family:'DM Sans', -apple-system, Bl
 .atag{font-weight:500;}
 .abtn,.backup-btn,.mini-btn,.sh-ok,.d-btn{font-weight:600;}
 .sh-preview-main{font-size:17px;font-weight:600;}
-
-
 
 /* ── FINAL TYPOGRAPHY CLEANUP ── */
 .mhdr-month,
@@ -494,8 +488,6 @@ body, button, input, select, textarea { font-family:'DM Sans', -apple-system, Bl
   font-weight:500 !important;
 }
 
-
-
 /* === Unified elegant typography: same style as month header === */
 :root{
   --tx:#2A1C12;
@@ -532,8 +524,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .mgd.sel .mgd-n,.wd.act .wd-n,.wd.act .wd-nm,.sh-sp.on .sh-sp-n,.sh-ai.on .sh-ai-n{color:#fff !important;}
 /* colored labels stay visually calm but text is dark brown */
 .ev *{color:#2A1C12 !important;}
-
-
 
 /* === Requested: proper Work/Life/Sleep colors + compact priorities === */
 :root{
@@ -595,8 +585,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .b3i{ font-size:14px !important; font-weight:400 !important; }
 .b3n{ font-size:17px !important; font-weight:400 !important; }
 
-
-
 /* FINAL FORCE CATEGORY COLORS - visible override */
 :root{
   --work:#B88A2E !important;
@@ -636,7 +624,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .b3n.done[style*="var(--work)"]{ background:#B88A2E !important; border-color:#B88A2E !important; }
 .b3n.done[style*="var(--life)"]{ background:#4CAF50 !important; border-color:#4CAF50 !important; }
 .b3n.done[style*="var(--slp)"]{ background:#3B82F6 !important; border-color:#3B82F6 !important; }
-
 
 /* FINAL CALENDAR READABILITY FIX */
 
@@ -712,9 +699,7 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   transform:translateY(-50%) !important;
 }
 
-
 .fab{display:none !important}
-
 
 /* Allow Calendar/Spheres nav to be clickable while Add sheet is open */
 .sh-ov{
@@ -724,7 +709,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   pointer-events:auto !important;
 }
 
-
 /* FIX: bottom navigation clickable while Add sheet is open */
 .nav{
   z-index:120 !important;
@@ -733,7 +717,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .sh-ov{
   z-index:60 !important;
 }
-
 
 /* NOTES DESIGN - editable iPhone style */
 .notes-page{padding:34px 18px 96px;background:var(--bg);min-height:100%}
@@ -757,13 +740,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .notes-del{float:right;border:none;background:none;font-size:20px;color:var(--mt2);cursor:pointer}
 .notes-edit-hint{font-size:17px;color:var(--mt);margin-top:4px}
 
-
-
-
-
-
-
-
 /* NOTES TEXT SAME AS SPHERES */
 .notes-list-area,
 .notes-card-title,
@@ -776,7 +752,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   letter-spacing:inherit !important;
   color:inherit !important;
 }
-
 
 /* NOTES FINAL TWEAKS */
 .notes-add-btn,
@@ -810,7 +785,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   line-height:1.6 !important;
 }
 
-
 /* HOUR COLOURS BY ADDED ACTIVITY/SPHERE */
 .hr.zwk{ background:#F8F1DE !important; }
 .hr.zlf{ background:#EEF8EF !important; }
@@ -818,7 +792,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .hr[data-sphere-color]{
   background:var(--hour-bg) !important;
 }
-
 
 /* LEFT HOUR LINE COLOUR ONLY WHEN ACTIVITY EXISTS */
 .hband.wk,
@@ -829,7 +802,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .hr[data-sphere-color] .hband{
   background:var(--sphere-line) !important;
 }
-
 
 /* CALENDAR DETAIL EDIT/DELETE BUTTONS VISIBLE */
 #sh-det{
@@ -872,7 +844,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   color:#fff !important;
 }
 
-
 /* NOTES ATTACHMENTS VISIBLE */
 .note-attachments{
   margin-top:10px;
@@ -892,17 +863,14 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   white-space:nowrap;
 }
 
-
 /* NOTES FILE PREVIEW / OPEN FIX */
 .note-attachment a{color:var(--tx2) !important;text-decoration:none}
 .note-img-preview{width:100%;max-height:180px;object-fit:cover;border-radius:14px;border:1px solid var(--ln);margin-top:8px}
-
 
 /* FORCE LEFT LINE REAL SPHERE COLOR */
 .hr .hband{background:var(--ln2) !important}
 .hr[data-sphere-color] .hband{background:var(--sphere-line) !important}
 .hr[data-sphere-color]{background:var(--hour-bg) !important}
-
 
 /* FINAL NOTES ATTACHMENT OPEN FIX */
 .note-attachment{
@@ -928,12 +896,10 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   margin-top:8px;
 }
 
-
 /* FINAL LEFT LINE COLOR AFTER ACTIVITY */
 .hr .hband{background:var(--ln2) !important}
 .hr[data-sphere-color] .hband{background:var(--sphere-line) !important}
 .hr[data-sphere-color]{background:var(--hour-bg) !important}
-
 
 /* FINAL LEFT VERTICAL LINE FIX */
 .hband:not(.wk):not(.lf):not(.sl){
@@ -943,7 +909,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   background:var(--sphere-line) !important;
   opacity:1 !important;
 }
-
 
 /* GOALS PAGE - same planner design */
 .goals-page{padding:0 0 96px;background:var(--bg);min-height:100%}
@@ -1041,7 +1006,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   cursor:pointer;
 }
 
-
 /* GOALS CONTEXT + REFLECTION FILES */
 .goals-context{
   font-size:17px;
@@ -1093,7 +1057,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   margin-top:8px;
 }
 
-
 /* GOALS PERIOD NAVIGATION */
 .goals-period-nav{
   display:flex;
@@ -1112,7 +1075,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   cursor:pointer;
 }
 
-
 /* GOALS TODAY BUTTON */
 .goals-today-btn{
   min-width:34px;
@@ -1128,7 +1090,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   align-items:center;
   justify-content:center;
 }
-
 
 /* GOALS FILE BUTTONS - elegant icon only */
 .goal-file-btn,
@@ -1175,7 +1136,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   margin-top:8px;
 }
 
-
 /* MATCH PAPERCLIP BUTTON SIZE TO OTHER CIRCLES */
 .goal-file-btn,
 .reflection-tool{
@@ -1185,7 +1145,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   line-height:1 !important;
   padding:0 !important;
 }
-
 
 /* LEFT LINE NEUTRAL UNTIL ACTIVITY EXISTS */
 .hband.sl,
@@ -1199,9 +1158,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 }
 
 </style>
-
-
-
 
 <style id="backup-dots-menu">
 .backup-dots{
@@ -1244,7 +1200,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
 .backup-menu button:first-child{border-bottom:1px solid var(--ln)}
 </style>
 
-
 <style id="left-line-final-neutral">
 /* FINAL: left line neutral until a real activity exists */
 #tg .hr .hband,
@@ -1259,19 +1214,6 @@ input::placeholder{font-family:'Cormorant Garamond', Georgia, serif !important; 
   opacity:1 !important;
 }
 </style>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 <style id="final-dropdown-repeat-week-fix">
 /* no default empty hour colours */
@@ -1315,7 +1257,6 @@ select option,
 .week-strip-wrap .week-strip{flex:1;}
 </style>
 
-
 <style id="final-dropdown-font-force">
 /* FINAL: force every dropdown/list to use the same app typography */
 select,
@@ -1343,13 +1284,11 @@ select.sh-inp, select.sh-inp option {
 }
 </style>
 
-
 <style id="only-todays-priorities-title-smaller">
 .b3ht{
   font-size:14px !important;
 }
 </style>
-
 
 <style id="force-todays-priorities-title-small">
 /* FORCE ONLY "Today's Priorities" TITLE SMALLER */
@@ -1364,11 +1303,10 @@ select.sh-inp, select.sh-inp option {
 </head>
 <body>
 <div id="app">
-<!-- ████ CALENDAR ████ -->
+
   <div class="V on" id="V-cal">
     <div class="cal-header">
 
-      <!-- Month nav -->
       <div class="mhdr">
         <div class="mhdr-left" onclick="toggleFold()">
           <div class="mhdr-month" id="mhdr-month">May</div>
@@ -1380,16 +1318,13 @@ select.sh-inp, select.sh-inp option {
         <div class="arr" onclick="shiftM(1)">›</div>
       </div>
 
-      <!-- DOW labels — always visible -->
       <div class="dow-row" id="dow-row"></div>
 
-      <!-- FULL MONTH GRID (folds away) -->
       <div class="month-fold" id="month-fold">
         <div class="month-grid" id="month-grid"></div>
         <div style="height:6px"></div>
       </div>
 
-      <!-- WEEK STRIP (shows when folded) -->
       <div class="week-fold" id="week-fold">
         <div class="week-strip-wrap"><div class="week-strip" id="week-strip"></div><button class="week-next-btn" onclick="shiftWeek(1)">›</button></div>
       </div>
@@ -1403,24 +1338,19 @@ select.sh-inp, select.sh-inp option {
       </div>
     </div>
 
-    <!-- FULL TIME GRID -->
     <div class="tg-outer" id="tg-outer">
       <div class="tg" id="tg"></div>
     </div>
 
-    
   </div>
 
-  <!-- ████ SPHERES ████ -->
   <div class="V" id="V-sph">
     <div class="spv-hd"><div class="spv-title">Spheres</div><div class="spv-sub">Activities · Goals · Deadlines</div></div>
     <div class="band-tabs" id="band-tabs"></div>
-    
+
     <div class="Vsc" style="padding-bottom:28px" id="sp-cards"></div>
   </div>
 
-
-  <!-- ████ NOTES ████ -->
   <div class="V" id="V-notes">
     <div class="Vsc">
       <div class="notes-page">
@@ -1451,8 +1381,6 @@ select.sh-inp, select.sh-inp option {
     </div>
   </div>
 
-
-  <!-- ████ GOALS ████ -->
   <div class="V" id="V-goals">
     <div class="Vsc">
       <div class="goals-page">
@@ -1475,7 +1403,6 @@ select.sh-inp, select.sh-inp option {
   </div>
 </div>
 
-<!-- ADD SHEET -->
 <div class="sh-ov" id="sh-add" onclick="csh(event,'sh-add')">
   <div class="sh">
     <div class="sh-h"></div>
@@ -1508,7 +1435,7 @@ select.sh-inp, select.sh-inp option {
 </select>
 
     </div>
-    
+
     <div class="sh-tasks" id="sh-tasks"></div>
     <div id="sh-preview"></div>
     <button class="sh-atb" style="display:none" onclick="addShTask()">◦ &nbsp;Add a task</button>
@@ -1516,7 +1443,6 @@ select.sh-inp, select.sh-inp option {
   </div>
 </div>
 
-<!-- DETAIL SHEET -->
 <div class="sh-ov" id="sh-det" onclick="csh(event,'sh-det')">
   <div class="sh d-sh"><div class="sh-h"></div><div id="det-in"></div></div>
 </div>
@@ -1568,10 +1494,6 @@ function getDay(k){if(!S.cal[k])S.cal[k]=[];return S.cal[k];}
 function getBig3(k){if(!S.big3[k])S.big3[k]=[{id:uid(),text:'',done:false},{id:uid(),text:'',done:false},{id:uid(),text:'',done:false}];return S.big3[k];}
 function togglePriorities(){S.prioritiesOpen=!S.prioritiesOpen;save();renderDayDetail();
   setTimeout(applyHourLineColors,0);}
-
-
-
-
 
 function eventStartMin(e){
   if(typeof e.startMin==='number')return e.startMin;
@@ -1652,8 +1574,6 @@ function softBg(hex){
 }
 
 function getGoalText(ev){const s=gsp(ev.sphId);const g=s&&s.goals&&s.goals.find(x=>x.id===ev.goalId);return g?g.text:'';}
-
-
 
 let editingNoteId=null;
 let noteFiles=[];
@@ -1775,10 +1695,7 @@ function renderNotes(){
   `).join('');
 }
 
-
-
 let reflectionFiles=[];
-
 
 function currentISODate(){
   return new Date().toISOString().slice(0,10);
@@ -2014,8 +1931,6 @@ function renderGoals(){
     </div>`;
 }
 
-
-
 function goV(v){
   document.querySelectorAll('.sh-ov').forEach(e=>e.classList.remove('O'));
   document.querySelectorAll('.V').forEach(e=>e.classList.remove('on'));
@@ -2150,7 +2065,6 @@ function selectDay(y,m,d){
   setTimeout(()=>{const o=document.getElementById('tg-outer');if(o)o.scrollTop=0;},100);
 }
 
-
 function shiftWeek(dir){
   const d=new Date(S.sy,S.sm,S.sd);
   d.setDate(d.getDate()+dir*7);
@@ -2197,7 +2111,6 @@ function renderGrid(dk){
 
 function togB3(dk,i){const t=getBig3(dk)[i];if(t){t.done=!t.done;save();renderCal();}}
 function rmEv(dk,id,e){e.stopPropagation();S.cal[dk]=(S.cal[dk]||[]).filter(ev=>ev.id!==id);save();renderCal();}
-
 
 function normData(){
   S.spheres.forEach(s=>{
@@ -2382,21 +2295,6 @@ function addShTask(){}
 function rmShTask(i){}
 function bShTk(){renderSelectedTasks();}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function dateFromKey(key){
   const [y,m,d]=String(key).split('-').map(Number);
   return new Date(y,(m||1)-1,d||1);
@@ -2457,7 +2355,6 @@ function createSeriesEventsFromKey(startKey,baseEv,mode,seriesId){
   });
   return keys.length;
 }
-
 
 function makeRepeatKeysDirect(mode,startKey){
   const parts=String(startKey).split('-').map(Number);
@@ -2653,7 +2550,6 @@ function addAct(id){}
 function rmAct(id,i){}
 function csh(e,id){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.remove('O');}
 
-
 function exportBackup(){
   const data={schemaVersion:2,exportedAt:new Date().toISOString(),app:'Life Balance OS',state:S};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -2675,7 +2571,7 @@ window.addEventListener('focus',()=>setTimeout(applyHourLineColors,0));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(applyHourLineColors,0);});
 
 </script>
-<!-- PWA install note (single-file safe) -->
+
 <div id="install-note" style="position:fixed;left:14px;right:14px;bottom:calc(var(--nh) + 82px);max-width:402px;margin:0 auto;background:#fff;border:1px solid var(--ln);border-radius:18px;padding:12px 14px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:none;z-index:80;align-items:center;gap:10px;justify-content:space-between">
   <div style="font-size:12px;color:#8A7860;line-height:1.4"><strong style="color:#1A160E">Install as app</strong><br>Open in Safari/Chrome → Share/Menu → Add to Home Screen.</div>
   <button onclick="document.getElementById('install-note').style.display='none';localStorage.setItem('lbosInstallDismissed','1')" style="border:none;background:#F5EFE4;border-radius:999px;padding:7px 10px;color:#8A7860;font-weight:700">×</button>
@@ -2684,8 +2580,6 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout
 try{if(!localStorage.getItem('lbosInstallDismissed'))setTimeout(()=>{const n=document.getElementById('install-note');if(n)n.style.display='flex'},1600)}catch(e){}
 </script>
 
-
-<!-- FINAL UX PATCH START -->
 <style>
 .nav{height:82px!important;padding-top:8px!important;background:rgba(245,239,228,.98)!important}.nb{gap:5px!important;padding:6px 4px 10px!important}.nb-ic{width:44px!important;height:44px!important;font-size:28px!important;color:#2A1C12!important}.nb-lb{display:block!important;font-size:17px!important;line-height:1!important;color:#2A1C12!important;opacity:.95!important}.nb.on .nb-ic{background:#EFE6D3!important;color:#2A1C12!important}.nb.on .nb-lb{color:#2A1C12!important}
 .hr.zsl,.hr.zwk,.hr.zlf{background:transparent!important}.hlbl{width:58px!important;padding-right:16px!important;position:relative!important;z-index:6!important}.hlbl-n{font-size:22px!important;color:#8D7C68!important}.ev{left:94px!important;right:12px!important;padding:10px 42px 10px 54px!important;min-height:50px!important;display:block!important}.ev-check{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:1.8px solid currentColor;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-size:17px;line-height:1;background:rgba(255,255,255,.55);color:inherit}.ev.done{opacity:.64}.ev.done .ev-n,.ev.done .ev-s{text-decoration:line-through}.ev-t{display:block!important;position:absolute!important;right:38px!important;top:50%!important;transform:translateY(-50%)!important;font-size:20px!important;line-height:1!important;opacity:.88!important;color:#2A1C12!important;white-space:nowrap!important}.ev-n,.ev-s,.ev-tk{max-width:50%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.ev-x{display:none!important}
@@ -2713,10 +2607,7 @@ function renderSphereDetail(s){const bm=BAND[s.band];return `<div class="sphere-
 renderSph=function(){ensureCustomSafe();normData();if(activeSpherePage){const s=gsp(activeSpherePage);if(s){document.getElementById('V-sph').innerHTML=renderSphereDetail(s)+`<div class="nav"><div class="nb" data-v="cal" onclick="goV('cal')"><div class="nb-ic">◈</div><div class="nb-lb">Calendar</div></div><div class="nb on" data-v="sph" onclick="goV('sph')"><div class="nb-ic">◎</div><div class="nb-lb">Spheres</div></div></div>`;return;}}const filtered=activeBandFilter==='all'?S.spheres:S.spheres.filter(s=>s.band===activeBandFilter);document.getElementById('V-sph').innerHTML=`<div class="spv-hd"><div class="spv-title">Spheres</div><div class="spv-sub">Activities · Goals · Deadlines</div></div><div class="band-tabs" id="band-tabs">${renderBandTabs()}</div><div class="backup-row"><button class="backup-btn" onclick="exportBackup()">Export</button><button class="backup-btn" onclick="document.getElementById('backup-file').click()">Import</button><input id="backup-file" type="file" accept="application/json" style="display:none" onchange="importBackupFile(event)"></div><div class="sphere-tools"><button onclick="addCustomSphere()">+ Add sphere</button></div><div class="Vsc" style="padding-bottom:28px" id="sp-cards">${filtered.map(renderSphereCard).join('')}</div><div class="nav"><div class="nb" data-v="cal" onclick="goV('cal')"><div class="nb-ic">◈</div><div class="nb-lb">Calendar</div></div><div class="nb on" data-v="sph" onclick="goV('sph')"><div class="nb-ic">◎</div><div class="nb-lb">Spheres</div></div></div>`;};
 setTimeout(()=>{try{renderCal();if(document.getElementById('V-sph').classList.contains('on'))renderSph();setupSwipeClose();}catch(e){}},700);
 </script>
-<!-- FINAL UX PATCH END -->
 
-
-<!-- FINAL SMALL FIXES START -->
 <style>
 /* one bottom nav only, clearly visible */
 #V-sph > .nav{
@@ -2916,10 +2807,7 @@ setTimeout(()=>{
   }catch(e){}
 },300);
 </script>
-<!-- FINAL SMALL FIXES END -->
 
-
-<!-- FINAL ALL TAB FIX START -->
 <style>
 /* Keep ALL tab, but remove only the "All spheres" subtitle */
 .band-tabs .btab:first-child{
@@ -3045,10 +2933,7 @@ setTimeout(()=>{
   }catch(e){}
 },300);
 </script>
-<!-- FINAL ALL TAB FIX END -->
 
-
-<!-- FINAL USER REQUEST PATCH START -->
 <style>
 /* Remove first ALL tab completely */
 .band-tabs .btab:first-child{display:none !important;}
@@ -3171,10 +3056,7 @@ setTimeout(()=>{
   }catch(e){}
 },300);
 </script>
-<!-- FINAL USER REQUEST PATCH END -->
 
-
-<!-- FINAL ORDER PATCH START -->
 <script>
 /* Final order: LIFE / WORK / SLEEP */
 function renderBandTabs(){
@@ -3198,10 +3080,7 @@ setTimeout(()=>{
   }catch(e){}
 },300);
 </script>
-<!-- FINAL ORDER PATCH END -->
 
-
-<!-- FINAL LIFE WORK SLEEP + DONE STYLE PATCH START -->
 <style>
 /* Show all three tabs: LIFE / WORK / SLEEP */
 .band-tabs .btab:first-child{
@@ -3294,8 +3173,6 @@ setTimeout(()=>{
   }catch(e){}
 },300);
 </script>
-<!-- FINAL LIFE WORK SLEEP + DONE STYLE PATCH END -->
-
 
 <style>
 .spv-sub,
@@ -3309,7 +3186,6 @@ setTimeout(()=>{
 .fab{display:none !important}
 
 </style>
-
 
 <style id="force-hide-tab-subtitles">
 .band-tabs .btab-c,
@@ -3326,8 +3202,6 @@ setTimeout(()=>{
 
 </style>
 
-
-<!-- ONLY REQUESTED 6 FIXES PATCH START -->
 <style>
 /* 2. A little more space between calendar blocks, without changing design */
 .ev{
@@ -3534,11 +3408,7 @@ setTimeout(()=>{
   setTimeout(()=>{try{renderCal();ensurePlusButton();ensureFileInput();}catch(e){}},50);
 })();
 </script>
-<!-- ONLY REQUESTED 6 FIXES PATCH END -->
 
-
-
-<!-- ONLY REQUESTED SLEEP 23-6 + ADD ACTIVITY TEXT PATCH START -->
 <style>
 /* Sleep colour only for 23:00–06:00 */
 .hr.zsl{background:#EEF4FF !important;}
@@ -3683,10 +3553,7 @@ setTimeout(()=>{
   setTimeout(()=>{labelAddButtons();try{renderCal();}catch(e){}},80);
 })();
 </script>
-<!-- ONLY REQUESTED SLEEP 23-6 + ADD ACTIVITY TEXT PATCH END -->
 
-
-<!-- FINAL DUPLICATE ADD ACTIVITY BUTTON FIX START -->
 <style>
 /* Keep only the original calendar add button. Hide the extra duplicate button added by the patch. */
 #lb-plus-add{
@@ -3722,11 +3589,7 @@ setTimeout(()=>{
   setTimeout(keepOnlyOriginalAddButton,500);
 })();
 </script>
-<!-- FINAL DUPLICATE ADD ACTIVITY BUTTON FIX END -->
 
-
-
-<!-- FINAL REQUEST: HIDE ADD TITLE + SLEEP 23-06 FOLDED START -->
 <style>
 /* Hide this text in the Add sheet only */
 #sh-add .sh-title,
@@ -3888,11 +3751,7 @@ setTimeout(()=>{
   setTimeout(()=>{try{renderCal();}catch(e){}},100);
 })();
 </script>
-<!-- FINAL REQUEST: HIDE ADD TITLE + SLEEP 23-06 FOLDED END -->
 
-
-
-<!-- FINAL FIX: SLEEP COVERED AND FOLDED START -->
 <style>
 /* Sleep coverage stays over all sleep hours, while the visible sleep card stays folded/compact */
 .sleep-coverage{
@@ -4001,11 +3860,7 @@ setTimeout(()=>{
   setTimeout(function(){try{renderCal();}catch(e){}},80);
 })();
 </script>
-<!-- FINAL FIX: SLEEP COVERED AND FOLDED END -->
 
-
-
-<!-- FINAL TRUE FOLDED SLEEP PATCH START -->
 <style>
 /* Sleep hours stay covered, but the sleep card itself is compact/folded */
 .hr.sleep-hour,
@@ -4107,11 +3962,7 @@ setTimeout(()=>{
   setTimeout(function(){try{renderCal();}catch(e){}},80);
 })();
 </script>
-<!-- FINAL TRUE FOLDED SLEEP PATCH END -->
 
-
-
-<!-- FINAL EXACT SLEEP FOLD 23-06 PATCH START -->
 <style>
 /* When sleep is 23–06, hide the inside hours and show a compact folded row. */
 .sleep-fold-row{
@@ -4237,11 +4088,7 @@ setTimeout(()=>{
   setTimeout(function(){try{renderCal();}catch(e){}},80);
 })();
 </script>
-<!-- FINAL EXACT SLEEP FOLD 23-06 PATCH END -->
 
-
-
-<!-- FINAL REAL SLEEP 23-06 FOLD/JUMP PATCH START -->
 <style>
 /* For an overnight sleep block, do not show the inside hours 00-05. */
 .hr.sleep-hidden-hour{display:none !important;}
@@ -4338,11 +4185,7 @@ setTimeout(()=>{
   setTimeout(function(){try{renderCal();}catch(e){}},100);
 })();
 </script>
-<!-- FINAL REAL SLEEP 23-06 FOLD/JUMP PATCH END -->
 
-
-
-<!-- FINAL ALL TASKS HIDE INSIDE HOURS PATCH START -->
 <style>
 /* Any task longer than one hour folds the hour labels inside it.
    Example: 16–18 shows 16, folded, 18; hour 17 is hidden. */
@@ -4515,10 +4358,7 @@ setTimeout(()=>{
   setTimeout(function(){try{renderCal();}catch(e){}},100);
 })();
 </script>
-<!-- FINAL ALL TASKS HIDE INSIDE HOURS PATCH END -->
 
-
-<!-- FINAL DELETE BUTTON NEXT TO EDIT + DUSTY RED START -->
 <style>
 :root{ --delete-soft:#A97B75; }
 /* delete color: soft dusty rosemary red, matching cream/gold app */
@@ -4562,8 +4402,8 @@ setTimeout(()=>{
       (ev.tasks||[]).map(function(t,i){return '<div class="dtask-row" onclick="togDT('+i+')"><div class="dtask-chk'+(t.done?' done':'')+'" style="border-color:'+c+(t.done?';background:'+c:'')+';color:'+(t.done?'#fff':'transparent')+'">'+(t.done?'✓':'')+'</div><div style="flex:1;font-size:20px;font-weight:400;color:#2A1C12'+(t.done?';opacity:.45':'')+'">'+esc(t.text)+'</div></div>';}).join('')+
       '</div>':'';
     document.getElementById('det-in').innerHTML=
-      '<div style="margin-bottom:20px"><div style="font-family:\'Cormorant Garamond\',serif;font-size:30px;font-weight:400;color:#2A1C12;margin-bottom:8px">'+esc(ev.title)+'</div>'+ 
-      '<div style="font-family:\'Cormorant Garamond\',serif;font-size:21px;color:var(--mt)">'+_eventTimeText(ev)+' · '+(Math.round((ev.dur||0)/60*10)/10)+'h</div>'+ 
+      '<div style="margin-bottom:20px"><div style="font-family:\'Cormorant Garamond\',serif;font-size:30px;font-weight:400;color:#2A1C12;margin-bottom:8px">'+esc(ev.title)+'</div>'+
+      '<div style="font-family:\'Cormorant Garamond\',serif;font-size:21px;color:var(--mt)">'+_eventTimeText(ev)+' · '+(Math.round((ev.dur||0)/60*10)/10)+'h</div>'+
       (sph?'<div style="font-size:18px;margin-top:6px;color:'+c+';font-weight:400">'+esc(sph.name)+(getGoalText(ev)?' · '+esc(getGoalText(ev)):'')+' · '+(BAND[sph.band]?BAND[sph.band].label:'')+'</div>':'')+
       (ev.activityTitle?'<div style="font-size:17px;margin-top:4px;color:var(--mt)">Activity: '+esc(ev.activityTitle)+'</div>':'')+'</div>'+taskHtml+
       '<div class="d-act"><button class="d-btn d-ok" style="background:'+c+'" onclick="openEditDet()">Edit</button><button class="d-btn d-del" onclick="deleteCalendarBlockFinal()">Delete</button></div>';
@@ -4584,11 +4424,7 @@ setTimeout(()=>{
   },100);
 })();
 </script>
-<!-- FINAL DELETE BUTTON NEXT TO EDIT + DUSTY RED END -->
 
-
-
-<!-- FINAL REAL DELETE FIX START -->
 <style>
 :root{
   --edit-soft-final:#A8B895;
@@ -4715,10 +4551,7 @@ setTimeout(()=>{
   setTimeout(function(){try{renderCal();}catch(e){}},80);
 })();
 </script>
-<!-- FINAL REAL DELETE FIX END -->
 
-
-<!-- FINAL CLEAN ADD WINDOW + NAV PATCH START -->
 <style id="final-clean-add-nav-style">
 /* keep only one bottom nav */
 #V-sph > .nav{display:none!important;}
@@ -4787,7 +4620,7 @@ setTimeout(()=>{
 
   const oldGoV = typeof goV==='function' ? goV : null;
   window.goV=function(v){
-    
+
     if(oldGoV) oldGoV(v);
     removeDuplicateControls();buildBottomNav();refreshNavState();
   };
@@ -4934,8 +4767,6 @@ setTimeout(()=>{
   },50);
 })();
 </script>
-<!-- FINAL CLEAN ADD WINDOW + NAV PATCH END -->
-
 
 <div class="backup-dots">
  <button class="backup-dots-btn" onclick="toggleBackupMenu()">⋯</button>
@@ -4952,9 +4783,6 @@ function toggleBackupMenu(){
 }
 </script>
 
-
-
-<!-- FINAL CLEAN SYSTEM PATCH START -->
 <style id="final-clean-system-css">
 /* 1) Dates straight under weekday letters */
 .dow-row{
@@ -5421,10 +5249,7 @@ select,select option,.sh-inp,#new-act-sphere,#new-act-goal,.goal-sphere-select{
   },400);
 })();
 </script>
-<!-- FINAL CLEAN SYSTEM PATCH END -->
 
-
-<!-- FINAL RESTORE GOALS PAGE PATCH START -->
 <style id="final-restore-goals-page-css">
 /* Restore main bottom navigation with all 4 pages */
 #app > .nav{
@@ -5919,10 +5744,7 @@ select,select option,.sh-inp,#new-act-sphere,#new-act-goal{
   },500);
 })();
 </script>
-<!-- FINAL RESTORE GOALS PAGE PATCH END -->
 
-
-<!-- FINAL FONT WEEK ADD NOTES PATCH START -->
 <style id="final-font-week-add-notes-css">
 /* Keep week arrows left and right, dates exactly under weekday letters */
 .dow-row{
@@ -6186,10 +6008,7 @@ select,select option,.sh-inp,#new-act-sphere,#new-act-goal,#sh-st,#sh-end,#det-s
   },500);
 })();
 </script>
-<!-- FINAL FONT WEEK ADD NOTES PATCH END -->
 
-
-<!-- FINAL ALIGN FONT NO BOLD PATCH START -->
 <style id="final-align-font-no-bold-css">
 .dow-row{
   display:grid !important;
@@ -6364,14 +6183,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   },500);
 })();
 </script>
-<!-- FINAL ALIGN FONT NO BOLD PATCH END -->
 
-
-
-
-
-
-<!-- FINAL TRUE SHARED WEEK GRID PATCH START -->
 <style id="final-true-shared-week-grid-css">
 /* Hide the old separate weekday row and old separate week strip.
    We render ONE shared grid where M and 1 are in the same column. */
@@ -6566,10 +6378,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   },300);
 })();
 </script>
-<!-- FINAL TRUE SHARED WEEK GRID PATCH END -->
 
-
-<!-- FINAL NOTES SPHERES NAV PATCH START -->
 <style id="final-notes-spheres-nav-css">
 .notes-title-input,
 #note-title{
@@ -6718,10 +6527,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   },300);
 })();
 </script>
-<!-- FINAL NOTES SPHERES NAV PATCH END -->
 
-
-<!-- FINAL PATCH: NOTES PEN + STOP ADD BLINK ONLY START -->
 <style id="final-notes-pen-stop-add-blink-only">
 /* Notes: use a pen, brown/gold, not black pencil */
 #app > .nav .nb[data-v="notes"] .nb-ic{
@@ -6836,10 +6642,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   setTimeout(finalFixNotesPenAndStaticAdd,200);
 })();
 </script>
-<!-- FINAL PATCH: NOTES PEN + STOP ADD BLINK ONLY END -->
 
-
-<!-- HIDE SPHERE WORD PILLS IN ADD ACTIVITY ONLY -->
 <style id="hide-add-activity-sphere-word-pills">
 /* Hide the row with Sleep / Health / Family / Career / Spiritual words in Add Activity.
    Nothing else is changed. */
@@ -6858,8 +6661,6 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 }
 </style>
 
-
-<!-- FINAL REMOVE ADD SHEET SPHERE WORD PILLS -->
 <style id="final-remove-add-sheet-sphere-word-pills">
 /* Remove only the pill row with sphere words in the Add Activity sheet */
 #sh-add #sh-spg,
@@ -6932,8 +6733,6 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 })();
 </script>
 
-
-<!-- FINAL HIDE ALL SPHERE NAME CHIPS IN ADD SHEET -->
 <style id="final-hide-all-sphere-name-chips-add-sheet">
 /* Hide all sphere-name chips in Add Activity only */
 #sh-add .sh-spg,
@@ -7010,8 +6809,6 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 })();
 </script>
 
-
-<!-- FINAL PEN BROWN + GOALS IPHONE OVAL FIX -->
 <style id="final-pen-brown-goals-oval-iphone-fix">
 /* Notes pen: always brown, not black */
 #app > .nav .nb[data-v="notes"] .nb-ic,
@@ -7101,8 +6898,6 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 })();
 </script>
 
-
-<!-- FINAL: CLICK WORK LIFE SLEEP TO SEE TODAY ACTIVITIES + HOURS -->
 <style id="final-band-day-summary-style">
 #bal-bar .bb{
   cursor:pointer !important;
@@ -7244,8 +7039,6 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 })();
 </script>
 
-
-<!-- FINAL IPHONE PEN + GOALS/SPHERES VISIBILITY FIX -->
 <style id="final-iphone-pen-goals-spheres-visible">
 /* iPhone renders emoji pens black. Replace Notes icon with a real CSS/text pen in brown. */
 #app > .nav .nb[data-v="notes"] .nb-ic,
@@ -7471,7 +7264,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
 
 </body>
 </html>
-<!-- FINAL SLEEP REALLY WORKING PATCH START -->
+
 <style>
 /* no big Add sheet title/subtitle */
 #sh-add .sh-title,#sh-add .sh-sub{display:none!important;}
@@ -7602,10 +7395,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   setTimeout(function(){try{_labelButton();renderCal();}catch(e){}},120);
 })();
 </script>
-<!-- FINAL SLEEP REALLY WORKING PATCH END -->
 
-
-<!-- FINAL NEXT-DAY SLEEP COVERAGE PATCH START -->
 <script>
 (function(){
   function _prevKey(k){
@@ -7708,9 +7498,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   setTimeout(function(){try{renderCal();}catch(e){}},100);
 })();
 </script>
-<!-- FINAL NEXT-DAY SLEEP COVERAGE PATCH END -->
 
-<!-- FINAL FIX: NEXT DAY SLEEP MUST COVER 00-06 START -->
 <script>
 (function(){
   function _prevKeyFinal(k){
@@ -7786,10 +7574,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   setTimeout(function(){try{renderCal();}catch(e){}},80);
 })();
 </script>
-<!-- FINAL FIX: NEXT DAY SLEEP MUST COVER 00-06 END -->
 
-
-<!-- FINAL REAL FIX: SLEEP 23-06 JUMPS 23 → 06, NO 00-05 START -->
 <style>
 #sh-add .sh-title,#sh-add .sh-sub{display:none!important;}
 #lb-plus-add{display:none!important;}
@@ -7907,8 +7692,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   setTimeout(function(){try{renderCal();}catch(e){}},120);
 })();
 </script>
-<!-- FINAL REAL FIX: SLEEP 23-06 JUMPS 23 → 06, NO 00-05 END -->
-<!-- FINAL ALL OVERNIGHT TASKS FOLD PATCH START -->
+
 <style>
 /* Any overnight task (end time earlier than start time) folds the hours between. */
 .overnight-fold-row{
@@ -8082,10 +7866,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   setTimeout(function(){try{renderCal();}catch(e){}},100);
 })();
 </script>
-<!-- FINAL ALL OVERNIGHT TASKS FOLD PATCH END -->
 
-
-<!-- FINAL UNIVERSAL ACTIVITY FOLD PATCH START -->
 <style>
 /* Make Add new activity visible, not collapsed */
 #sh-add .quick-add-box .quick-add-body{display:block !important;}
@@ -8238,9 +8019,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   setTimeout(function(){try{renderCal();}catch(e){}},120);
 })();
 </script>
-<!-- FINAL UNIVERSAL ACTIVITY FOLD PATCH END -->
 
-<!-- FINAL REQUEST: SHORT WEEKDAYS + DELETE OPTIONS START -->
 <style>
 /* Calendar: leave only single-letter weekdays (M T W...), hide MON/TUE/WED row labels */
 .week-strip .wd-nm{
@@ -8358,10 +8137,10 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
             '<div class="sh-ai-d" style="background:'+s.color+'"></div>'+
             '<div style="flex:1">'+(selected?'<div class="sh-selected-label" style="color:'+s.color+'">Selected</div>':'')+
               '<div class="sh-act-name">'+esc(x.activity.title)+'</div>'+
-              '<div class="sh-act-goal">'+esc(s.name)+' · Goal: '+esc(x.goal.text)+'</div>'+ 
+              '<div class="sh-act-goal">'+esc(s.name)+' · Goal: '+esc(x.goal.text)+'</div>'+
             '</div>'+
             (selected?'<div class="sh-selected-check" style="color:'+s.color+'">✓</div>':'<div class="act-chevron'+(open?' o':'')+'" style="color:'+s.color+'">›</div>')+
-            '<button class="sh-delete-mini" title="Remove activity" onclick="deleteActivityFromAddSheet(\''+s.id+'\',\''+gid+'\',\''+aid+'\',event)">×</button>'+ 
+            '<button class="sh-delete-mini" title="Remove activity" onclick="deleteActivityFromAddSheet(\''+s.id+'\',\''+gid+'\',\''+aid+'\',event)">×</button>'+
           '</div>'+
           (open?'<div class="sh-act-body">'+(tasks.length?tasks.map(function(t){
             const on=!!aChecked[t.id];
@@ -8379,10 +8158,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   },100);
 })();
 </script>
-<!-- FINAL REQUEST: SHORT WEEKDAYS + DELETE OPTIONS END -->
 
-
-<!-- FINAL WORKING DELETE BUTTON IN DETAIL SHEET START -->
 <style>
 /* Softer app colors for detail buttons */
 :root{
@@ -8494,9 +8270,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   },80);
 })();
 </script>
-<!-- FINAL WORKING DELETE BUTTON IN DETAIL SHEET END -->
 
-<!-- REAL FINAL DELETE FIX START -->
 <style>
 .d-act.real-delete-actions{
   display:flex !important;
@@ -8609,10 +8383,7 @@ button,.abtn,.sh-ok,.d-btn,.mini-btn,.backup-btn,.goals-add{
   setTimeout(function(){try{renderCal();}catch(e){}},80);
 })();
 </script>
-<!-- REAL FINAL DELETE FIX END -->
 
-
-<!-- FINAL ONLY REQUESTED FIXES: ADD BUTTON + ACTIVITY SCROLL START -->
 <style>
 /* 1) iPhone: keep the floating Add activity button from covering other controls. */
 .fab{
@@ -8732,10 +8503,7 @@ body:has(#sh-det.O) .fab{
   },100);
 })();
 </script>
-<!-- FINAL ONLY REQUESTED FIXES: ADD BUTTON + ACTIVITY SCROLL END -->
 
-
-<!-- FINAL FIX: BOTTOM ADD BUTTON + TIME VISIBLE START -->
 <style>
 /* Put Add activity between Calendar and Spheres at the bottom. Hide the old floating button. */
 .fab,
@@ -8918,9 +8686,7 @@ body:has(#sh-det.O) .fab{
   setTimeout(function(){insertBottomAddButton();keepTimeVisibleInAddSheet();},300);
 })();
 </script>
-<!-- FINAL FIX: BOTTOM ADD BUTTON + TIME VISIBLE END -->
 
-<!-- FINAL FIX: START END VISIBLE IN ADD ACTIVITY WINDOW START -->
 <style>
 /* Keep Start / End visible in the Add Activity sheet. Do not change other design. */
 #sh-add .sh{
@@ -9015,7 +8781,6 @@ body:has(#sh-det.O) .fab{
   setTimeout(keepStartEndVisible,100);
 })();
 </script>
-<!-- FINAL FIX: START END VISIBLE IN ADD ACTIVITY WINDOW END -->
 
 <style>
 .notes-input-card{
@@ -9023,7 +8788,6 @@ body:has(#sh-det.O) .fab{
 }
 </style>
 
-<!-- FINAL PATCH: CALENDAR CARD SHOWS ONLY ACTIVITY + TIME START -->
 <style id="calendar-only-activity-time-style">
 /* Only activity name and time period are shown on calendar cards */
 #tg .ev .ev-s,
@@ -9100,9 +8864,7 @@ body:has(#sh-det.O) .fab{
   },120);
 })();
 </script>
-<!-- FINAL PATCH: CALENDAR CARD SHOWS ONLY ACTIVITY + TIME END -->
 
-<!-- FINAL PATCH: HALF-HOUR ACTIVITIES VISIBLE, NO OTHER TEXT CHANGE START -->
 <script id="half-hour-activity-visible-final">
 (function(){
   function _p2(n){return String(n).padStart(2,'0');}
@@ -9194,10 +8956,7 @@ body:has(#sh-det.O) .fab{
   setTimeout(function(){try{renderCal();}catch(e){}},120);
 })();
 </script>
-<!-- FINAL PATCH: HALF-HOUR ACTIVITIES VISIBLE, NO OTHER TEXT CHANGE END -->
 
-
-<!-- FINAL PATCH: ONLY CURRENT BOTTOM PAGE BROWN + NO EXTRA ACTIVITY LINES START -->
 <style id="bottom-current-page-only-and-clean-activity">
 /* Calendar activity cards: keep only activity name + time period + checkbox */
 #tg .ev .ev-s,
@@ -9293,9 +9052,7 @@ body:not(.lb-calendar-page) .fab{
   setTimeout(function(){cleanActivityCards();updateBottomCurrentPage();},500);
 })();
 </script>
-<!-- FINAL PATCH: ONLY CURRENT BOTTOM PAGE BROWN + NO EXTRA ACTIVITY LINES END -->
 
-<!-- FINAL PATCH: ADD BUTTON NOT ACTIVE/BROWN START -->
 <style id="add-button-not-active-brown-final">
 /* Add is an action, not a page: it must not look like the active brown page */
 #lb-plus-add,
@@ -9325,10 +9082,7 @@ body.lb-calendar-page #lb-plus-add{
   background:rgba(168,120,40,.10) !important;
 }
 </style>
-<!-- FINAL PATCH: ADD BUTTON NOT ACTIVE/BROWN END -->
 
-
-<!-- FINAL REAL FIX: ADD BUTTON NEUTRAL, ONLY CURRENT PAGE BROWN START -->
 <style id="final-real-add-neutral-current-page-only">
 /* Add is an action, not the active page: keep it neutral always */
 #app > .nav .nav-add-center .nb-ic,
@@ -9414,10 +9168,7 @@ body.lb-calendar-page #lb-plus-add{
   setTimeout(fixAddNeutralAndCurrent,500);
 })();
 </script>
-<!-- FINAL REAL FIX: ADD BUTTON NEUTRAL, ONLY CURRENT PAGE BROWN END -->
 
-
-<!-- FINAL PATCH: ADD SAME INACTIVE COLOR, NOT BLACK START -->
 <style id="final-add-same-inactive-color-not-black">
 /* Add is an action: it must look like the other INACTIVE items, not black and not active brown */
 #app > .nav .nav-add-center,
@@ -9497,10 +9248,7 @@ body.lb-calendar-page #lb-plus-add{
   setTimeout(fixAddColor,500);
 })();
 </script>
-<!-- FINAL PATCH: ADD SAME INACTIVE COLOR, NOT BLACK END -->
 
-
-<!-- FINAL PATCH: NO ADD BLINK + NEXT AVAILABLE TIME START -->
 <style id="final-no-add-blink-next-time-style">
 /* Stop Add from blinking: Add is always the same inactive color unless the sheet itself is open. */
 #app > .nav .nav-add-center,
@@ -9659,10 +9407,7 @@ body.lb-calendar-page #lb-plus-add{
   setTimeout(bindExistingAddButtonsFinal,900);
 })();
 </script>
-<!-- FINAL PATCH: NO ADD BLINK + NEXT AVAILABLE TIME END -->
 
-
-<!-- FINAL ONLY REQUESTED FIX: bottom labels one line + Goals sphere selector left -->
 <style id="final-only-bottom-nav-goals-spheres-left">
 /* Bottom navigation: keep every word on one line */
 #app > .nav{
@@ -9732,7 +9477,6 @@ body.lb-calendar-page #lb-plus-add{
 }
 </style>
 
-
 <style id="bottom-nav-single-line-fix">
 .nav{height:82px!important;padding-top:2px!important}
 .nb{padding:2px 1px 0 1px!important}
@@ -9745,8 +9489,6 @@ body.lb-calendar-page #lb-plus-add{
  margin-top:-2px!important;
 }
 </style>
-
-
 
 <style id="goals-page-scroll-fix">
 /* FIX: Goals page must scroll up/down normally */
@@ -9778,12 +9520,6 @@ body.lb-calendar-page #lb-plus-add{
   min-height:auto !important;
 }
 </style>
-
-
-
-
-
-
 
 <script id="edit-activity-remove-repeat-fix">
 (function(){
@@ -9871,12 +9607,6 @@ body.lb-calendar-page #lb-plus-add{
 })();
 </script>
 
-
-
-
-
-
-
 <style id="goals-text-sphere-real-no-overlap-fix">
 /* REAL FIX: goal text and sphere selector are separate columns, never overlap */
 #V-goals .goals-list{
@@ -9963,14 +9693,6 @@ body.lb-calendar-page #lb-plus-add{
   }
 }
 </style>
-
-
-
-
-
-
-
-
 
 <style id="calendar-span-hours-restore-css">
 /* RESTORE: long activities span/fold across their full time range */
@@ -10077,8 +9799,6 @@ body.lb-calendar-page #lb-plus-add{
   };
 })();
 </script>
-
-
 
 <style id="fold-long-activities-and-add-date-css">
 /* Fold long activities: compressed rows still show one activity block */
@@ -10330,8 +10050,6 @@ body.lb-calendar-page #lb-plus-add{
 })();
 </script>
 
-
-
 <style id="sphere-activity-delete-option-css">
 /* Delete option for activities inside Work/Life/Sleep sphere pages */
 .linked-activity-row,
@@ -10423,8 +10141,6 @@ body.lb-calendar-page #lb-plus-add{
   setInterval(addDeleteButtonsToSphereActivities,700);
 })();
 </script>
-
-
 
 <style id="real-delete-activities-in-spheres-css">
 .sphere-activity-row-final{
@@ -10529,8 +10245,6 @@ body.lb-calendar-page #lb-plus-add{
 })();
 </script>
 
-
-
 <style id="calendar-card-delete-visible-css">
 /* Delete option directly on calendar activity cards */
 .ev{
@@ -10616,8 +10330,6 @@ body.lb-calendar-page #lb-plus-add{
   }
 })();
 </script>
-
-
 
 <style id="calendar-section-activity-delete-css">
 /* Delete option next to activities in Calendar Work/Life/Sleep sections */
