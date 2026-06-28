@@ -10475,6 +10475,7 @@ body.lb-calendar-page #lb-plus-add{
   #fbAuthOverlay button{width:100%;padding:13px;margin-top:10px;border:none;border-radius:12px;background:#A87828;color:#fff;font-size:19px;font-family:'Cormorant Garamond',serif;font-weight:600;letter-spacing:.5px;}
   #fbAuthOverlay button.ghost{background:transparent;color:#A87828;border:1px solid #A87828;margin-top:8px;}
   #fbAuthOverlay #fbErr{min-height:20px;margin-top:12px;color:#b4543a;font-size:16px;}
+  #fbAuthOverlay .fb-forgot{display:inline-block;margin-top:16px;color:#7a6f5d;font-size:16px;text-decoration:underline;cursor:pointer;}
   #fbAuthOverlay.hide{display:none;}
 </style>
 <script id="fb-sync-script">
@@ -10493,18 +10494,20 @@ body.lb-calendar-page #lb-plus-add{
   try{
     firebase.initializeApp(firebaseConfig);
     auth=firebase.auth();
+    try{ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(e){}
     db=firebase.firestore();
   }catch(e){ console.warn('Firebase init failed', e); return; }
 
   // ---- sign-in overlay (injected, does not alter app markup) ----
   var ov=document.createElement('div');
   ov.id='fbAuthOverlay';
-  ov.innerHTML='<div class="fb-card"><div class="fb-title">Life Balance</div><div class="fb-sub">Sign in to sync your data</div><input id="fbEmail" type="email" placeholder="Email" autocomplete="username"><input id="fbPass" type="password" placeholder="Password" autocomplete="current-password"><button id="fbSignIn">Sign in</button><button id="fbSignUp" class="ghost">Create account</button><div id="fbErr"></div></div>';
+  ov.innerHTML='<div class="fb-card"><div class="fb-title">Life Balance</div><div class="fb-sub">Sign in to sync your data</div><input id="fbEmail" type="email" placeholder="Email" autocomplete="username"><input id="fbPass" type="password" placeholder="Password" autocomplete="current-password"><button id="fbSignIn">Sign in</button><button id="fbSignUp" class="ghost">Create account</button><div class="fb-forgot" id="fbForgot">Forgot password?</div><div id="fbErr"></div></div>';
   function mount(){ if(document.body){ document.body.appendChild(ov); wire(); } else { setTimeout(mount,50); } }
-  function showErr(m){ var e=document.getElementById('fbErr'); if(e) e.textContent=m||''; }
+  function showErr(m, ok){ var e=document.getElementById('fbErr'); if(e){ e.textContent=m||''; e.style.color = ok ? '#5a7d5a' : '#b4543a'; } }
   function friendly(e){
     var c=(e&&e.code)||'';
     if(c.indexOf('wrong-password')>=0||c.indexOf('invalid-credential')>=0) return 'Wrong email or password.';
+    if(c.indexOf('too-many-requests')>=0) return 'Too many tries — wait a few minutes, then try again.';
     if(c.indexOf('user-not-found')>=0) return 'No account yet — tap Create account.';
     if(c.indexOf('email-already-in-use')>=0) return 'Account exists — tap Sign in.';
     if(c.indexOf('weak-password')>=0) return 'Password too short (min 6 characters).';
@@ -10522,6 +10525,14 @@ body.lb-calendar-page #lb-plus-add{
       showErr('');
       var em=document.getElementById('fbEmail').value.trim(), pw=document.getElementById('fbPass').value;
       auth.createUserWithEmailAndPassword(em,pw).catch(function(e){showErr(friendly(e));});
+    };
+    document.getElementById('fbForgot').onclick=function(){
+      showErr('');
+      var em=document.getElementById('fbEmail').value.trim();
+      if(!em){ showErr('Type your email in the box above first, then tap this.'); return; }
+      auth.sendPasswordResetEmail(em).then(function(){
+        showErr('Reset email sent — check your inbox (and spam folder).', true);
+      }).catch(function(e){ showErr(friendly(e)); });
     };
   }
   mount();
