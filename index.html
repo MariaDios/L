@@ -10932,3 +10932,40 @@ body.lb-calendar-page #lb-plus-add{
   setTimeout(bindSlots, 600);
 })();
 </script>
+
+<!-- ===== Sleep fold v2: also fold the next-day (overnight spill) portion ===== -->
+<script id="sleep-fold-overnight">
+(function(){
+  function sleepEv(ev){
+    try{
+      var sph=(ev&&ev.sphId&&typeof gsp==='function')?gsp(ev.sphId):null;
+      var txt=(((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'')).toLowerCase();
+      return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.indexOf('sleep')>-1));
+    }catch(e){ return !!(ev&&ev.band==='sleep'); }
+  }
+  function domSleep(el){
+    var txt=(el.textContent||'').toLowerCase();
+    if(txt.indexOf('sleep')>-1) return true;
+    try{
+      var bl=getComputedStyle(el).borderLeftColor;
+      if(bl==='rgb(59, 130, 246)' || bl==='rgb(138, 155, 176)') return true;
+    }catch(e){}
+    return false;
+  }
+  function foldAll(dk){
+    try{
+      var evts=(typeof getDay==='function'?getDay(dk):[])||[];
+      var cards=[].slice.call(document.querySelectorAll('#tg .ev'));
+      cards.forEach(function(el,i){
+        var ev=evts[i];
+        if((ev && sleepEv(ev)) || domSleep(el)) el.classList.add('sleep-folded');
+      });
+    }catch(e){}
+  }
+  var prev=window.renderGrid;
+  if(typeof prev==='function'){
+    window.renderGrid=function(dk){ var r=prev.apply(this,arguments); foldAll(dk); return r; };
+  }
+  setTimeout(function(){ try{ if(typeof renderCal==='function') renderCal(); }catch(e){} }, 450);
+})();
+</script>
