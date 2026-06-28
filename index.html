@@ -10584,3 +10584,351 @@ body.lb-calendar-page #lb-plus-add{
   });
 })();
 </script>
+
+<!-- ===== Fold Sleep blocks into one compact strip (final, runs after all renderGrid versions) ===== -->
+<style id="sleep-fold-final-style">
+#tg .ev.sleep-folded{height:50px !important;min-height:50px !important;max-height:50px !important;overflow:hidden !important;}
+</style>
+<script id="sleep-fold-final">
+(function(){
+  function sleepEv(ev){
+    try{
+      var sph=(ev&&ev.sphId&&typeof gsp==='function')?gsp(ev.sphId):null;
+      var txt=(((ev&&ev.title)||'')+' '+((ev&&ev.activityTitle)||'')).toLowerCase();
+      return !!(ev&&(ev.band==='sleep'||ev.sphId==='sleep'||(sph&&sph.band==='sleep')||txt.indexOf('sleep')>-1));
+    }catch(e){ return !!(ev&&ev.band==='sleep'); }
+  }
+  function fmt(m){ m=((Math.round(m)%1440)+1440)%1440; var h=Math.floor(m/60), n=m%60; return (h<10?'0':'')+h+':'+(n<10?'0':'')+n; }
+  function foldSleep(dk){
+    try{
+      var evts=(typeof getDay==='function'?getDay(dk):[])||[];
+      var cards=[].slice.call(document.querySelectorAll('#tg .ev'));
+      cards.forEach(function(el,i){
+        var ev=evts[i];
+        if(!ev || !sleepEv(ev)) return;
+        el.classList.add('sleep-folded');
+        var t=el.querySelector('.ev-t');
+        if(t && ev.startMin!=null && ev.dur!=null){ t.textContent=fmt(ev.startMin)+' – '+fmt(ev.startMin+ev.dur); }
+      });
+    }catch(e){}
+  }
+  var prev=window.renderGrid;
+  if(typeof prev==='function'){
+    window.renderGrid=function(dk){ prev(dk); foldSleep(dk); };
+  }
+  /* fold the very first view as well */
+  setTimeout(function(){ try{ if(typeof renderCal==='function') renderCal(); }catch(e){} }, 350);
+})();
+</script>
+
+<!-- ===== Fix: scrolling the add/detail sheet no longer closes it ===== -->
+<script id="swipe-close-fix">
+(function(){
+  /* Redefine setupSwipeClose with a scroll-aware version. The original is only
+     CALLED on a 700ms timer, so this replacement is what actually runs, and the
+     old dismiss-on-any-downward-swipe listeners never get attached. */
+  setupSwipeClose=function(){
+    document.querySelectorAll('.sh-ov').forEach(function(ov){
+      if(ov.dataset.swipeReady==='1')return;
+      ov.dataset.swipeReady='1';
+      var sx=0, sy=0, startTop=0;
+      function scrollHost(node){
+        while(node && node!==ov){
+          if(node.scrollHeight > node.clientHeight + 2){
+            var oy=getComputedStyle(node).overflowY;
+            if(oy==='auto' || oy==='scroll') return node;
+          }
+          node=node.parentElement;
+        }
+        return null;
+      }
+      ov.addEventListener('touchstart',function(e){
+        sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+        var h=scrollHost(e.target); startTop=h?h.scrollTop:0;
+      },{passive:true});
+      ov.addEventListener('touchend',function(e){
+        var dx=e.changedTouches[0].clientX-sx;
+        var dy=e.changedTouches[0].clientY-sy;
+        /* clear left-swipe still closes */
+        if(dx<-80){ ov.classList.remove('O'); return; }
+        /* downward pull closes ONLY when the content is already at the very top,
+           so scrolling back up through a long list never dismisses the sheet */
+        if(dy>80 && startTop<=2){ ov.classList.remove('O'); }
+      },{passive:true});
+    });
+  };
+  /* make sure the new version is applied to the already-present sheets too */
+  try{ setupSwipeClose(); }catch(e){}
+})();
+</script>
+
+<!-- ===== Move calendar delete × to top-left, away from the bottom-right tick ===== -->
+<style id="ev-delete-separate">
+#tg .ev{ padding-left:34px !important; }
+#tg .ev-delete-visible{
+  left:6px !important;
+  right:auto !important;
+  top:7px !important;
+  width:26px !important;
+  height:26px !important;
+  font-size:24px !important;
+}
+</style>
+
+<!-- ===== Goals: tap-to-complete check, cross out, move done to bottom ===== -->
+<style id="goal-done-style">
+.goal-check{flex:0 0 auto;width:24px;height:24px;border:2px solid #C9BDA2;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;color:#fff;cursor:pointer;background:transparent;transition:background .15s,border-color .15s;}
+.goal-head .goal-check + .gdot{display:none !important;}
+.goal-done .goal-title{text-decoration:line-through !important;opacity:.5 !important;}
+</style>
+<script id="goal-done-script">
+(function(){
+  function lookup(sId,gId){
+    var sp=(typeof gsp==='function')?gsp(sId):null;
+    if(!sp)return null;
+    var g=(sp.goals||[]).find(function(x){return x.id===gId;});
+    return {sp:sp,g:g};
+  }
+  window.toggleGoalDone=function(sId,gId){
+    try{
+      var r=lookup(sId,gId); if(!r||!r.g)return;
+      r.g.done=!r.g.done;
+      /* stable sort keeps order, pushes done goals to the bottom */
+      r.sp.goals.sort(function(a,b){return (a.done?1:0)-(b.done?1:0);});
+      if(typeof save==='function') save();
+      if(typeof renderSph==='function') renderSph();
+      decorate();
+    }catch(e){}
+  };
+  function decorate(){
+    try{
+      document.querySelectorAll('.goal-card').forEach(function(card){
+        var head=card.querySelector('.goal-head'); if(!head)return;
+        var oc=head.getAttribute('onclick')||'';
+        var m=oc.match(/toggleGoal\(\s*'([^']+)'\s*,\s*'([^']+)'/);
+        if(!m)return;
+        var sId=m[1], gId=m[2];
+        var r=lookup(sId,gId); var g=r&&r.g; var sp=r&&r.sp;
+        var done=!!(g&&g.done);
+        var chk=head.querySelector('.goal-check');
+        if(!chk){
+          chk=document.createElement('div');
+          chk.className='goal-check';
+          chk.onclick=function(ev){ ev.stopPropagation(); window.toggleGoalDone(sId,gId); };
+          head.insertBefore(chk, head.firstChild);
+        }
+        chk.textContent=done?'✓':'';
+        if(done && sp){ chk.style.background=sp.color; chk.style.borderColor=sp.color; }
+        else { chk.style.background='transparent'; chk.style.borderColor=''; }
+        card.classList.toggle('goal-done',done);
+      });
+    }catch(e){}
+  }
+  var prev=window.renderSph;
+  if(typeof prev==='function'){ window.renderSph=function(){ var x=prev.apply(this,arguments); decorate(); return x; }; }
+  setInterval(decorate, 700);
+  setTimeout(decorate, 400);
+})();
+</script>
+
+<!-- ===== 8·8·8 balanced-day achievement indicator ===== -->
+<style id="badge888-style">
+#badge888{margin:1px 16px 6px;text-align:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;letter-spacing:.08em;color:#fff;background:linear-gradient(90deg,#A87828,#cca54e);border-radius:999px;padding:5px 12px;box-shadow:0 2px 12px rgba(168,120,40,.35);animation:badge888pop .45s ease;}
+@keyframes badge888pop{from{transform:scale(.82);opacity:0}to{transform:scale(1);opacity:1}}
+</style>
+<script id="badge888-script">
+(function(){
+  var was=false;
+  function check(){
+    try{
+      var bar=document.getElementById('bal-bar'); if(!bar)return;
+      var vls=bar.querySelectorAll('.bb-vl');
+      var badge=document.getElementById('badge888');
+      if(vls.length<3){ if(badge)badge.style.display='none'; return; }
+      var ok=true;
+      vls.forEach(function(v){
+        var n=parseFloat(((v.textContent||'').replace(',','.')).replace(/[^0-9.]/g,''));
+        if(isNaN(n) || n<8) ok=false;
+      });
+      if(ok){
+        if(!badge){
+          badge=document.createElement('div');
+          badge.id='badge888';
+          badge.textContent='\u2726 8\u00b78\u00b78 \u2014 balanced day';
+          bar.parentNode.insertBefore(badge, bar.nextSibling);
+        }
+        badge.style.display='';
+        if(!was && typeof toast==='function') toast('8\u00b78\u00b78 achieved \u2014 balanced day! \ud83c\udf89');
+      } else if(badge){ badge.style.display='none'; }
+      was=ok;
+    }catch(e){}
+  }
+  var prev=(typeof renderCal==='function')?renderCal:null;
+  if(prev){ renderCal=function(){ var r=prev.apply(this,arguments); check(); return r; }; }
+  setTimeout(check,500);
+})();
+</script>
+
+<!-- ===== Add sheet: show ALL spheres grouped under their name headings ===== -->
+<style id="add-all-spheres-style">
+#sh-add .final-sphere-row{display:none !important;}
+#sh-add #sh-alist .sh-group{margin-bottom:14px !important;}
+#sh-add #sh-alist .sh-group-title{display:block !important;}
+</style>
+<script id="add-all-spheres-script">
+(function(){
+  function item(s,g,a){
+    var aid=a.id, selected=aSel&&aSel.activity&&aSel.activity.id===aid, open=selected||aOpenAct===aid;
+    var tasks=a.tasks||[];
+    return '<div class="sh-act '+(selected?'selected':'')+'" style="border-color:'+s.color+'30;color:'+s.color+'">'+
+      '<div class="sh-act-head" onclick="pickActivity(\''+s.id+'\',\''+g.id+'\',\''+aid+'\')"><div class="sh-ai-d" style="background:'+s.color+'"></div><div style="flex:1"><div class="sh-act-name">'+esc(a.title)+'</div><div class="sh-act-goal">Goal: '+esc(g.text||'General')+'</div></div><div class="sh-selected-check" style="color:'+s.color+'">'+(selected?'\u2713':'\u203a')+'</div></div>'+
+      (open?'<div class="sh-act-body">'+(tasks.length?tasks.map(function(t){var on=!!aChecked[t.id];return '<div class="sh-check '+(on?'on':'')+'" onclick="togglePickTask(\''+t.id+'\')"><div class="sh-check-box" style="'+(on?'background:'+s.color+';border-color:'+s.color:'')+'">'+(on?'\u2713':'')+'</div><div>'+esc(t.text)+'</div></div>';}).join(''):'')+(selected?'<div class="final-file-inside"><input id="lb-files" type="file" multiple></div>':'')+'</div>':'')+
+      '</div>';
+  }
+  window.renderActivityPicker=function(){
+    try{ if(typeof normData==='function') normData(); }catch(e){}
+    var wrap=document.getElementById('sh-alist'); if(!wrap)return;
+    var spheres=(typeof S!=='undefined'&&S.spheres)?S.spheres:[];
+    var html='', any=false;
+    spheres.forEach(function(s){
+      var rows=[];
+      (s.goals||[]).forEach(function(g){(g.activities||[]).forEach(function(a){rows.push(item(s,g,a));});});
+      if(!rows.length) return;
+      any=true;
+      html+='<div class="sh-group"><div class="sh-group-title" style="color:'+s.color+'">'+esc(s.name)+'</div>'+rows.join('')+'</div>';
+    });
+    wrap.innerHTML = any ? html : '<div style="font-size:20px;color:var(--mt);padding:12px 4px;text-align:center;font-style:italic">No activities yet</div>';
+  };
+})();
+</script>
+
+<!-- ===== Add sheet: two modes — "Write my own" vs "From activities" ===== -->
+<style id="add-twomode-style">
+#add-mode-row{display:flex;gap:8px;margin:2px 0 12px;flex:0 0 auto;}
+.add-mode-btn{flex:1;padding:10px;border:1px solid #DDD4BC;border-radius:14px;background:#fffaf2;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#8A7860;cursor:pointer;transition:all .15s;}
+.add-mode-btn.on{background:#A87828;border-color:#A87828;color:#fff;box-shadow:0 2px 10px rgba(168,120,40,.25);}
+#add-own-panel{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;flex:0 0 auto;}
+#add-own-title{padding:13px 14px;border:1px solid #d8cdb8;border-radius:12px;background:#fffdf8;font-size:19px;font-family:'Cormorant Garamond',serif;color:#2A1C12;outline:none;}
+#add-own-title:focus{border-color:#A87828;}
+.add-own-lbl{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A7860;}
+#add-own-bands{display:flex;gap:8px;}
+.add-own-band{flex:1;padding:10px;border:1.5px solid var(--bc);border-radius:12px;background:transparent;color:var(--bc);font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;cursor:pointer;transition:all .15s;}
+.add-own-band.on{background:var(--bc);color:#fff;}
+#add-own-btn{padding:14px;border:none;border-radius:14px;background:#A87828;color:#fff;font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;letter-spacing:.5px;cursor:pointer;}
+</style>
+<script id="add-twomode-script">
+(function(){
+  var ownBand=null;
+  function hide(el){ if(el)el.style.setProperty('display','none','important'); }
+  function show(el){ if(el)el.style.removeProperty('display'); }
+  function setMode(m){
+    var list=document.getElementById('sh-alist');
+    var panel=document.getElementById('add-own-panel');
+    var addBtn=document.getElementById('sh-add-btn');
+    var pick=document.getElementById('add-mode-pick'), own=document.getElementById('add-mode-own');
+    if(!pick||!own)return;
+    if(m==='own'){
+      hide(list); hide(addBtn); if(panel)panel.style.display='flex';
+      pick.classList.remove('on'); own.classList.add('on');
+    }else{
+      show(list); show(addBtn); if(panel)panel.style.display='none';
+      own.classList.remove('on'); pick.classList.add('on');
+    }
+  }
+  function addOwn(){
+    var t=document.getElementById('add-own-title');
+    var title=t?(t.value||'').trim():'';
+    if(!title){ if(typeof toast==='function')toast('Write a task first'); return; }
+    if(!ownBand){ if(typeof toast==='function')toast('Pick Work, Life or Sleep'); return; }
+    var col=(typeof BAND!=='undefined'&&BAND[ownBand])?BAND[ownBand].color:'#A87828';
+    /* hand the tested confirmAdd a synthetic selection */
+    aSel={ sphere:{id:'',band:ownBand,color:col,name:''}, goal:{id:'',text:''}, activity:{id:'',title:title,tasks:[]} };
+    aChecked={};
+    if(typeof window.confirmAdd==='function') window.confirmAdd();
+  }
+  function inject(){
+    var list=document.getElementById('sh-alist');
+    if(!list || document.getElementById('add-mode-row')) return;
+    var row=document.createElement('div'); row.id='add-mode-row';
+    row.innerHTML='<button type="button" id="add-mode-pick" class="add-mode-btn on">\u25c7 From activities</button><button type="button" id="add-mode-own" class="add-mode-btn">\u270e Write my own</button>';
+    list.parentNode.insertBefore(row, list);
+    var panel=document.createElement('div'); panel.id='add-own-panel'; panel.style.display='none';
+    var bands=['work','life','sleep'];
+    panel.innerHTML='<input id="add-own-title" placeholder="Write your task..."><div class="add-own-lbl">Category</div><div id="add-own-bands">'+bands.map(function(b){var c=(typeof BAND!=='undefined'&&BAND[b])?BAND[b].color:'#A87828';var lbl=(typeof BAND!=='undefined'&&BAND[b])?BAND[b].label:b;return '<button type="button" class="add-own-band" data-band="'+b+'" style="--bc:'+c+'">'+lbl+'</button>';}).join('')+'</div><button type="button" id="add-own-btn">Add to calendar</button>';
+    list.parentNode.insertBefore(panel, list.nextSibling);
+    document.getElementById('add-mode-pick').onclick=function(){ setMode('pick'); };
+    document.getElementById('add-mode-own').onclick=function(){ setMode('own'); };
+    document.getElementById('add-own-btn').onclick=addOwn;
+    panel.querySelectorAll('.add-own-band').forEach(function(btn){
+      btn.onclick=function(){ ownBand=btn.getAttribute('data-band'); panel.querySelectorAll('.add-own-band').forEach(function(x){x.classList.toggle('on',x===btn);}); };
+    });
+    /* reset to pick mode + clear typed task each time the sheet opens */
+    var sheet=document.getElementById('sh-add');
+    if(sheet){
+      new MutationObserver(function(){
+        if(sheet.classList.contains('O')){
+          setMode('pick');
+          var ti=document.getElementById('add-own-title'); if(ti)ti.value='';
+          ownBand=null;
+          var p=document.getElementById('add-own-panel'); if(p)p.querySelectorAll('.add-own-band').forEach(function(x){x.classList.remove('on');});
+        }
+      }).observe(sheet,{attributes:true,attributeFilter:['class']});
+    }
+  }
+  function boot(){ inject(); if(!document.getElementById('add-mode-row')) setTimeout(boot,300); }
+  if(document.readyState!=='loading') boot(); else document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>
+
+<!-- ===== Write tasks directly on the calendar: inline quick-add on a time slot ===== -->
+<style id="inline-add-style">
+.inline-add-inp{position:absolute;left:0;right:0;top:0;width:100%;box-sizing:border-box;height:40px;border:1.5px solid #A87828;border-radius:9px;background:#fffdf8;font-family:'Cormorant Garamond',serif;font-size:17px;color:#2A1C12;padding:4px 10px;outline:none;z-index:40;box-shadow:0 3px 12px rgba(0,0,0,.14);}
+.inline-add-inp::placeholder{color:#b3a589;}
+</style>
+<script id="inline-add-script">
+(function(){
+  function calS(){ return (typeof CAL_S!=='undefined')?CAL_S:6; }
+  function hrH(){ return (typeof HR_H!=='undefined')?HR_H:54; }
+  function zoneBand(h){ if(h<8||h>=22) return 'sleep'; if(h>=9&&h<18) return 'work'; return 'life'; }
+  function removeInline(){ var e=document.getElementById('inlineAddInp'); if(e&&e.parentNode) e.parentNode.removeChild(e); }
+  function commit(h,title){
+    var inp=document.getElementById('inlineAddInp');
+    if(inp){ if(inp.dataset.done==='1') return; inp.dataset.done='1'; }
+    title=(title||'').trim();
+    removeInline();
+    if(!title) return;
+    try{
+      var dk=window.__lbCurDk; if(!dk || typeof getDay!=='function') return;
+      var band=zoneBand(h);
+      var ev={title:title,band:band,startMin:h*60,dur:60,tasks:[],done:false,files:[]};
+      getDay(dk).push(Object.assign({}, ev, {id:(typeof uid==='function'?uid():String(Date.now())),repeat:'none',seriesId:''}));
+      if(typeof save==='function') save();
+      if(typeof renderCal==='function') renderCal();
+      if(typeof applyHourLineColors==='function') setTimeout(applyHourLineColors,0);
+      if(typeof toast==='function') toast('Task added');
+    }catch(e){}
+  }
+  function startInlineAdd(col,h){
+    removeInline();
+    if(getComputedStyle(col).position==='static') col.style.position='relative';
+    var inp=document.createElement('input');
+    inp.id='inlineAddInp'; inp.className='inline-add-inp'; inp.placeholder='Write task\u2026 \u21b5';
+    inp.onclick=function(e){ e.stopPropagation(); };
+    inp.onkeydown=function(e){ if(e.key==='Enter'){ commit(h,inp.value); } else if(e.key==='Escape'){ removeInline(); } };
+    inp.onblur=function(){ if(inp.dataset.done==='1') return; var v=inp.value; setTimeout(function(){ if(v.trim()) commit(h,v); else removeInline(); },150); };
+    col.appendChild(inp);
+    setTimeout(function(){ try{inp.focus();}catch(e){} },10);
+  }
+  function bindSlots(){
+    var cols=document.querySelectorAll('#tg .hcol');
+    cols.forEach(function(col,i){
+      col.onclick=function(){ startInlineAdd(col, calS()+i); };
+    });
+  }
+  var prev=window.renderGrid;
+  if(typeof prev==='function'){
+    window.renderGrid=function(dk){ var r=prev.apply(this,arguments); window.__lbCurDk=dk; bindSlots(); return r; };
+  }
+  setTimeout(bindSlots, 600);
+})();
+</script>
