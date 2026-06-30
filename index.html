@@ -11137,3 +11137,115 @@ html{ overflow-x:hidden; }
   setInterval(move, 1000);
 })();
 </script>
+
+<!-- ===== Type new task in a fixed bar at top (above keyboard) ===== -->
+<style id="inline-add-top-style">
+#inlineAddOverlay{position:fixed;inset:0;z-index:99998;background:transparent;}
+#inlineAddBar{position:fixed;left:12px;right:12px;top:14px;z-index:99999;
+  background:#FBF7EC;border:1px solid #E4D9BE;border-radius:16px;
+  box-shadow:0 10px 34px rgba(80,60,20,.20);padding:13px 16px 14px;
+  font-family:'Cormorant Garamond',serif;}
+#inlineAddBar .iab-inp{width:100%;border:none;background:transparent;outline:none;
+  font-family:inherit;font-size:25px;color:#3a3326;caret-color:#A87828;padding-right:22px;}
+#inlineAddBar .iab-inp::placeholder{color:#bcb39a;}
+#inlineAddBar .iab-row{display:flex;align-items:center;gap:8px;margin-top:11px;flex-wrap:wrap;}
+#inlineAddBar .iab-chip{padding:5px 13px;border-radius:14px;color:#fff;font-size:17px;
+  line-height:1.1;opacity:.82;filter:saturate(.6) brightness(1.04);}
+#inlineAddBar .iab-chip.sel{outline:2px solid #A87828;opacity:1;}
+#inlineAddBar .iab-time{font-family:inherit;font-size:18px;border:1px solid #E4D9BE;
+  border-radius:9px;padding:3px 7px;background:#fff;color:#3a3326;}
+#inlineAddBar .iab-dash{color:#9a8f74;}
+#inlineAddBar .iab-ok{margin-left:auto;background:#A87828;color:#fff;border:none;
+  border-radius:12px;padding:6px 18px;font-size:19px;line-height:1;}
+#inlineAddBar .iab-x{position:absolute;top:9px;right:13px;color:#b0a589;font-size:23px;
+  line-height:1;cursor:pointer;}
+</style>
+<script id="inline-add-top-script">
+(function(){
+  function pad(n){return String(n).padStart(2,'0');}
+  function calS(){ return (typeof CAL_S!=='undefined')?CAL_S:6; }
+  function zoneBand(h){ if(h<8||h>=22) return 'sleep'; if(h>=9&&h<18) return 'work'; return 'life'; }
+  function toMinStr(v){ var p=(v||'0:0').split(':'); return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0); }
+  function closeBar(){ ['inlineAddBar','inlineAddOverlay'].forEach(function(id){ var e=document.getElementById(id); if(e&&e.parentNode) e.parentNode.removeChild(e); }); }
+  function createTask(startMin,dur,title,sphere){
+    title=(title||'').trim(); if(!title){ closeBar(); return; }
+    try{
+      var dk=window.__lbCurDk; if(!dk || typeof getDay!=='function'){ closeBar(); return; }
+      var band=(sphere&&sphere.band)?sphere.band:zoneBand(Math.floor(startMin/60));
+      var ev={title:title,band:band,sphId:(sphere?sphere.id:''),goalId:'',activityId:'',startMin:startMin,dur:dur,tasks:[],done:false,files:[]};
+      getDay(dk).push(Object.assign({}, ev, {id:(typeof uid==='function'?uid():String(Date.now())),repeat:'none',seriesId:''}));
+      if(typeof save==='function') save();
+      closeBar();
+      if(typeof renderCal==='function') renderCal();
+      if(typeof applyHourLineColors==='function') setTimeout(applyHourLineColors,0);
+      if(typeof toast==='function') toast('Added to '+((sphere&&sphere.name)?sphere.name:'calendar'));
+    }catch(e){ closeBar(); }
+  }
+  function buildConfirm(bar,h,inp){
+    if(bar.querySelector('.iab-row')) return;
+    var spheres=(typeof S!=='undefined'&&S.spheres)?S.spheres:[];
+    var sel={s:null};
+    var chips=document.createElement('div'); chips.className='iab-row';
+    spheres.forEach(function(s){
+      var chip=document.createElement('div'); chip.className='iab-chip'; chip.style.background=s.color; chip.textContent=s.name;
+      chip.onclick=function(e){ e.stopPropagation(); sel.s=s; chips.querySelectorAll('.iab-chip').forEach(function(c){c.classList.remove('sel');}); chip.classList.add('sel'); };
+      chips.appendChild(chip);
+    });
+    bar.appendChild(chips);
+    var trow=document.createElement('div'); trow.className='iab-row';
+    var st=document.createElement('input'); st.type='time'; st.className='iab-time'; st.value=pad(h)+':00';
+    var dash=document.createElement('span'); dash.className='iab-dash'; dash.textContent='\u2013';
+    var en=document.createElement('input'); en.type='time'; en.className='iab-time'; en.value=pad((h+1)%24)+':00';
+    var ok=document.createElement('button'); ok.type='button'; ok.className='iab-ok'; ok.textContent='\u2713';
+    ok.onclick=function(e){ e.stopPropagation();
+      if(!sel.s){ if(typeof toast==='function') toast('Tap a sphere'); return; }
+      var sm=toMinStr(st.value), em=toMinStr(en.value);
+      var dur=em>sm?em-sm:(em<sm?(1440-sm)+em:60);
+      createTask(sm,dur,(inp.value||'').trim(),sel.s);
+    };
+    trow.appendChild(st); trow.appendChild(dash); trow.appendChild(en); trow.appendChild(ok);
+    bar.appendChild(trow);
+  }
+  function openBar(h){
+    closeBar();
+    var ov=document.createElement('div'); ov.id='inlineAddOverlay'; ov.onclick=closeBar; document.body.appendChild(ov);
+    var bar=document.createElement('div'); bar.id='inlineAddBar'; bar.onclick=function(e){e.stopPropagation();};
+    var x=document.createElement('div'); x.className='iab-x'; x.textContent='\u00d7'; x.onclick=closeBar; bar.appendChild(x);
+    var inp=document.createElement('input'); inp.className='iab-inp'; inp.type='text';
+    inp.setAttribute('autocomplete','off'); inp.setAttribute('autocapitalize','sentences'); inp.placeholder='New task\u2026';
+    bar.appendChild(inp);
+    document.body.appendChild(bar);
+    var phase=1;
+    inp.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); if(phase===1){ if(inp.value.trim()){ buildConfirm(bar,h,inp); phase=2; } } } else if(e.key==='Escape'){ closeBar(); } };
+    setTimeout(function(){ try{inp.focus();}catch(e){} }, 30);
+  }
+  function bindSlots(){ document.querySelectorAll('#tg .hcol').forEach(function(col,i){ col.onclick=function(ev){ ev.stopPropagation(); openBar(calS()+i); }; }); }
+  var prev=window.renderGrid;
+  if(typeof prev==='function'){ window.renderGrid=function(dk){ var r=prev.apply(this,arguments); window.__lbCurDk=dk; bindSlots(); return r; }; }
+  setTimeout(bindSlots, 800);
+  setInterval(bindSlots, 1200);
+})();
+</script>
+
+<!-- ===== Time on timeline only: free up card width for task title ===== -->
+<style id="ev-time-off-card-style">
+#tg .ev:not(.sleep-folded) .ev-t{ display:none !important; }
+#tg .ev:not(.sleep-folded) .ev-n{
+  max-width:none !important;
+  white-space:normal !important;
+  overflow:hidden !important;
+  padding-right:46px !important;
+  line-height:1.12 !important;
+}
+</style>
+
+<!-- ===== Sleep card: time sits right after title, by the 23 ===== -->
+<style id="sleep-time-left-style">
+#tg .ev.sleep-folded{ display:flex !important; align-items:center !important; gap:16px !important; }
+#tg .ev.sleep-folded .ev-n{ max-width:none !important; flex:0 0 auto !important; padding-right:0 !important; }
+#tg .ev.sleep-folded .ev-t{
+  position:static !important; transform:none !important;
+  left:auto !important; right:auto !important; top:auto !important;
+  flex:0 0 auto !important;
+}
+</style>
